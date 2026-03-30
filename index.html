@@ -382,6 +382,26 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 .toast.warn{background:#2e1e0d;color:var(--orange);border-color:rgba(255,107,53,.3)}
 .toast.show{transform:translateY(0);opacity:1}
 
+/* AVATAR & THEME SELECTORS */
+.sub-selectors{padding:20px 30px 24px;background:rgba(99,102,241,.02);border-top:1px solid var(--border)}
+.sub-sel-label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sub-sel-label .lbl-ico{font-size:14px}
+.avatar-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.avatar-chip{display:flex;align-items:center;gap:6px;padding:7px 13px;background:var(--bg3);border:1.5px solid var(--border);border-radius:100px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;user-select:none;transition:all .2s}
+.avatar-chip:hover{border-color:var(--border2);color:var(--text)}
+.avatar-chip.on{background:rgba(139,92,246,.12);border-color:var(--accent2);color:var(--purple)}
+.avatar-chip .av-ico{font-size:15px}
+.avatar-divider{width:100%;display:flex;align-items:center;gap:8px;margin:8px 0}
+.avatar-divider::before,.avatar-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.avatar-divider span{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.persona-chip{background:rgba(167,139,250,.07);border-color:rgba(167,139,250,.25);color:var(--purple)}
+.persona-chip:hover{border-color:var(--purple);background:rgba(167,139,250,.15)}
+.persona-chip.on{background:rgba(167,139,250,.2);border-color:var(--purple);color:#fff;box-shadow:0 0 0 2px rgba(167,139,250,.2)}
+.theme-grid{display:flex;flex-wrap:wrap;gap:8px}
+.theme-chip{display:flex;align-items:center;gap:6px;padding:7px 13px;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;user-select:none;transition:all .2s}
+.theme-chip:hover{border-color:var(--border2);color:var(--text)}
+.theme-chip.on{background:rgba(0,212,170,.08);border-color:rgba(0,212,170,.4);color:var(--teal);box-shadow:0 0 0 2px rgba(0,212,170,.1)}
+
 @media(max-width:600px){
   .fsec,.pp-body,.pp-header,.gen-strip,.prog-panel,.done-panel,.submit-strip{padding:18px 16px}
   .fields{grid-template-columns:1fr}.f-full{grid-column:1}
@@ -394,6 +414,9 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
   .phase-bar{padding:10px 16px}
   .modal-card{padding:28px 18px}
   .otp-wrap input{width:38px;height:46px;font-size:17px}
+  .sub-selectors{padding:16px}
+  .avatar-grid,.theme-grid{gap:6px}
+  .avatar-chip,.theme-chip{padding:6px 10px;font-size:11px}
 }
 </style>
 </head>
@@ -602,7 +625,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
     </div>
 
     <div class="fsec">
-      <div class="fsec-head"><div class="fsec-num">3</div><div class="fsec-title">Market Style</div><div class="fsec-hint">Faces &amp; locations match your selection</div></div>
+      <div class="fsec-head"><div class="fsec-num">3</div><div class="fsec-title">Market Style</div><div class="fsec-hint">Config pulled from Google Sheet</div></div>
       <div class="style-grid">
         <div class="style-card on" data-style="indian" onclick="selectStyle(this)"><span class="style-flag">🇮🇳</span><span class="style-name">Indian</span><span class="style-sub">South Asian faces</span></div>
         <div class="style-card" data-style="american" onclick="selectStyle(this)"><span class="style-flag">🇺🇸</span><span class="style-name">American</span><span class="style-sub">Western interiors</span></div>
@@ -616,6 +639,43 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
         <div class="style-card" data-style="african" onclick="selectStyle(this)"><span class="style-flag">🌍</span><span class="style-name">African</span><span class="style-sub">African faces</span></div>
         <div class="style-card" data-style="korean" onclick="selectStyle(this)"><span class="style-flag">🇰🇷</span><span class="style-name">Korean</span><span class="style-sub">K-style clean</span></div>
         <div class="style-card" data-style="global" onclick="selectStyle(this)"><span class="style-flag">🌐</span><span class="style-name">Global</span><span class="style-sub">Diverse universal</span></div>
+      </div>
+
+      <!-- ── Avatar & Theme sub-selectors ── -->
+      <div class="sub-selectors">
+        <div class="sub-sel-label"><span class="lbl-ico">👤</span> Avatar <span style="color:var(--dim);font-size:10px;font-weight:400;text-transform:none;letter-spacing:0"> — sets the person face in lifestyle &amp; hero shots</span></div>
+        <div class="avatar-grid" id="avatarGrid">
+          <!-- Generic -->
+          <div class="avatar-chip on" data-avatar="avatar_1" onclick="selectAvatar(this)"><span class="av-ico">👨</span> Men</div>
+          <div class="avatar-chip" data-avatar="avatar_2" onclick="selectAvatar(this)"><span class="av-ico">👩</span> Women</div>
+          <div class="avatar-chip" data-avatar="avatar_3" onclick="selectAvatar(this)"><span class="av-ico">👦</span> Boy</div>
+          <div class="avatar-chip" data-avatar="avatar_4" onclick="selectAvatar(this)"><span class="av-ico">👧</span> Girl</div>
+          <div class="avatar-chip" data-avatar="avatar_5" onclick="selectAvatar(this)"><span class="av-ico">👶</span> Baby Boy</div>
+          <div class="avatar-chip" data-avatar="avatar_6" onclick="selectAvatar(this)"><span class="av-ico">👶</span> Baby Girl</div>
+          <div class="avatar-chip" data-avatar="avatar_7" onclick="selectAvatar(this)"><span class="av-ico">🧓</span> Old Man</div>
+          <div class="avatar-chip" data-avatar="avatar_8" onclick="selectAvatar(this)"><span class="av-ico">👵</span> Old Woman</div>
+          <!-- Named personas divider -->
+          <div class="avatar-divider"><span>Named Personas</span></div>
+          <div class="avatar-chip persona-chip" data-avatar="avatar_raj" onclick="selectAvatar(this)"><span class="av-ico">🧑‍💼</span> Raj</div>
+          <div class="avatar-chip persona-chip" data-avatar="avatar_krishna" onclick="selectAvatar(this)"><span class="av-ico">🧑‍🎨</span> Krishna</div>
+          <div class="avatar-chip persona-chip" data-avatar="avatar_smita" onclick="selectAvatar(this)"><span class="av-ico">👩‍💼</span> Smita</div>
+          <div class="avatar-chip persona-chip" data-avatar="avatar_jeni" onclick="selectAvatar(this)"><span class="av-ico">👩‍🎤</span> Jeni</div>
+          <div class="avatar-chip persona-chip" data-avatar="avatar_kumar" onclick="selectAvatar(this)"><span class="av-ico">👨‍🔬</span> Kumar</div>
+        </div>
+
+        <div class="sub-sel-label" style="margin-top:4px"><span class="lbl-ico">🎨</span> Theme <span style="color:var(--dim);font-size:10px;font-weight:400;text-transform:none;letter-spacing:0"> — mood, lighting &amp; set design (variant picked randomly by n8n)</span></div>
+        <div class="theme-grid" id="themeGrid">
+          <div class="theme-chip on" data-theme="theme_1" onclick="selectTheme(this)">🌅 Golden Hour</div>
+          <div class="theme-chip" data-theme="theme_2" onclick="selectTheme(this)">🏙️ Urban Minimal</div>
+          <div class="theme-chip" data-theme="theme_3" onclick="selectTheme(this)">🌿 Natural</div>
+          <div class="theme-chip" data-theme="theme_4" onclick="selectTheme(this)">✨ Luxury</div>
+          <div class="theme-chip" data-theme="theme_5" onclick="selectTheme(this)">🎨 Pastel</div>
+          <div class="theme-chip" data-theme="theme_6" onclick="selectTheme(this)">🏠 Cozy Home</div>
+          <div class="theme-chip" data-theme="theme_7" onclick="selectTheme(this)">🔬 Clinical</div>
+          <div class="theme-chip" data-theme="theme_8" onclick="selectTheme(this)">🌊 Coastal</div>
+          <div class="theme-chip" data-theme="theme_9" onclick="selectTheme(this)">🎭 Bold</div>
+          <div class="theme-chip" data-theme="theme_10" onclick="selectTheme(this)">🌙 Neon</div>
+        </div>
       </div>
     </div>
 
@@ -1060,7 +1120,7 @@ const STYLE_CONTEXT={
   global:    {faces:'diverse multicultural faces',location:'modern universal setting, clean contemporary interior',lifestyle:'diverse group of people in a modern inclusive setting'},
 };
 
-let file=null, lang='en', marketStyle='indian', analysisData=null, runFolderLink=null;
+let file=null, lang='en', marketStyle='indian', avatarId='avatar_1', themeId='theme_1', analysisData=null, runFolderLink=null;
 const selectedCards=new Set(['hero','infographic','lifestyle']);
 
 // ════════════════════════════════════════════
@@ -1089,6 +1149,8 @@ function setFile(f){
 }
 function clearImage(){ file=null;fileInput.value='';document.getElementById('prevWrap').classList.remove('on');uploadZone.style.display='block';document.getElementById('uploadRing').textContent='📷';validate(); }
 function selectStyle(el){ document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('on'));el.classList.add('on');marketStyle=el.dataset.style; }
+function selectAvatar(el){ document.querySelectorAll('.avatar-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');avatarId=el.dataset.avatar; }
+function selectTheme(el){ document.querySelectorAll('.theme-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');themeId=el.dataset.theme; }
 document.querySelectorAll('.lp').forEach(p=>p.addEventListener('click',()=>{document.querySelectorAll('.lp').forEach(x=>x.classList.remove('on'));p.classList.add('on');lang=p.dataset.lang;}));
 function validate(){
   const limitHit=usageData&&!usageData.allowed;
@@ -1142,6 +1204,7 @@ async function runAnalyse(){
       body:JSON.stringify({
         imageBase64,imageName:file.name,imageMimeType:file.type||'image/jpeg',
         category:document.getElementById('category').value,market:marketStyle,
+        avatarId,themeId,
         productName:document.getElementById('productName').value.trim(),
         features:document.getElementById('features').value.trim(),
         amazonLink:document.getElementById('amazonLink').value.trim(),
@@ -1213,6 +1276,7 @@ async function generate(){
       body:JSON.stringify({
         imageBase64,imageName:file.name,imageMimeType:file.type||'image/jpeg',
         category:document.getElementById('category').value,market:marketStyle,
+        avatarId,themeId,
         productName:document.getElementById('productName').value.trim(),
         features:document.getElementById('features').value.trim(),
         amazonLink:document.getElementById('amazonLink').value.trim(),
@@ -1331,7 +1395,11 @@ function resetForm(){
   document.querySelector('[data-lang="en"]').classList.add('on');
   document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('on'));
   document.querySelector('[data-style="indian"]').classList.add('on');
-  lang='en';marketStyle='indian';
+  document.querySelectorAll('.avatar-chip').forEach(c=>c.classList.remove('on'));
+  document.querySelector('[data-avatar="avatar_1"]').classList.add('on');
+  document.querySelectorAll('.theme-chip').forEach(c=>c.classList.remove('on'));
+  document.querySelector('[data-theme="theme_1"]').classList.add('on');
+  lang='en';marketStyle='indian';avatarId='avatar_1';themeId='theme_1';
   document.getElementById('imgsRow').innerHTML='';
   hideQueueBanner();updateSelCount();validate();
   window.scrollTo({top:0,behavior:'smooth'});
