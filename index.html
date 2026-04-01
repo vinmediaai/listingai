@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ListingAI — E-Commerce Image Generator</title>
+<title>ListingAI v8 — E-Commerce Image Generator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
 <style>
@@ -689,7 +689,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
       <div class="pp-header">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span class="phase-badge p2">Phase 2</span><span style="font-size:12px;color:var(--muted);">Review &amp; select — then generate</span></div>
         <div class="pp-title">AI generated <span>prompts</span></div>
-        <div class="pp-sub">Click ✓ to select/deselect. Tap directly inside the text to edit. Each prompt has a character limit.</div>
+        <div class="pp-sub">Prompts built from your Google Sheet config. Click ✓ to select/deselect. Edit any prompt directly. Changes are preserved when generating.</div>
       </div>
       <div class="pp-body">
 
@@ -704,7 +704,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
           <div class="pc-body">
             <textarea class="prompt-ta" id="ta-hero" maxlength="500" placeholder="Hero image prompt…" oninput="updateCounter('hero',500)"></textarea>
             <div class="char-counter" id="cc-hero">0 / 500</div>
-            <div class="prompt-hint">💡 Pure white background, product fills 85% of frame.</div>
+            <div class="prompt-hint">💡 Pure white background, 85% frame fill, 50mm lens, 1000px.</div>
           </div>
         </div>
 
@@ -719,7 +719,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
           <div class="pc-body">
             <textarea class="prompt-ta teal" id="ta-infographic" maxlength="500" placeholder="Infographic prompt…" oninput="updateCounter('infographic',500)"></textarea>
             <div class="char-counter" id="cc-infographic">0 / 500</div>
-            <div class="prompt-hint">💡 4 callout labels connected to product. Bold text.</div>
+            <div class="prompt-hint">💡 Product on right, features list on left. Pleasant background, no connector lines.</div>
           </div>
         </div>
 
@@ -734,7 +734,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
           <div class="pc-body">
             <textarea class="prompt-ta teal" id="ta-lifestyle" maxlength="600" placeholder="Lifestyle variant 1 prompt…" oninput="updateCounter('lifestyle',600)"></textarea>
             <div class="char-counter" id="cc-lifestyle">0 / 600</div>
-            <div class="prompt-hint">💡 Face &amp; location match your selected market or avatar.</div>
+            <div class="prompt-hint">💡 Face, location &amp; lifestyle context pulled from Google Sheet config.</div>
           </div>
         </div>
 
@@ -765,6 +765,21 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
             <textarea class="prompt-ta teal" id="ta-lifestyle3" maxlength="600" placeholder="Lifestyle variant 3 prompt…" oninput="updateCounter('lifestyle3',600)"></textarea>
             <div class="char-counter" id="cc-lifestyle3">0 / 600</div>
             <div class="prompt-hint">💡 Try close-up detail, packaging reveal, or gifting moment.</div>
+          </div>
+        </div>
+
+        <!-- 5b. Lifestyle 4 -->
+        <div class="prompt-card teal" id="card-lifestyle4">
+          <div class="pc-head">
+            <div class="pc-check" id="chk-lifestyle4" onclick="toggleCard(event,'lifestyle4')"></div>
+            <div class="pc-dot life"></div>
+            <div class="pc-label"><div class="pc-label-main">5b · Lifestyle Variant 4</div><div class="pc-label-sub">Fourth scene — gifting, packaging or detail</div></div>
+            <span class="pc-badge optional">Optional</span>
+          </div>
+          <div class="pc-body" style="display:none">
+            <textarea class="prompt-ta teal" id="ta-lifestyle4" maxlength="600" placeholder="Lifestyle variant 4 prompt…" oninput="updateCounter('lifestyle4',600)"></textarea>
+            <div class="char-counter" id="cc-lifestyle4">0 / 600</div>
+            <div class="prompt-hint">💡 Gifting moment, packaging reveal, or close-up detail.</div>
           </div>
         </div>
 
@@ -865,7 +880,7 @@ const SHEET_API_KEY     = 'YOUR_GOOGLE_API_KEY';
 const MAX_USES          = 5;
 const USE_PERIOD_DAYS   = 10;
 
-const CHAR_LIMITS = { hero:500, infographic:500, lifestyle:600, lifestyle2:600, lifestyle3:600, dimensions:400, generic:600 };
+const CHAR_LIMITS = { hero:500, infographic:500, lifestyle:600, lifestyle2:600, lifestyle3:600, lifestyle4:600, dimensions:400, generic:600 };
 
 // ══════════════════════════════════════════════════════
 //  INIT STATUS BANNER
@@ -1116,23 +1131,10 @@ function showQB(pos,sec){ document.getElementById('queueBanner').classList.add('
 function hideQB(){ document.getElementById('queueBanner').classList.remove('on'); }
 
 // ══════════════════════════════════════════════════════
-//  STYLE CONTEXT (fallback)
+//  STYLE CONTEXT — resolved from Google Sheet in workflow
+//  Frontend just passes market/avatarId/themeId/category
+//  No hardcoded fallback map — sheet is single source of truth
 // ══════════════════════════════════════════════════════
-const STYLE_CONTEXT={
-  indian:{faces:'South Asian Indian faces',location:'Indian home interior',lifestyle:'Indian family or young Indian professional'},
-  american:{faces:'American diverse faces',location:'modern American home',lifestyle:'American family in a spacious modern home'},
-  chinese:{faces:'East Asian Chinese faces',location:'modern Chinese apartment',lifestyle:'Chinese family or young professional'},
-  japanese:{faces:'Japanese faces',location:'minimalist Japanese interior',lifestyle:'Japanese person in a calm minimal setting'},
-  australian:{faces:'Australian faces',location:'Australian coastal outdoor',lifestyle:'Australian family outdoors in bright sunlight'},
-  european:{faces:'European faces',location:'modern European apartment',lifestyle:'European person in a stylish home'},
-  arabic:{faces:'Middle Eastern Arabic faces',location:'luxury Arabic interior',lifestyle:'Arabic family in an elegant home'},
-  nepali:{faces:'Nepali South Asian faces',location:'Himalayan mountain backdrop',lifestyle:'Nepali family in a mountain village'},
-  brazilian:{faces:'Brazilian Latin faces',location:'vibrant Brazilian home',lifestyle:'Brazilian family in a lively tropical setting'},
-  african:{faces:'African faces',location:'vibrant African home',lifestyle:'African family in a colorful home'},
-  korean:{faces:'Korean faces',location:'clean Korean apartment',lifestyle:'Korean person in a minimalist K-style interior'},
-  global:{faces:'diverse multicultural faces',location:'modern universal setting',lifestyle:'diverse group in a modern inclusive setting'},
-};
-function getStyleSuffix(){ const s=STYLE_CONTEXT[marketStyle]||STYLE_CONTEXT.global; return ` People: ${s.faces}. Setting: ${s.location}. ${s.lifestyle}.`; }
 
 // ══════════════════════════════════════════════════════
 //  FILE UPLOAD
@@ -1271,7 +1273,6 @@ async function runAnalyse(){
   const pp=runSteps('astepsList','apbarFill',ASTEPS);
   try{
     const imageBase64=await toBase64(file);
-    const styleCtx=STYLE_CONTEXT[marketStyle]||STYLE_CONTEXT.global;
     const res=await fetch(ANALYSE_WEBHOOK,{
       method:'POST',
       headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
@@ -1285,9 +1286,7 @@ async function runAnalyse(){
         features:document.getElementById('features').value.trim(),
         amazonLink:document.getElementById('amazonLink').value.trim(),
         language:lang,userEmail:currentUser.email,email:currentUser.email,
-        driveFolderId:DRIVE_FOLDER,
-        marketStyleContext:JSON.stringify(styleCtx),
-        lifestyleStyleSuffix:getStyleSuffix()
+        driveFolderId:DRIVE_FOLDER
       })
     });
     if(!res.ok) throw new Error('Analyse error — HTTP '+res.status);
@@ -1304,6 +1303,7 @@ async function runAnalyse(){
     setTA('lifestyle',   a.lifestylePrompt||nest.lifestylePrompt||a.lifestylePrompt1||'');
     setTA('lifestyle2',  a.lifestylePrompt2||nest.lifestylePrompt2||'');
     setTA('lifestyle3',  a.lifestylePrompt3||nest.lifestylePrompt3||'');
+    setTA('lifestyle4',  a.lifestylePrompt4||nest.lifestylePrompt4||'');
     setTA('dimensions',  a.dimensionPrompt||nest.dimensionPrompt||'');
     const callouts=a.infographicCallouts||nest.infographicCallouts||[];
     if(callouts.length) analysisData.infographicCallouts=callouts;
@@ -1342,6 +1342,7 @@ async function generate(){
     {id:'lifestyle',ico:'🏠',name:'Rendering Lifestyle Variant 1',ms:25000},
     {id:'lifestyle2',ico:'🏡',name:'Rendering Lifestyle Variant 2',ms:25000},
     {id:'lifestyle3',ico:'🌿',name:'Rendering Lifestyle Variant 3',ms:25000},
+    {id:'lifestyle4',ico:'🎁',name:'Rendering Lifestyle Variant 4',ms:25000},
     {id:'dimensions',ico:'📐',name:'Creating Dimensions Diagram',ms:18000},
     {id:'generic',ico:'✨',name:'Generating Custom Image',ms:18000},
     {id:'saving',ico:'💾',name:'Saving to Google Drive',ms:3000},
@@ -1376,11 +1377,11 @@ async function generate(){
         lifestylePrompt:getTA('lifestyle'),
         lifestylePrompt2:getTA('lifestyle2'),
         lifestylePrompt3:getTA('lifestyle3'),
+        lifestylePrompt4:getTA('lifestyle4'),
         dimensionPrompt:getTA('dimensions'),
         genericPrompt:getTA('generic'),
         outputFolderId:analysisData?.outputFolderId||'',
         infographicCallouts:callouts,
-        marketStyleContext:JSON.stringify(STYLE_CONTEXT[marketStyle]||STYLE_CONTEXT.global)
       })
     });
     clearTimeout(tid);
@@ -1402,7 +1403,7 @@ async function generate(){
     }
   }
 }
-const EMOJIS={hero:'🖼️',infographic:'📊',lifestyle:'🏠',lifestyle2:'🏡',lifestyle3:'🌿',dimensions:'📐',generic:'✨'};
+const EMOJIS={hero:'🖼️',infographic:'📊',lifestyle:'🏠',lifestyle2:'🏡',lifestyle3:'🌿',lifestyle4:'🎁',dimensions:'📐',generic:'✨'};
 function showDone(data,email){
   document.getElementById('progPanel').classList.remove('on');
   document.getElementById('emailConfirmAddr').textContent=email;
