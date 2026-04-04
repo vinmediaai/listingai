@@ -5,98 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ListingAI v8 — E-Commerce Image Generator</title>
 <script type="module">
+  import { removeBackground, subscribeToProgress } from 'https://esm.sh/rembg-webgpu@0.2.1';
+
   (async () => {
     try {
-      // Switched from esm.sh to jsdelivr to prevent tree-shaking from stripping model architectures
-      const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3');
-      env.allowLocalModels = false;
-      let pipe = null;
-      let loading = false;
-
       window._rembgReady = false;
 
+      // Connect to your existing UI progress handler
+      subscribeToProgress((s) => {
+        if (window._rembgOnProgress) {
+          window._rembgOnProgress({ 
+            phase: s.phase, // 'downloading', 'building', 'processing'
+            progress: s.progress 
+          });
+        }
+      });
+
+      // Define the global function for your application logic
       window._rembgRemoveBackground = async function(imageUrl) {
-        if (!pipe) {
-          if (loading) {
-            // wait for existing load
-            await new Promise(r => { const t = setInterval(() => { if (pipe) { clearInterval(t); r(); } }, 200); });
-          } else {
-            loading = true;
-            if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'downloading', progress: 0 });
-            pipe = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
-              // Smart fallback: use WebGPU if available, otherwise use WASM
-              device: navigator.gpu ? 'webgpu' : 'wasm',
-              dtype: 'fp32',
-              progress_callback: (p) => {
-                if (window._rembgOnProgress) {
-                  const pct = p.progress != null ? Math.round(p.progress * 100) : 0;
-                  window._rembgOnProgress({ phase: p.status === 'ready' ? 'ready' : 'downloading', progress: pct });
-                }
-              }
-            });
-            loading = false;
-            window._rembgReady = true;
-            if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'ready', progress: 100 });
-          }
+        try {
+          const result = await removeBackground(imageUrl);
+          // Return the blobUrl for immediate display in the UI
+          return result.blobUrl; 
+        } catch (err) {
+          console.error("Background Removal Error:", err);
+          throw err;
         }
-
-        // Run segmentation
-        if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'processing', progress: 50 });
-        const output = await pipe(imageUrl, { subtask: 'semantic' });
-
-        // Get mask from output
-        const mask = output[0]?.mask;
-        if (!mask) throw new Error('No mask returned from model');
-
-        // Apply mask to original image
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imageUrl; });
-
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-        // Apply mask — mask.data values: 255 = foreground, 0 = background
-        const maskCanvas = document.createElement('canvas');
-        maskCanvas.width = mask.width;
-        maskCanvas.height = mask.height;
-        const maskCtx = maskCanvas.getContext('2d');
-        const maskImg = maskCtx.createImageData(mask.width, mask.height);
-        for (let i = 0; i < mask.data.length; i++) {
-          maskImg.data[i * 4 + 3] = mask.data[i];
-        }
-        maskCtx.putImageData(maskImg, 0, 0);
-
-        // Scale mask to image size if needed
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-        const raw = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-        // Draw scaled mask
-        const mCanvas = document.createElement('canvas');
-        mCanvas.width = canvas.width; mCanvas.height = canvas.height;
-        const mCtx = mCanvas.getContext('2d');
-        mCtx.drawImage(maskCanvas, 0, 0, canvas.width, canvas.height);
-        const mData = mCtx.getImageData(0, 0, canvas.width, canvas.height);
-
-        // Apply alpha
-        for (let i = 0; i < raw.data.length / 4; i++) {
-          raw.data[i * 4 + 3] = mData.data[i * 4 + 3];
-        }
-        ctx.putImageData(raw, 0, 0);
-
-        if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'ready', progress: 100 });
-        return new Promise(res => canvas.toBlob(b => res(URL.createObjectURL(b)), 'image/png'));
       };
 
-      console.log('[rembg] transformers.js loaded via jsdelivr ✓');
+      window._rembgReady = true;
+      console.log('[AI] rembg-webgpu engine initialized');
+
     } catch (e) {
-      console.warn('[rembg] Failed to load:', e.message);
-      window._rembgReady = false;
+      console.error("AI Initialization Failed:", e);
+      if(typeof toast === 'function') toast("AI Hardware acceleration failed. Use Chrome/Edge.", "err");
     }
   })();
 </script>
