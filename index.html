@@ -11,34 +11,36 @@
     try {
       window._rembgReady = false;
 
-      // Connect to your existing UI progress handler
+      // Connect to your UI's progress handler
       subscribeToProgress((s) => {
         if (window._rembgOnProgress) {
+          // Normalizes progress for your existing UI status bar
           window._rembgOnProgress({ 
-            phase: s.phase, // 'downloading', 'building', 'processing'
+            phase: s.phase, // 'downloading', 'building', or 'processing'
             progress: s.progress 
           });
         }
       });
 
-      // Define the global function for your application logic
+      // Global function called by your 'Analyse' buttons
       window._rembgRemoveBackground = async function(imageUrl) {
         try {
+          console.log("[AI] Starting background removal via WebGPU...");
           const result = await removeBackground(imageUrl);
-          // Return the blobUrl for immediate display in the UI
+          
+          // Returns the blobUrl to be displayed in your image preview
           return result.blobUrl; 
         } catch (err) {
-          console.error("Background Removal Error:", err);
+          console.error("AI Processing Error:", err);
           throw err;
         }
       };
 
       window._rembgReady = true;
-      console.log('[AI] rembg-webgpu engine initialized');
+      console.log("[AI] rembg-webgpu Engine Ready");
 
     } catch (e) {
-      console.error("AI Initialization Failed:", e);
-      if(typeof toast === 'function') toast("AI Hardware acceleration failed. Use Chrome/Edge.", "err");
+      console.error("Initialization Failed:", e);
     }
   })();
 </script>
