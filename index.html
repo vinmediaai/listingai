@@ -4,14 +4,102 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ListingAI v8 — E-Commerce Image Generator</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<!-- rembg-webgpu: browser-side AI background removal, no server needed -->
+<!-- Browser-side background removal via transformers.js (esm.sh resolves all specifiers) -->
 <script type="module">
-  import { removeBackground, subscribeToProgress } from 'https://cdn.jsdelivr.net/npm/rembg-webgpu@latest/dist/index.js';
-  window._rembgRemoveBackground = removeBackground;
-  window._rembgSubscribeToProgress = subscribeToProgress;
-  window._rembgReady = true;
+  (async () => {
+    try {
+      const { pipeline, env } = await import('https://esm.sh/@huggingface/transformers@3.3.3');
+      env.allowLocalModels = false;
+      let pipe = null;
+      let loading = false;
+
+      window._rembgReady = false;
+
+      window._rembgRemoveBackground = async function(imageUrl) {
+        if (!pipe) {
+          if (loading) {
+            // wait for existing load
+            await new Promise(r => { const t = setInterval(() => { if (pipe) { clearInterval(t); r(); } }, 200); });
+          } else {
+            loading = true;
+            if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'downloading', progress: 0 });
+            pipe = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
+              device: 'webgpu',
+              dtype: 'fp32',
+              progress_callback: (p) => {
+                if (window._rembgOnProgress) {
+                  const pct = p.progress != null ? Math.round(p.progress * 100) : 0;
+                  window._rembgOnProgress({ phase: p.status === 'ready' ? 'ready' : 'downloading', progress: pct });
+                }
+              }
+            });
+            loading = false;
+            window._rembgReady = true;
+            if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'ready', progress: 100 });
+          }
+        }
+
+        // Run segmentation
+        if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'processing', progress: 50 });
+        const output = await pipe(imageUrl, { subtask: 'semantic' });
+
+        // Get mask from output
+        const mask = output[0]?.mask;
+        if (!mask) throw new Error('No mask returned from model');
+
+        // Apply mask to original image
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imageUrl; });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        // Apply mask — mask.data values: 255 = foreground, 0 = background
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = mask.width;
+        maskCanvas.height = mask.height;
+        const maskCtx = maskCanvas.getContext('2d');
+        const maskImg = maskCtx.createImageData(mask.width, mask.height);
+        for (let i = 0; i < mask.data.length; i++) {
+          maskImg.data[i * 4 + 3] = mask.data[i];
+        }
+        maskCtx.putImageData(maskImg, 0, 0);
+
+        // Scale mask to image size if needed
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        const raw = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        // Draw scaled mask
+        const mCanvas = document.createElement('canvas');
+        mCanvas.width = canvas.width; mCanvas.height = canvas.height;
+        const mCtx = mCanvas.getContext('2d');
+        mCtx.drawImage(maskCanvas, 0, 0, canvas.width, canvas.height);
+        const mData = mCtx.getImageData(0, 0, canvas.width, canvas.height);
+
+        // Apply alpha
+        for (let i = 0; i < raw.data.length / 4; i++) {
+          raw.data[i * 4 + 3] = mData.data[i * 4 + 3];
+        }
+        ctx.putImageData(raw, 0, 0);
+
+        if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'ready', progress: 100 });
+        return new Promise(res => canvas.toBlob(b => res(URL.createObjectURL(b)), 'image/png'));
+      };
+
+      console.log('[rembg] transformers.js loaded via esm.sh ✓');
+    } catch (e) {
+      console.warn('[rembg] Failed to load:', e.message);
+      window._rembgReady = false;
+    }
+  })();
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -410,53 +498,50 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 }
 
 /* ══ REMBG SECTION ══ */
-.rembg-section{margin-top:16px;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:var(--bg2)}
-.rembg-header{padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;transition:background .2s}
-.rembg-header:hover{background:rgba(255,255,255,.025)}
-.rembg-toggle-ico{font-size:16px;flex-shrink:0}
-.rembg-toggle-label{flex:1}
-.rembg-toggle-title{font-size:13px;font-weight:700;color:var(--text)}
-.rembg-toggle-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.rembg-chevron{font-size:12px;color:var(--dim);transition:transform .2s}
+.rembg-wrap{margin-top:14px}
+.rembg-section{border:1.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg2)}
+.rembg-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none;transition:background .18s}
+.rembg-head:hover{background:rgba(255,255,255,.018)}
+.rembg-head-ico{font-size:15px;flex-shrink:0}
+.rembg-head-text{flex:1}
+.rembg-head-title{font-size:13px;font-weight:700;color:var(--text)}
+.rembg-head-sub{font-size:11px;color:var(--muted);margin-top:1px;line-height:1.3}
+.rembg-chevron{font-size:11px;color:var(--dim);transition:transform .2s}
 .rembg-section.open .rembg-chevron{transform:rotate(180deg)}
-.rembg-body{display:none;padding:14px 16px;border-top:1px solid var(--border)}
+.rembg-body{display:none;padding:13px 14px;border-top:1px solid var(--border)}
 .rembg-section.open .rembg-body{display:block}
-/* Mode pick row */
-.rembg-mode-row{display:flex;gap:10px;margin-bottom:14px}
-.rembg-mode-card{flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;user-select:none;transition:all .2s;background:var(--bg3);text-align:center}
-.rembg-mode-card:hover{border-color:var(--border2)}
-.rembg-mode-card.on{border-color:var(--accent);background:rgba(99,102,241,.08);box-shadow:0 0 0 2px rgba(99,102,241,.1)}
-.rembg-mode-card.on.teal{border-color:var(--teal);background:rgba(0,212,170,.07);box-shadow:0 0 0 2px rgba(0,212,170,.1)}
-.rembg-mode-ico{font-size:20px;display:block;margin-bottom:5px}
+/* mode cards */
+.rembg-modes{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
+.rembg-mode{padding:11px 12px;border:1.5px solid var(--border);border-radius:9px;cursor:pointer;user-select:none;transition:all .18s;background:var(--bg3);text-align:center}
+.rembg-mode:hover{border-color:var(--border2)}
+.rembg-mode.on{border-color:var(--teal);background:rgba(0,212,170,.07);box-shadow:0 0 0 2px rgba(0,212,170,.09)}
+.rembg-mode-ico{font-size:18px;display:block;margin-bottom:4px}
 .rembg-mode-title{font-size:12px;font-weight:700;color:var(--text)}
-.rembg-mode-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4}
-/* Action strip */
-.rembg-action-strip{display:flex;gap:10px;align-items:center;margin-top:6px}
-.btn-rembg-go{display:flex;align-items:center;gap:7px;padding:11px 20px;background:linear-gradient(135deg,var(--teal),#00b894);color:white;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(0,212,170,.3)}
-.btn-rembg-go:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,170,.4)}
-.btn-rembg-go:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.btn-rembg-analyse{display:flex;align-items:center;gap:7px;padding:11px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(99,102,241,.3)}
-.btn-rembg-analyse:hover:not(:disabled){transform:translateY(-1px)}
-.btn-rembg-analyse:disabled{opacity:.4;cursor:not-allowed;transform:none}
-/* Progress */
-.rembg-progress{display:none;margin-top:12px;padding:12px 14px;background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.2);border-radius:10px}
-.rembg-progress.on{display:block}
-.rembg-prog-label{font-size:12px;font-weight:600;color:var(--teal);margin-bottom:8px;display:flex;align-items:center;gap:8px}
-.rembg-prog-spin{width:13px;height:13px;border:2px solid rgba(0,212,170,.3);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-.rembg-prog-bar-wrap{background:var(--bg3);border-radius:100px;height:4px;overflow:hidden}
-.rembg-prog-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),#00b894);border-radius:100px;transition:width .3s ease}
-.rembg-prog-phase{font-size:10px;color:var(--dim);margin-top:5px}
-/* Result */
-.rembg-result{display:none;margin-top:14px;border:1.5px solid rgba(0,212,170,.35);border-radius:12px;overflow:hidden}
+.rembg-mode-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3}
+/* action */
+.rembg-action-row{margin-top:4px;display:none}
+.btn-rembg{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;background:rgba(0,212,170,.09);border:1.5px solid rgba(0,212,170,.3);border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;color:var(--teal);cursor:pointer;transition:all .2s}
+.btn-rembg:hover:not(:disabled){background:rgba(0,212,170,.16);border-color:var(--teal)}
+.btn-rembg:disabled{opacity:.35;cursor:not-allowed}
+/* progress */
+.rembg-prog{display:none;margin-top:11px;padding:11px 13px;background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.16);border-radius:8px}
+.rembg-prog.on{display:block}
+.rembg-prog-top{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.rembg-prog-spin{width:12px;height:12px;border:2px solid rgba(0,212,170,.2);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.rembg-prog-lbl{font-size:12px;font-weight:600;color:var(--teal)}
+.rembg-prog-bar-wrap{background:var(--bg3);border-radius:100px;height:3px;overflow:hidden;margin-bottom:4px}
+.rembg-prog-bar{height:100%;width:0%;background:var(--teal);border-radius:100px;transition:width .3s ease}
+.rembg-prog-phase{font-size:10px;color:var(--dim)}
+/* result */
+.rembg-result{display:none;margin-top:12px;border:1.5px solid rgba(0,212,170,.28);border-radius:10px;overflow:hidden}
 .rembg-result.on{display:block}
-.rembg-result-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(0,212,170,.07);border-bottom:1px solid rgba(0,212,170,.18)}
-.rembg-result-label{flex:1;font-size:12px;font-weight:700;color:var(--teal);display:flex;align-items:center;gap:6px}
-.rembg-result-img{width:100%;max-height:280px;object-fit:contain;display:block;background:repeating-conic-gradient(#1a1a26 0% 25%,#12121a 0% 50%) 0 0/18px 18px}
-.rembg-result-actions{display:flex;gap:10px;padding:12px 14px;flex-wrap:wrap}
-.btn-rembg-dl{display:flex;align-items:center;gap:6px;padding:9px 16px;background:none;border:1.5px solid rgba(0,212,170,.35);border-radius:9px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;color:var(--teal);cursor:pointer;transition:all .2s}
-.btn-rembg-dl:hover{background:rgba(0,212,170,.1);border-color:var(--teal)}
-.btn-rembg-use{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;color:white;cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(99,102,241,.25)}
-.btn-rembg-use:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.35)}
+.rembg-result-bar{display:flex;align-items:center;padding:8px 13px;background:rgba(0,212,170,.06);border-bottom:1px solid rgba(0,212,170,.14);font-size:12px;font-weight:700;color:var(--teal);gap:7px}
+.rembg-result-img{width:100%;max-height:250px;object-fit:contain;display:block;background:repeating-conic-gradient(#1a1a26 0% 25%,#12121a 0% 50%) 0 0/18px 18px}
+.rembg-result-actions{display:flex;gap:9px;padding:10px 13px;flex-wrap:wrap}
+.btn-rembg-dl{display:flex;align-items:center;gap:5px;padding:7px 13px;background:none;border:1.5px solid rgba(0,212,170,.28);border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;color:var(--teal);cursor:pointer;transition:all .18s}
+.btn-rembg-dl:hover{background:rgba(0,212,170,.08);border-color:var(--teal)}
+.btn-rembg-use{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 13px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;color:white;cursor:pointer;transition:all .18s;box-shadow:0 3px 12px rgba(99,102,241,.25)}
+.btn-rembg-use:hover{transform:translateY(-1px)}
 </style>
 </head>
 <body>
@@ -593,50 +678,46 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
         </div>
       </div>
 
-      <!-- ══ REMOVE BACKGROUND SECTION (always visible) ══ -->
-      <div class="rembg-section" id="rembgSection">
-        <div class="rembg-header" onclick="toggleRembgSection()">
-          <span class="rembg-toggle-ico">✂️</span>
-          <div class="rembg-toggle-label">
-            <div class="rembg-toggle-title">Background Removal</div>
-            <div class="rembg-toggle-sub">AI runs in your browser — no upload needed until you choose to proceed</div>
-          </div>
-          <span class="rembg-chevron">▼</span>
-        </div>
-        <div class="rembg-body">
-          <!-- Mode selector -->
-          <div class="rembg-mode-row">
-            <div class="rembg-mode-card teal on" id="modeDirect" onclick="setRembgMode('direct')">
-              <span class="rembg-mode-ico">🖼️</span>
-              <div class="rembg-mode-title">Use Original Image</div>
-              <div class="rembg-mode-desc">Send as-is for listing generation</div>
+      <!-- BACKGROUND REMOVAL — always visible, open by default -->
+      <div class="rembg-wrap">
+        <div class="rembg-section open" id="rembgSection">
+          <div class="rembg-head" onclick="toggleRembg()">
+            <span class="rembg-head-ico">✂️</span>
+            <div class="rembg-head-text">
+              <div class="rembg-head-title">Background Removal</div>
+              <div class="rembg-head-sub">AI runs in your browser — no server, no upload needed</div>
             </div>
-            <div class="rembg-mode-card" id="modeRembg" onclick="setRembgMode('rembg')">
-              <span class="rembg-mode-ico">✂️</span>
-              <div class="rembg-mode-title">Remove Background First</div>
-              <div class="rembg-mode-desc">AI strips background in browser, then proceed</div>
+            <span class="rembg-chevron">▼</span>
+          </div>
+          <div class="rembg-body">
+            <div class="rembg-modes">
+              <div class="rembg-mode on" id="rmodeUse" onclick="setRembgMode('use')">
+                <span class="rembg-mode-ico">🖼️</span>
+                <div class="rembg-mode-title">Use Original</div>
+                <div class="rembg-mode-desc">Send as-is to AI</div>
+              </div>
+              <div class="rembg-mode" id="rmodeStrip" onclick="setRembgMode('strip')">
+                <span class="rembg-mode-ico">✂️</span>
+                <div class="rembg-mode-title">Remove Background</div>
+                <div class="rembg-mode-desc">Strip bg first, then proceed</div>
+              </div>
             </div>
-          </div>
-          <!-- Action strip (shown in rembg mode) -->
-          <div class="rembg-action-strip" id="rembgActionStrip" style="display:none">
-            <button class="btn-rembg-go" id="btnRembgGo" onclick="runRembg()" disabled>✂️ Remove Background</button>
-            <span style="font-size:11px;color:var(--dim)">Image processes in your browser — private &amp; instant</span>
-          </div>
-          <!-- Progress -->
-          <div class="rembg-progress" id="rembgProgress">
-            <div class="rembg-prog-label"><div class="rembg-prog-spin"></div><span id="rembgProgLabel">Processing…</span></div>
-            <div class="rembg-prog-bar-wrap"><div class="rembg-prog-bar" id="rembgProgBar"></div></div>
-            <div class="rembg-prog-phase" id="rembgProgPhase">Initialising AI model…</div>
-          </div>
-          <!-- Result -->
-          <div class="rembg-result" id="rembgResult">
-            <div class="rembg-result-bar">
-              <span class="rembg-result-label">✅ Background removed</span>
+            <div class="rembg-action-row" id="rembgActionRow">
+              <button class="btn-rembg" id="btnRembg" onclick="runRembg()" disabled>✂️ Remove Background</button>
+              <span style="font-size:10px;color:var(--dim);margin-left:10px">~40MB model, cached after first use</span>
             </div>
-            <img class="rembg-result-img" id="rembgResultImg" src="" alt="Background removed preview">
-            <div class="rembg-result-actions">
-              <button class="btn-rembg-dl" onclick="downloadRembg()">↓ Download PNG</button>
-              <button class="btn-rembg-use" onclick="useRembgForListing()">Use this image → Create listing images <span class="arr">→</span></button>
+            <div class="rembg-prog" id="rembgProg">
+              <div class="rembg-prog-top"><div class="rembg-prog-spin"></div><span class="rembg-prog-lbl" id="rembgProgLbl">Processing…</span></div>
+              <div class="rembg-prog-bar-wrap"><div class="rembg-prog-bar" id="rembgProgBar"></div></div>
+              <div class="rembg-prog-phase" id="rembgProgPhase"></div>
+            </div>
+            <div class="rembg-result" id="rembgResult">
+              <div class="rembg-result-bar">✅ Background removed</div>
+              <img class="rembg-result-img" id="rembgImg" src="" alt="">
+              <div class="rembg-result-actions">
+                <button class="btn-rembg-dl" onclick="downloadRembg()">↓ Download PNG</button>
+                <button class="btn-rembg-use" onclick="useRembgImage()">Use this → Analyse &amp; Generate <span class="arr">→</span></button>
+              </div>
             </div>
           </div>
         </div>
@@ -950,7 +1031,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
         <div class="ec-address"><div class="ec-bullet"></div><span id="emailConfirmAddr"></span></div>
       </div>
       <div id="imgsRow" class="imgs-row"></div>
-      <!-- Drive folder link hidden — download via individual buttons only -->
+      <a href="#" class="download-all" id="driveFolderBtn" target="_blank">📁 Open Google Drive Folder — View &amp; Download All</a>
       <button class="btn-reset" onclick="askFeedback()">← Generate for another product</button>
     </div>
 
@@ -1011,11 +1092,7 @@ let marketStyle   = 'indian';
 let avatarId      = '';
 let themeId       = '';
 let lang          = 'en';
-let file          = null;
-let rembgMode     = 'direct'; // 'rembg' | 'direct'
-let rembgResultB64= null;    // base64 of bg-removed image
-let rembgFileId   = null;    // Drive fileId after saving
-let rembgObjectURL= null;    // blob URL for download
+let file=null, rembgBlobURL=null, rembgMode='use';
 let analysisData  = null, runFolderLink = null;
 let fbRating      = 0;
 
@@ -1266,12 +1343,15 @@ function setFile(f){
     uploadZone.style.display='none';
     document.getElementById('prevWrap').classList.add('on');
     document.getElementById('uploadRing').textContent='✅';
-    updateRembgBtn();
+    document.getElementById('btnRembg').disabled=false;
+    document.getElementById('rembgResult').classList.remove('on');
+    document.getElementById('rembgProg').classList.remove('on');
+    if(rembgBlobURL){URL.revokeObjectURL(rembgBlobURL);rembgBlobURL=null;}
     validate();
   };
   r.readAsDataURL(f);
 }
-function clearImage(){ file=null;fileInput.value='';document.getElementById('prevWrap').classList.remove('on');uploadZone.style.display='block';document.getElementById('uploadRing').textContent='📷';rembgResultB64=null;rembgFileId=null;if(rembgObjectURL){URL.revokeObjectURL(rembgObjectURL);rembgObjectURL=null;}document.getElementById('rembgResult').classList.remove('on');document.getElementById('rembgProgress').classList.remove('on');updateRembgBtn();validate(); }
+function clearImage(){file=null;fileInput.value='';document.getElementById('prevWrap').classList.remove('on');uploadZone.style.display='block';document.getElementById('uploadRing').textContent='📷';document.getElementById('btnRembg').disabled=true;document.getElementById('rembgResult').classList.remove('on');document.getElementById('rembgProg').classList.remove('on');if(rembgBlobURL){URL.revokeObjectURL(rembgBlobURL);rembgBlobURL=null;}validate();}
 
 // ══════════════════════════════════════════════════════
 //  MODE (market vs avatar)
@@ -1348,8 +1428,6 @@ function toggleCard(event, key){
     setTimeout(()=>{ const ta=document.getElementById('ta-'+key); if(ta) ta.focus(); }, 60);
   }
   updateSelCount();
-// Open rembg section by default so user sees it
-document.getElementById('rembgSection').classList.add('open');
 }
 function updateSelCount(){
   const n=selectedCards.size;
@@ -1525,9 +1603,10 @@ function showDone(data,email){
   const row=document.getElementById('imgsRow'); row.innerHTML='';
   (data.images||[]).forEach(img=>{
     const label=(img.label||'image').toLowerCase();
+    const fileId=img.fileId||'';
+    const dlUrl=fileId?'https://drive.google.com/uc?export=download&id='+fileId:(img.downloadUrl||'');
     const c=document.createElement('div'); c.className='img-thumb';
-    const _dlHref = img.fileId ? 'https://drive.google.com/uc?export=download&id='+img.fileId : (img.downloadUrl||'');
-    c.innerHTML='<div class="img-thumb-head"><span class="img-thumb-emoji">'+(EMOJIS[label]||'🖼️')+'</span><div><div class="img-thumb-label">'+(img.label||'Image')+'</div><div class="img-thumb-name">'+(img.name||'')+'</div></div></div><div class="img-thumb-status">✓ Saved to Drive</div><div class="img-thumb-actions">'+(_dlHref?'<a class="btn-dl dl" href="'+_dlHref+'" target="_blank">↓ Download</a>':'')+'</div>';
+    c.innerHTML='<div class="img-thumb-head"><span class="img-thumb-emoji">'+(EMOJIS[label]||'🖼️')+'</span><div><div class="img-thumb-label">'+(img.label||'Image')+'</div><div class="img-thumb-name">'+(img.name||'')+'</div></div></div><div class="img-thumb-status">✓ Saved to Drive</div><div class="img-thumb-actions">'+(dlUrl?'<a class="btn-dl dl" href="'+dlUrl+'" target="_blank">↓ Download</a>':'')+'</div>';
     row.appendChild(c);
   });
   document.getElementById('donePanel').classList.add('on');
@@ -1605,178 +1684,103 @@ async function runStepsAfter(lid,bid,steps,from){
 function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function toBase64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=()=>rej(new Error('Read failed')); r.readAsDataURL(f); }); }
 
-// ══════════════════════════════════════════════════════
-//  RESET
-// ══════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════
-//  REMOVE BACKGROUND — browser-side AI via rembg-webgpu
+//  REMBG — browser-side background removal
+//  Uses @huggingface/transformers via esm.sh (no bare specifier error)
 // ══════════════════════════════════════════════════════
-function toggleRembgSection(){
-  document.getElementById('rembgSection').classList.toggle('open');
-}
+function toggleRembg(){ document.getElementById('rembgSection').classList.toggle('open'); }
 
 function setRembgMode(mode){
-  rembgMode = mode;
-  document.getElementById('modeDirect').classList.toggle('on', mode==='direct');
-  document.getElementById('modeDirect').classList.toggle('teal', mode==='direct');
-  document.getElementById('modeRembg').classList.toggle('on', mode==='rembg');
-  document.getElementById('modeRembg').classList.toggle('teal', false);
-  document.getElementById('rembgActionStrip').style.display = mode==='rembg' ? 'flex' : 'none';
-  // reset result if switching mode
-  if(mode==='direct'){
-    document.getElementById('rembgResult').classList.remove('on');
-    document.getElementById('rembgProgress').classList.remove('on');
-    rembgResultB64=null; rembgFileId=null;
-    if(rembgObjectURL){ URL.revokeObjectURL(rembgObjectURL); rembgObjectURL=null; }
-  }
-  updateRembgBtn();
-}
-
-function updateRembgBtn(){
-  const btn = document.getElementById('btnRembgGo');
-  if(!btn) return;
-  btn.disabled = !file || rembgMode !== 'rembg';
+  rembgMode=mode;
+  document.getElementById('rmodeUse').classList.toggle('on',mode==='use');
+  document.getElementById('rmodeStrip').classList.toggle('on',mode==='strip');
+  document.getElementById('rembgActionRow').style.display=mode==='strip'?'flex':'none';
+  if(mode==='use'){ document.getElementById('rembgResult').classList.remove('on'); document.getElementById('rembgProg').classList.remove('on'); }
 }
 
 async function runRembg(){
   if(!file) return toast('Upload an image first.','err');
-  if(!window._rembgReady && !window._rembgRemoveBackground){
-    toast('Background removal is loading — try again in a moment.','warn'); return;
+  if(!window._rembgRemoveBackground){
+    toast('AI model is still loading — try again in a moment.','warn'); return;
   }
-  const removeBackground = window._rembgRemoveBackground;
-  const subscribeToProgress = window._rembgSubscribeToProgress;
-  if(!removeBackground){ toast('Background removal not available in this browser.','err'); return; }
 
-  document.getElementById('rembgProgress').classList.add('on');
+  document.getElementById('btnRembg').disabled=true;
+  document.getElementById('rembgProg').classList.add('on');
   document.getElementById('rembgResult').classList.remove('on');
-  document.getElementById('btnRembgGo').disabled = true;
-  document.getElementById('rembgProgBar').style.width = '0%';
-  document.getElementById('rembgProgLabel').textContent = 'Starting…';
-  document.getElementById('rembgProgPhase').textContent = 'Initialising AI model (downloads once, cached after)…';
+  document.getElementById('rembgProgBar').style.width='0%';
+  document.getElementById('rembgProgLbl').textContent='Loading AI model…';
+  document.getElementById('rembgProgPhase').textContent='First load ~40MB, cached after that';
 
-  // Subscribe to progress
-  let unsubscribe = ()=>{};
-  if(subscribeToProgress){
-    unsubscribe = subscribeToProgress(({phase, progress})=>{
-      const bar = document.getElementById('rembgProgBar');
-      const lbl = document.getElementById('rembgProgLabel');
-      const ph  = document.getElementById('rembgProgPhase');
-      if(bar) bar.style.width = (progress||0)+'%';
-      if(lbl) lbl.textContent = phase==='ready' ? 'Complete!' : phase==='downloading' ? 'Downloading AI model…' : phase==='building' ? 'Preparing model…' : 'Processing…';
-      if(ph) ph.textContent = `${phase} — ${Math.round(progress||0)}%`;
-    });
-  }
+  // Hook progress callback
+  window._rembgOnProgress = ({phase, progress}) => {
+    const pct = Math.min(100, Math.round(progress||0));
+    document.getElementById('rembgProgBar').style.width = pct+'%';
+    const labels = { downloading:'Downloading model…', building:'Preparing model…', processing:'Processing image…', ready:'Done!', idle:'' };
+    document.getElementById('rembgProgLbl').textContent = labels[phase] || 'Working…';
+    document.getElementById('rembgProgPhase').textContent = phase + ' — ' + pct + '%';
+  };
 
   try{
-    // Convert file to object URL for rembg-webgpu
     const objectURL = URL.createObjectURL(file);
-    const resultURL = await removeBackground(objectURL);
+    const resultURL = await window._rembgRemoveBackground(objectURL);
     URL.revokeObjectURL(objectURL);
-    unsubscribe();
 
-    // resultURL is a blob URL — convert to base64 for storage and n8n
-    const response = await fetch(resultURL);
-    const blob = await response.blob();
-    const base64 = await new Promise((res,rej)=>{
-      const reader = new FileReader();
-      reader.onload = ()=> res(reader.result.split(',')[1]);
-      reader.onerror = ()=> rej(new Error('Read failed'));
-      reader.readAsDataURL(blob);
-    });
+    if(rembgBlobURL) URL.revokeObjectURL(rembgBlobURL);
+    rembgBlobURL = resultURL;
 
-    rembgResultB64 = base64;
-    rembgObjectURL = resultURL;
-
-    // Show result preview
-    document.getElementById('rembgResultImg').src = resultURL;
-    document.getElementById('rembgProgress').classList.remove('on');
+    document.getElementById('rembgImg').src = resultURL;
+    document.getElementById('rembgProg').classList.remove('on');
     document.getElementById('rembgResult').classList.add('on');
-    document.getElementById('btnRembgGo').disabled = false;
-    toast('✅ Background removed successfully!','ok');
-
-    // Auto-save to Drive in background (non-blocking)
-    saveRembgToDrive(base64).catch(e=>console.log('Drive save skipped:',e));
+    document.getElementById('btnRembg').disabled = false;
+    window._rembgOnProgress = null;
+    toast('✅ Background removed!','ok');
 
   }catch(err){
-    unsubscribe();
-    document.getElementById('rembgProgress').classList.remove('on');
-    document.getElementById('btnRembgGo').disabled = false;
-    toast('❌ Background removal failed: '+err.message,'err');
+    document.getElementById('rembgProg').classList.remove('on');
+    document.getElementById('btnRembg').disabled = false;
+    window._rembgOnProgress = null;
+    toast('❌ Failed: '+err.message,'err');
+    console.error('[rembg]', err);
   }
-}
-
-async function saveRembgToDrive(base64){
-  if(!currentUser) return;
-  try{
-    const fileName = (file?.name?.replace(/\.[^.]+$/,'')||'product')+'-nobg-'+Date.now()+'.png';
-    const res = await fetch(REMBG_SAVE_WEBHOOK,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        imageBase64: base64,
-        imageName: fileName,
-        driveFolderId: DRIVE_FOLDER,
-        userEmail: currentUser.email,
-        email: currentUser.email
-      })
-    });
-    if(!res.ok) return;
-    const data = await res.json();
-    rembgFileId = data.fileId || '';
-  }catch(e){ /* Drive save is non-critical — user can still download locally */ }
 }
 
 function downloadRembg(){
-  if(rembgObjectURL){
-    // Download directly from blob URL — no Drive needed
-    const a = document.createElement('a');
-    a.href = rembgObjectURL;
-    a.download = (file?.name?.replace(/\.[^.]+$/,'')||'product')+'-nobg.png';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    return;
-  }
-  if(rembgFileId){
-    const a = document.createElement('a');
-    a.href = 'https://drive.google.com/uc?export=download&id='+rembgFileId;
-    a.download = 'product-nobg.png';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    return;
-  }
-  toast('Nothing to download yet.','warn');
+  if(!rembgBlobURL){ toast('Nothing to download yet.','warn'); return; }
+  const a=document.createElement('a');
+  a.href=rembgBlobURL;
+  a.download=(file?.name?.replace(/\.[^.]+$/,'')||'product')+'-nobg.png';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-async function useRembgForListing(){
-  if(!rembgResultB64){ toast('Run background removal first.','err'); return; }
-  // Convert base64 PNG to File object and replace current file
-  const byteString = atob(rembgResultB64);
-  const ab = new ArrayBuffer(byteString.length);
-  const ia = new Uint8Array(ab);
-  for(let i=0;i<byteString.length;i++) ia[i]=byteString.charCodeAt(i);
-  const blob = new Blob([ab],{type:'image/png'});
-  const newFile = new File([blob], (file?.name?.replace(/\.[^.]+$/,'')||'product')+'-nobg.png', {type:'image/png'});
-
-  // Replace file + update preview
-  file = newFile;
-  if(rembgObjectURL) document.getElementById('prevImg').src = rembgObjectURL;
-  document.getElementById('prevName').textContent = newFile.name;
-  document.getElementById('prevSize').textContent = '(bg removed)';
+async function useRembgImage(){
+  if(!rembgBlobURL){ toast('Remove background first.','err'); return; }
+  const r=await fetch(rembgBlobURL);
+  const blob=await r.blob();
+  const newName=(file?.name?.replace(/\.[^.]+$/,'')||'product')+'-nobg.png';
+  const newFile=new File([blob],newName,{type:'image/png'});
+  file=newFile;
+  document.getElementById('prevImg').src=rembgBlobURL;
+  document.getElementById('prevName').textContent=newName;
+  document.getElementById('prevSize').textContent='(bg removed)';
   document.getElementById('prevWrap').classList.add('on');
-  uploadZone.style.display = 'none';
-  document.getElementById('uploadRing').textContent = '✅';
-
-  // Collapse rembg section and switch to direct mode display
+  uploadZone.style.display='none';
+  document.getElementById('uploadRing').textContent='✅';
   document.getElementById('rembgSection').classList.remove('open');
-
   validate();
-  toast('✅ Using background-removed image. Fill in details and analyse!','ok');
-  // Scroll to section 2
-  const sec2 = document.querySelector('[data-sec="2"]');
-  if(sec2) sec2.scrollIntoView({behavior:'smooth',block:'start'});
+  toast('✅ Using bg-removed image. Fill in details below and click Analyse!','ok');
 }
 
+
+// ══════════════════════════════════════════════════════
+//  RESET
+// ══════════════════════════════════════════════════════
 function resetForm(){
-  clearImage(); analysisData=null; rembgResultB64=null; rembgFileId=null; if(rembgObjectURL){URL.revokeObjectURL(rembgObjectURL);rembgObjectURL=null;} document.getElementById('rembgResult').classList.remove('on'); document.getElementById('rembgProgress').classList.remove('on'); setRembgMode('direct'); runFolderLink=null; queueJobId=null; pendingAnalyse=false;
+  clearImage(); analysisData=null; runFolderLink=null; queueJobId=null; pendingAnalyse=false;
+  if(rembgBlobURL){URL.revokeObjectURL(rembgBlobURL);rembgBlobURL=null;}
+  document.getElementById('rembgResult').classList.remove('on');
+  document.getElementById('rembgProg').classList.remove('on');
+  setRembgMode('use');
   selectedCards.clear(); ['hero','infographic','lifestyle'].forEach(k=>selectedCards.add(k));
   ['donePanel','progPanel','analysePanel','promptPanel'].forEach(id=>document.getElementById(id).classList.remove('on'));
   document.getElementById('pbarFill').style.width='0%';
@@ -1798,17 +1802,13 @@ function resetForm(){
   document.querySelectorAll('.av-card').forEach(c=>c.classList.remove('on'));
   lang='en'; marketStyle='indian'; avatarId=''; themeId='';
   document.getElementById('imgsRow').innerHTML='';
-  hideQB(); updateSelCount();
-// Open rembg section by default so user sees it
-document.getElementById('rembgSection').classList.add('open'); validate();
+  hideQB(); updateSelCount(); validate();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function toast(msg,type='ok'){ const el=document.getElementById('toast'); el.innerHTML=msg; el.className='toast '+type+' show'; setTimeout(()=>el.classList.remove('show'),4500); }
 
 updateSelCount();
-// Open rembg section by default so user sees it
-document.getElementById('rembgSection').classList.add('open');
 </script>
 </body>
 </html>
