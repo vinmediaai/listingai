@@ -4,72 +4,45 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ListingAI v8 — E-Commerce Image Generator</title>
-<!-- Browser-side background removal via @huggingface/transformers (esm.sh resolves all specifiers) -->
 <script type="module">
-(async () => {
-  try {
-    const { pipeline } = await import('https://esm.sh/@huggingface/transformers@3.3.3');
-    let pipe = null, loading = false;
-    window._rembgReady = false;
+  import { removeBackground, subscribeToProgress } from 'https://esm.sh/rembg-webgpu@0.2.1';
 
-    window._rembgRemoveBackground = async function(imageUrl) {
-      if (!pipe) {
-        if (loading) {
-          await new Promise(r => { const t = setInterval(() => { if (pipe) { clearInterval(t); r(); } }, 300); });
-        } else {
-          loading = true;
-          if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'downloading', progress: 10 });
-          pipe = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
-            device: 'webgpu', dtype: 'fp32',
-            progress_callback: (p) => {
-              if (window._rembgOnProgress) {
-                const pct = p.progress != null ? Math.round(p.progress * 100) : 0;
-                window._rembgOnProgress({ phase: p.status === 'ready' ? 'building' : 'downloading', progress: pct });
-              }
-            }
+  (async () => {
+    try {
+      window._rembgReady = false;
+
+      // Connect to your UI's progress handler
+      subscribeToProgress((s) => {
+        if (window._rembgOnProgress) {
+          // Normalizes progress for your existing UI status bar
+          window._rembgOnProgress({ 
+            phase: s.phase, // 'downloading', 'building', or 'processing'
+            progress: s.progress 
           });
-          loading = false;
-          window._rembgReady = true;
         }
-      }
-      if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'processing', progress: 80 });
-      const output = await pipe(imageUrl, { subtask: 'semantic' });
-      const mask = output[0]?.mask;
-      if (!mask) throw new Error('No mask returned');
+      });
 
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imageUrl; });
+      // Global function called by your 'Analyse' buttons
+      window._rembgRemoveBackground = async function(imageUrl) {
+        try {
+          console.log("[AI] Starting background removal via WebGPU...");
+          const result = await removeBackground(imageUrl);
+          
+          // Returns the blobUrl to be displayed in your image preview
+          return result.blobUrl; 
+        } catch (err) {
+          console.error("AI Processing Error:", err);
+          throw err;
+        }
+      };
 
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      const raw = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      window._rembgReady = true;
+      console.log("[AI] rembg-webgpu Engine Ready");
 
-      const mCanvas = document.createElement('canvas');
-      mCanvas.width = mask.width; mCanvas.height = mask.height;
-      const mCtx = mCanvas.getContext('2d');
-      mCtx.drawImage(await createImageBitmap(
-        new ImageData(new Uint8ClampedArray(mask.data.flatMap(v => [0,0,0,v])), mask.width, mask.height)
-      ), 0, 0);
-      const scaled = document.createElement('canvas');
-      scaled.width = canvas.width; scaled.height = canvas.height;
-      scaled.getContext('2d').drawImage(mCanvas, 0, 0, canvas.width, canvas.height);
-      const mData = scaled.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < raw.data.length / 4; i++) raw.data[i*4+3] = mData.data[i*4+3];
-      ctx.putImageData(raw, 0, 0);
-
-      if (window._rembgOnProgress) window._rembgOnProgress({ phase: 'ready', progress: 100 });
-      return new Promise(res => canvas.toBlob(b => res(URL.createObjectURL(b)), 'image/png'));
-    };
-    console.log('[rembg] transformers.js loaded via esm.sh ✓');
-  } catch(e) {
-    console.warn('[rembg] load failed:', e.message);
-    window._rembgReady = false;
-  }
-})();
+    } catch (e) {
+      console.error("Initialization Failed:", e);
+    }
+  })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
@@ -1674,7 +1647,7 @@ function toBase64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); 
 
 // ══════════════════════════════════════════════════════
 //  REMBG — browser-side AI background removal
-//  Uses @huggingface/transformers via esm.sh
+//  Uses rembg-webgpu via esm.sh
 // ══════════════════════════════════════════════════════
 function toggleRembg(){ document.getElementById('rembgSection').classList.toggle('open'); }
 
