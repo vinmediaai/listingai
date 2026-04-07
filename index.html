@@ -3,45 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ListingAI v8 — E-Commerce Image Generator</title>
+<title>ListingAI v9 — E-Commerce Image Generator</title>
 <script type="module">
   import { removeBackground, subscribeToProgress } from 'https://esm.sh/rembg-webgpu@0.2.1';
-
   (async () => {
     try {
       window._rembgReady = false;
-
-      // Connect to your UI's progress handler
       subscribeToProgress((s) => {
-        if (window._rembgOnProgress) {
-          // Normalizes progress for your existing UI status bar
-          window._rembgOnProgress({ 
-            phase: s.phase, // 'downloading', 'building', or 'processing'
-            progress: s.progress 
-          });
-        }
+        if (window._rembgOnProgress) window._rembgOnProgress({ phase: s.phase, progress: s.progress });
       });
-
-      // Global function called by your 'Analyse' buttons
       window._rembgRemoveBackground = async function(imageUrl) {
         try {
-          console.log("[AI] Starting background removal via WebGPU...");
           const result = await removeBackground(imageUrl);
-          
-          // Returns the blobUrl to be displayed in your image preview
-          return result.blobUrl; 
-        } catch (err) {
-          console.error("AI Processing Error:", err);
-          throw err;
-        }
+          return result.blobUrl;
+        } catch (err) { console.error("AI Processing Error:", err); throw err; }
       };
-
       window._rembgReady = true;
-      console.log("[AI] rembg-webgpu Engine Ready");
-
-    } catch (e) {
-      console.error("Initialization Failed:", e);
-    }
+    } catch (e) { console.error("Initialization Failed:", e); }
   })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,9 +36,9 @@ html{scroll-behavior:smooth}
 body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 60% 40% at 10% 10%,rgba(99,102,241,.08) 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 90% 80%,rgba(0,212,170,.05) 0%,transparent 60%);pointer-events:none}
 body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
-.wrap{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:0 20px 80px}
+.wrap{position:relative;z-index:1;max-width:840px;margin:0 auto;padding:0 20px 80px}
 
-/* SERVICE STATUS */
+/* STATUS */
 #statusBanner{display:none;margin-bottom:14px;padding:11px 16px;border-radius:12px;font-size:13px;font-weight:500;line-height:1.5;animation:fadeDown .4s ease both}
 #statusBanner.degraded{display:flex;align-items:flex-start;gap:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);color:var(--yellow)}
 #statusBanner.outage{display:flex;align-items:flex-start;gap:10px;background:rgba(255,68,102,.07);border:1px solid rgba(255,68,102,.25);color:var(--error)}
@@ -75,7 +53,6 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 @keyframes fadeDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes qpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
 @keyframes pop{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.5)}50%{box-shadow:0 0 0 10px rgba(99,102,241,0)}}
 @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
@@ -147,7 +124,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 /* QUEUE BANNER */
 #queueBanner{display:none;position:fixed;top:0;left:0;right:0;z-index:500;padding:12px 24px;background:rgba(10,10,15,.96);border-bottom:1px solid rgba(255,107,53,.25);backdrop-filter:blur(14px)}
 #queueBanner.on{display:flex}
-.qb-inner{max-width:820px;margin:0 auto;width:100%;display:flex;align-items:center;gap:12px}
+.qb-inner{max-width:840px;margin:0 auto;width:100%;display:flex;align-items:center;gap:12px}
 .qb-pulse{width:9px;height:9px;border-radius:50%;background:var(--orange);flex-shrink:0;animation:qpulse 1.3s ease infinite}
 .qb-text{flex:1;font-size:13px;font-weight:500}.qb-text strong{color:var(--orange)}
 .qb-badge{padding:4px 12px;background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.3);border-radius:100px;font-size:12px;font-weight:800;color:var(--orange)}
@@ -215,27 +192,11 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 .preview-size{font-size:11px;color:var(--muted);margin-left:6px}
 .btn-rm{background:none;border:none;cursor:pointer;font-size:11px;font-weight:600;color:var(--error);padding:4px 10px;border-radius:6px;transition:background .15s}
 .btn-rm:hover{background:rgba(255,68,102,.1)}
-
-/* UPLOAD GUIDELINES */
 .upload-guidelines{margin-top:14px;padding:12px 15px;background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.14);border-radius:10px}
 .ug-title{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
 .ug-list{display:flex;flex-direction:column;gap:5px}
 .ug-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);line-height:1.4}
 .ug-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:5px}
-
-/* CAT + THEME PARALLEL */
-.cat-theme-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;margin-bottom:16px}
-.theme-col-head{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-.theme-col-desc{font-size:11px;color:var(--dim);margin-bottom:8px;line-height:1.4}
-.theme-scroll{display:flex;flex-direction:column;gap:5px;max-height:196px;overflow-y:auto;padding-right:2px}
-.theme-scroll::-webkit-scrollbar{width:3px}
-.theme-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-.theme-pill{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;user-select:none;transition:all .18s}
-.theme-pill:hover{border-color:var(--border2);color:var(--text)}
-.theme-pill.on{background:rgba(0,212,170,.07);border-color:rgba(0,212,170,.4);color:var(--teal)}
-.th-name{display:flex;align-items:center;gap:6px}
-.th-auto-tag{font-size:9px;color:var(--dim);font-weight:400}
-.theme-pill.on .th-auto-tag{display:none}
 
 /* FIELDS */
 .field{margin-bottom:0}
@@ -249,45 +210,39 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 .sel-wrap::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
 .field select{cursor:pointer}
 .field select option{background:#1a1a26}
-.input-icon{position:relative}
-.input-icon input{padding-left:38px}
-.input-icon .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
 .fields-stack{display:flex;flex-direction:column;gap:14px}
-
-/* MODE TOGGLE */
-.mode-toggle{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
-.mode-btn{flex:1;padding:10px 12px;font-size:12px;font-weight:700;text-align:center;cursor:pointer;user-select:none;transition:all .2s;color:var(--muted);border:none;background:none;font-family:'Outfit',sans-serif}
-.mode-btn.active{background:var(--accent);color:white}
-.mode-note{font-size:11px;color:var(--dim);margin-bottom:14px;padding:9px 12px;background:rgba(99,102,241,.04);border-radius:8px;border:1px solid rgba(99,102,241,.1);line-height:1.5}
-.mode-note em{color:var(--accent);font-style:normal;font-weight:600}
-
-/* MARKET STYLE COMPACT */
-.style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px}
-.style-card{border:1.5px solid var(--border);border-radius:9px;padding:7px 5px;text-align:center;cursor:pointer;user-select:none;transition:all .18s;background:var(--bg3)}
-.style-card:hover{border-color:var(--border2);background:var(--bg2)}
-.style-card.on{border-color:var(--accent);background:rgba(99,102,241,.08);box-shadow:0 0 0 2px rgba(99,102,241,.12)}
-.style-flag{font-size:17px;display:block;margin-bottom:2px}
-.style-name{font-size:10px;font-weight:700;color:var(--text);display:block}
-.style-sub{font-size:9px;color:var(--muted);margin-top:1px;display:block}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 
 /* AVATAR SECTION */
-.avatar-section{display:none}
-.avatar-section.on{display:block}
-.av-market-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.av-market-tab{padding:5px 12px;background:var(--bg3);border:1.5px solid var(--border);border-radius:100px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;transition:all .18s}
-.av-market-tab:hover{border-color:var(--border2);color:var(--text)}
-.av-market-tab.on{background:rgba(139,92,246,.1);border-color:var(--accent2);color:var(--purple)}
+.av-country-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.av-country-tab{padding:6px 14px;background:var(--bg3);border:1.5px solid var(--border);border-radius:100px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;transition:all .18s}
+.av-country-tab:hover{border-color:var(--border2);color:var(--text)}
+.av-country-tab.on{background:rgba(139,92,246,.1);border-color:var(--accent2);color:var(--purple)}
 .avatar-grid-wrap{display:none}
 .avatar-grid-wrap.on{display:block}
-.avatar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
+.avatar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
 .av-card{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;user-select:none;transition:all .18s;background:var(--bg3);text-align:center}
 .av-card:hover{border-color:var(--border2)}
 .av-card.on{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(139,92,246,.18)}
 .av-thumb{width:100%;aspect-ratio:1;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-.av-thumb img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
-.av-thumb img[src=""]{display:none}
 .av-ph{font-size:24px}
 .av-name{font-size:10px;font-weight:700;padding:5px 3px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av-dyn-card{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(99,102,241,.06);border:1.5px solid rgba(99,102,241,.2);border-radius:10px;cursor:pointer;transition:all .18s;margin-bottom:10px}
+.av-dyn-card:hover{border-color:var(--accent)}
+.av-dyn-card.on{border-color:var(--accent);background:rgba(99,102,241,.12);box-shadow:0 0 0 2px rgba(99,102,241,.12)}
+.av-dyn-ico{font-size:22px;flex-shrink:0}
+.av-dyn-text .av-dyn-title{font-size:13px;font-weight:700;color:var(--text)}
+.av-dyn-text .av-dyn-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.av-dyn-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);margin-left:auto;display:grid;place-items:center;font-size:10px;flex-shrink:0;transition:all .2s}
+.av-dyn-card.on .av-dyn-check{background:var(--accent);border-color:var(--accent)}
+
+/* LOCATION PICKER */
+.location-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px}
+.loc-card{border:1.5px solid var(--border);border-radius:9px;padding:8px 10px;cursor:pointer;user-select:none;transition:all .18s;background:var(--bg3);display:flex;align-items:center;gap:8px}
+.loc-card:hover{border-color:var(--border2);background:var(--bg2)}
+.loc-card.on{border-color:var(--teal);background:rgba(0,212,170,.07);box-shadow:0 0 0 2px rgba(0,212,170,.09)}
+.loc-ico{font-size:16px;flex-shrink:0}
+.loc-name{font-size:11px;font-weight:700;color:var(--text);line-height:1.3}
 
 /* LANGUAGE */
 .lang-row{display:flex;flex-wrap:wrap;gap:8px}
@@ -317,17 +272,13 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 .pp-title span{color:var(--accent)}
 .pp-sub{font-size:13px;color:var(--muted)}
 .pp-body{padding:16px 28px;display:flex;flex-direction:column;gap:11px}
-
-/* PROMPT CARDS — UX FIXED */
 .prompt-card{border:1.5px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;background:var(--bg2)}
 .prompt-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.08)}
 .prompt-card.selected.teal{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,212,170,.08)}
 .prompt-card.selected.blue{border-color:var(--blue);box-shadow:0 0 0 3px rgba(96,165,250,.08)}
 .prompt-card.selected.purple{border-color:var(--purple);box-shadow:0 0 0 3px rgba(167,139,250,.08)}
-/* pc-head has NO onclick — only checkbox has onclick */
 .pc-head{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid transparent}
 .prompt-card.selected .pc-head{border-bottom-color:var(--border)}
-/* Checkbox is the SOLE toggle — directly clickable, stops propagation */
 .pc-check{width:20px;height:20px;flex-shrink:0;border-radius:6px;border:2px solid var(--border2);display:grid;place-items:center;font-size:10px;transition:all .2s;background:var(--bg3);cursor:pointer;position:relative;z-index:2}
 .pc-check:hover{border-color:var(--accent)}
 .prompt-card.selected .pc-check{background:var(--accent);border-color:var(--accent)}
@@ -346,16 +297,13 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 .pc-badge{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:5px}
 .pc-badge.required{background:rgba(99,102,241,.15);color:var(--accent)}
 .pc-badge.optional{background:rgba(0,212,170,.1);color:var(--teal)}
-/* pc-body: directly clickable, never triggers deselect */
 .pc-body{padding:11px 14px;display:none}
 .prompt-card.selected .pc-body{display:block}
-/* textarea: always directly tappable/clickable */
 .prompt-ta{width:100%;padding:10px 12px;background:var(--bg3);border:1.5px solid var(--border);border-radius:9px;font-family:'Outfit',sans-serif;font-size:13px;line-height:1.6;color:var(--text);resize:vertical;min-height:82px;outline:none;transition:all .2s;cursor:text;display:block}
 .prompt-ta:focus{border-color:var(--accent);background:rgba(99,102,241,.03);box-shadow:0 0 0 3px rgba(99,102,241,.08)}
 .prompt-ta.teal:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,212,170,.08)}
 .prompt-ta.blue:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(96,165,250,.08)}
 .prompt-ta.purple:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(167,139,250,.08)}
-/* char counter */
 .char-counter{font-size:10px;text-align:right;margin-top:4px;color:var(--dim);transition:color .2s}
 .char-counter.warn{color:var(--orange)}
 .char-counter.over{color:var(--error);font-weight:700}
@@ -386,7 +334,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 .pstep.run .pstep-stat{color:var(--accent)}
 .pstep.done .pstep-stat{color:var(--teal)}
 
-/* DONE */
+/* DONE PANEL */
 .done-panel{display:none;padding:26px 28px;border-top:1px solid var(--border);animation:fadeUp .5s ease both}
 .done-panel.on{display:block}
 .done-top{text-align:center;padding-bottom:22px;margin-bottom:22px;border-bottom:1px solid var(--border)}
@@ -394,28 +342,26 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 .done-title{font-family:'Fraunces',serif;font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
 .done-title span{color:var(--teal)}
 .done-sub{font-size:14px;color:var(--muted)}
-.email-confirm{border:1px solid rgba(167,139,250,.3);border-radius:13px;overflow:hidden;margin-bottom:18px}
-.ec-head{display:flex;align-items:center;gap:12px;padding:13px 16px;background:rgba(167,139,250,.07);border-bottom:1px solid rgba(167,139,250,.18)}
-.ec-icon{font-size:20px}
-.ec-label{font-size:13px;font-weight:700}
-.ec-sub{font-size:11px;color:var(--muted);margin-top:1px}
-.ec-address{padding:11px 16px;font-size:14px;font-weight:600;color:#c4b5fd;display:flex;align-items:center;gap:8px}
-.ec-bullet{width:7px;height:7px;background:#a78bfa;border-radius:50%;flex-shrink:0}
-.imgs-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px}
-.img-thumb{border-radius:12px;overflow:hidden;border:1px solid var(--border2);background:var(--bg3)}
-.img-thumb-head{padding:12px 12px 8px;display:flex;align-items:center;gap:7px}
-.img-thumb-emoji{font-size:18px}
-.img-thumb-label{font-size:12px;font-weight:700;color:var(--text)}
-.img-thumb-name{font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.img-thumb-status{font-size:10px;color:var(--teal);padding:0 12px 8px;display:flex;align-items:center;gap:5px}
-.img-thumb-actions{display:flex;gap:5px;padding:0 8px 10px}
-.btn-dl{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:6px;border-radius:7px;font-size:11px;font-weight:700;text-decoration:none;transition:all .2s;border:1px solid var(--border2)}
+.imgs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.img-result-card{background:var(--bg3);border:1px solid var(--border2);border-radius:14px;overflow:hidden;transition:border-color .2s}
+.img-result-card:hover{border-color:var(--border)}
+.img-result-thumb{width:100%;aspect-ratio:1;background:#0d0d14;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.img-result-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.img-result-card:hover .img-result-thumb img{transform:scale(1.04)}
+.img-result-thumb .img-placeholder{font-size:32px;opacity:.3}
+.img-result-info{padding:10px 12px 8px}
+.img-result-label{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.img-result-name{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.img-result-status{font-size:10px;color:var(--teal);margin-bottom:8px;padding:0 12px;display:flex;align-items:center;gap:4px}
+.img-result-actions{display:flex;gap:6px;padding:0 8px 10px}
+.btn-dl{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border-radius:7px;font-size:11px;font-weight:700;text-decoration:none;transition:all .2s;border:1px solid var(--border2);cursor:pointer;font-family:'Outfit',sans-serif}
 .btn-dl.view{background:var(--bg2);color:var(--muted)}
 .btn-dl.view:hover{border-color:var(--teal);color:var(--teal);background:rgba(0,212,170,.06)}
 .btn-dl.dl{background:rgba(99,102,241,.1);color:var(--accent);border-color:rgba(99,102,241,.3)}
 .btn-dl.dl:hover{background:rgba(99,102,241,.2);border-color:var(--accent)}
-.download-all{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.2);border-radius:12px;color:var(--teal);font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;margin-bottom:16px}
-.download-all:hover{background:rgba(0,212,170,.12);border-color:var(--teal)}
+.done-actions{display:flex;gap:10px;margin-bottom:16px}
+.btn-dl-all{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.2);border-radius:12px;color:var(--teal);font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-dl-all:hover{background:rgba(0,212,170,.12);border-color:var(--teal)}
 .btn-reset{display:block;width:100%;margin-top:12px;padding:12px;background:none;border:1px solid var(--border2);border-radius:10px;color:var(--muted);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
 .btn-reset:hover{border-color:var(--border);color:var(--text);background:var(--bg3)}
 
@@ -426,23 +372,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 .toast.warn{background:#2e1e0d;color:var(--orange);border-color:rgba(255,107,53,.3)}
 .toast.show{transform:translateY(0);opacity:1}
 
-@media(max-width:600px){
-  .fsec,.pp-body,.pp-header,.gen-strip,.prog-panel,.done-panel,.submit-strip{padding:16px}
-  .cat-theme-row{grid-template-columns:1fr}
-  .submit-strip,.gen-strip{flex-direction:column}
-  .imgs-row{grid-template-columns:1fr 1fr}
-  .dim-inputs{grid-template-columns:1fr}
-  .header{padding:16px 0 28px}
-  .style-grid{grid-template-columns:repeat(4,1fr)}
-  .avatar-grid{grid-template-columns:repeat(4,1fr)}
-  .phase-bar{padding:10px 16px}
-  .modal-card,.fb-card{padding:26px 16px}
-  .otp-wrap input{width:38px;height:46px;font-size:17px}
-  .powered-pill{display:none}
-  .hero h1{font-size:28px}
-}
-
-/* ══ REMBG ══ */
+/* REMBG */
 .rembg-wrap{margin-top:14px}
 .rembg-section{border:1.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg2)}
 .rembg-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none;transition:background .18s}
@@ -483,6 +413,23 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 .btn-rembg-dl:hover{background:rgba(0,212,170,.08);border-color:var(--teal)}
 .btn-rembg-use{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 13px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;color:white;cursor:pointer;transition:all .18s;box-shadow:0 3px 12px rgba(99,102,241,.25)}
 .btn-rembg-use:hover{transform:translateY(-1px)}
+
+@media(max-width:600px){
+  .fsec,.pp-body,.pp-header,.gen-strip,.prog-panel,.done-panel,.submit-strip{padding:16px}
+  .two-col{grid-template-columns:1fr}
+  .submit-strip,.gen-strip{flex-direction:column}
+  .imgs-grid{grid-template-columns:1fr 1fr}
+  .dim-inputs{grid-template-columns:1fr}
+  .header{padding:16px 0 28px}
+  .location-grid{grid-template-columns:repeat(3,1fr)}
+  .avatar-grid{grid-template-columns:repeat(4,1fr)}
+  .phase-bar{padding:10px 16px}
+  .modal-card,.fb-card{padding:26px 16px}
+  .otp-wrap input{width:38px;height:46px;font-size:17px}
+  .powered-pill{display:none}
+  .hero h1{font-size:28px}
+  .done-actions{flex-direction:column}
+}
 </style>
 </head>
 <body>
@@ -575,9 +522,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
     </div>
   </header>
 
-  <!-- SERVICE STATUS BANNER -->
   <div id="statusBanner"><span class="sb-ico" id="sbIco">⚠️</span><div class="sb-msg"><strong id="statusTitle"></strong><span id="statusMsg"></span></div></div>
-
   <div id="limitBanner"><strong>⛔ Generation limit reached</strong>You've used all 5 generations for this 10-day window. Resets on <span id="limitResetDate"></span>.</div>
 
   <section class="hero">
@@ -592,7 +537,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
       <span style="font-size:12px;color:var(--muted);">Upload &amp; Analyse — AI generates your prompts</span>
     </div>
 
-    <!-- SECTION 1: Upload -->
+    <!-- SECTION 1: Upload + Remove Background -->
     <div class="fsec">
       <div class="fsec-head"><div class="fsec-num">1</div><div class="fsec-title">Product Image</div><div class="fsec-hint">JPG · PNG · WEBP · Max 20 MB</div></div>
       <div class="upload-zone" id="uploadZone">
@@ -615,11 +560,10 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
           <div class="ug-item"><div class="ug-dot"></div>One product per photo — do not mix multiple products in one shot</div>
           <div class="ug-item"><div class="ug-dot"></div>Use a plain or simple background so AI can focus on your product</div>
           <div class="ug-item"><div class="ug-dot"></div>Ensure the full product is visible — avoid cropped or partial shots</div>
-          <div class="ug-item"><div class="ug-dot"></div>Good lighting with no heavy shadows on the product surface</div>
         </div>
       </div>
 
-      <!-- BACKGROUND REMOVAL — always visible, open by default -->
+      <!-- BACKGROUND REMOVAL -->
       <div class="rembg-wrap">
         <div class="rembg-section open" id="rembgSection">
           <div class="rembg-head" onclick="toggleRembg()">
@@ -665,125 +609,233 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
       </div>
     </div>
 
-    <!-- SECTION 2: Category + Theme + Details -->
+    <!-- SECTION 2: Product Details -->
     <div class="fsec">
-      <div class="fsec-head"><div class="fsec-num">2</div><div class="fsec-title">Product Details &amp; Theme</div></div>
-      <div class="cat-theme-row">
-        <div class="field">
-          <label>Category <span class="req">*</span></label>
-          <div class="sel-wrap">
-            <select id="category" onchange="validate()">
-              <option value="">Select category…</option>
-              <optgroup label="Toys &amp; Kids"><option value="ride-on-toys">Ride-On Toys</option><option value="outdoor-toys">Outdoor &amp; Play Toys</option><option value="educational-toys">Educational Toys</option><option value="baby-products">Baby Products</option></optgroup>
-              <optgroup label="Electronics"><option value="smartphones">Smartphones &amp; Accessories</option><option value="headphones">Headphones &amp; Audio</option><option value="smart-home">Smart Home Devices</option><option value="cameras">Cameras &amp; Photography</option></optgroup>
-              <optgroup label="Home &amp; Kitchen"><option value="cookware">Cookware &amp; Bakeware</option><option value="small-appliances">Small Appliances</option><option value="furniture">Furniture &amp; Décor</option><option value="bedding">Bedding &amp; Pillows</option></optgroup>
-              <optgroup label="Fashion &amp; Beauty"><option value="clothing">Clothing &amp; Apparel</option><option value="footwear">Shoes &amp; Footwear</option><option value="bags">Bags &amp; Accessories</option><option value="skincare">Skincare &amp; Beauty</option></optgroup>
-              <optgroup label="Sports &amp; Outdoors"><option value="fitness">Fitness Equipment</option><option value="cycling">Cycling &amp; Scooters</option><option value="camping">Camping &amp; Hiking</option></optgroup>
-              <optgroup label="Other"><option value="pet-supplies">Pet Supplies</option><option value="automotive">Automotive</option><option value="tools">Tools &amp; Hardware</option><option value="other">Other</option></optgroup>
-            </select>
-          </div>
-        </div>
-        <div>
-          <div class="theme-col-head">🎨 Theme <span style="font-size:9px;color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0;margin-left:3px">optional — auto if none</span></div>
-          <div class="theme-col-desc">Sets the location &amp; background where your product will be placed.</div>
-          <div class="theme-scroll" id="themeGrid">
-            <div class="theme-pill" data-theme="theme_1" onclick="selectTheme(this)"><span class="th-name">🌅 Golden Hour</span><span class="th-auto-tag">auto</span></div>
-            <div class="theme-pill" data-theme="theme_2" onclick="selectTheme(this)"><span class="th-name">🏙️ Urban Minimal</span><span class="th-auto-tag">auto</span></div>
-            <div class="theme-pill" data-theme="theme_3" onclick="selectTheme(this)"><span class="th-name">🌿 Natural</span><span class="th-auto-tag">auto</span></div>
-            <div class="theme-pill" data-theme="theme_4" onclick="selectTheme(this)"><span class="th-name">✨ Luxury</span><span class="th-auto-tag">auto</span></div>
-            <div class="theme-pill" data-theme="theme_5" onclick="selectTheme(this)"><span class="th-name">🎨 Pastel</span><span class="th-auto-tag">auto</span></div>
-            <div class="theme-pill" data-theme="theme_6" onclick="selectTheme(this)"><span class="th-name">🏠 Cozy Home</span><span class="th-auto-tag">auto</span></div>
-            <div class="theme-pill" data-theme="theme_7" onclick="selectTheme(this)"><span class="th-name">🔬 Clinical</span><span class="th-auto-tag">auto</span></div>
-            <div class="theme-pill" data-theme="theme_8" onclick="selectTheme(this)"><span class="th-name">🌊 Coastal</span><span class="th-auto-tag">auto</span></div>
-            <div class="theme-pill" data-theme="theme_9" onclick="selectTheme(this)"><span class="th-name">🎭 Bold</span><span class="th-auto-tag">auto</span></div>
-            <div class="theme-pill" data-theme="theme_10" onclick="selectTheme(this)"><span class="th-name">🌙 Neon</span><span class="th-auto-tag">auto</span></div>
-          </div>
-        </div>
-      </div>
+      <div class="fsec-head"><div class="fsec-num">2</div><div class="fsec-title">Product Details</div></div>
       <div class="fields-stack">
+        <div class="two-col">
+          <div class="field">
+            <label>Category <span class="req">*</span></label>
+            <div class="sel-wrap">
+              <select id="category" onchange="onCategoryChange()">
+                <option value="">Select category…</option>
+                <optgroup label="Toys &amp; Kids"><option value="ride-on-toys">Ride-On Toys</option><option value="outdoor-toys">Outdoor &amp; Play Toys</option><option value="educational-toys">Educational Toys</option><option value="baby-products">Baby Products</option></optgroup>
+                <optgroup label="Electronics"><option value="smartphones">Smartphones &amp; Accessories</option><option value="headphones">Headphones &amp; Audio</option><option value="smart-home">Smart Home Devices</option><option value="cameras">Cameras &amp; Photography</option></optgroup>
+                <optgroup label="Home &amp; Kitchen"><option value="cookware">Cookware &amp; Bakeware</option><option value="small-appliances">Small Appliances</option><option value="furniture">Furniture &amp; Décor</option><option value="bedding">Bedding &amp; Pillows</option></optgroup>
+                <optgroup label="Fashion &amp; Beauty"><option value="clothing">Clothing &amp; Apparel</option><option value="footwear">Shoes &amp; Footwear</option><option value="bags">Bags &amp; Accessories</option><option value="skincare">Skincare &amp; Beauty</option></optgroup>
+                <optgroup label="Sports &amp; Outdoors"><option value="fitness">Fitness Equipment</option><option value="cycling">Cycling &amp; Scooters</option><option value="camping">Camping &amp; Hiking</option></optgroup>
+                <optgroup label="Other"><option value="pet-supplies">Pet Supplies</option><option value="automotive">Automotive</option><option value="tools">Tools &amp; Hardware</option><option value="other">Other</option></optgroup>
+              </select>
+            </div>
+          </div>
+          <div class="field" id="subcatWrap" style="display:none">
+            <label>Sub-Category</label>
+            <div class="sel-wrap">
+              <select id="subcategory">
+                <option value="">Select sub-category…</option>
+              </select>
+            </div>
+          </div>
+        </div>
         <div class="field"><label>Product / Brand Name <span class="req">*</span></label><input type="text" id="productName" placeholder="e.g. Premium Stainless Steel Water Bottle 1L" oninput="validate()"></div>
-        <div class="field"><label>Key Features <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(one per line)</span></label><textarea id="features" placeholder="Double-wall insulation&#10;Leak-proof lid&#10;BPA free"></textarea></div>
-        <div class="field"><label>Reference URL <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><div class="input-icon"><span class="ico">🔗</span><input type="url" id="amazonLink" placeholder="https://www.amazon.in/dp/XXXXXXXXXX"></div></div>
-      </div>
-    </div>
-
-    <!-- SECTION 3: Face & Style -->
-    <div class="fsec">
-      <div class="fsec-head"><div class="fsec-num">3</div><div class="fsec-title">Face &amp; Style</div><div class="fsec-hint">AI dynamic or named avatar</div></div>
-      <div class="mode-toggle">
-        <button class="mode-btn active" id="modeMarket" onclick="setMode('market')">🌍 Market Style — AI Dynamic</button>
-        <button class="mode-btn" id="modeAvatar" onclick="setMode('avatar')">👤 Named Avatar — Static</button>
-      </div>
-      <!-- Market Style -->
-      <div id="marketStyleSection">
-        <div class="mode-note"><em>AI Dynamic Mode:</em> Face generated by AI to match the selected market. Natural variety every run — no fixed person.</div>
-        <div class="style-grid">
-          <div class="style-card on" data-style="indian" onclick="selectStyle(this)"><span class="style-flag">🇮🇳</span><span class="style-name">Indian</span><span class="style-sub">South Asian</span></div>
-          <div class="style-card" data-style="american" onclick="selectStyle(this)"><span class="style-flag">🇺🇸</span><span class="style-name">American</span><span class="style-sub">Western</span></div>
-          <div class="style-card" data-style="chinese" onclick="selectStyle(this)"><span class="style-flag">🇨🇳</span><span class="style-name">Chinese</span><span class="style-sub">East Asian</span></div>
-          <div class="style-card" data-style="japanese" onclick="selectStyle(this)"><span class="style-flag">🇯🇵</span><span class="style-name">Japanese</span><span class="style-sub">Minimalist</span></div>
-          <div class="style-card" data-style="australian" onclick="selectStyle(this)"><span class="style-flag">🇦🇺</span><span class="style-name">Australian</span><span class="style-sub">Coastal</span></div>
-          <div class="style-card" data-style="european" onclick="selectStyle(this)"><span class="style-flag">🇪🇺</span><span class="style-name">European</span><span class="style-sub">Modern EU</span></div>
-          <div class="style-card" data-style="arabic" onclick="selectStyle(this)"><span class="style-flag">🇦🇪</span><span class="style-name">Arabic</span><span class="style-sub">Mid East</span></div>
-          <div class="style-card" data-style="nepali" onclick="selectStyle(this)"><span class="style-flag">🇳🇵</span><span class="style-name">Nepali</span><span class="style-sub">Himalayan</span></div>
-          <div class="style-card" data-style="brazilian" onclick="selectStyle(this)"><span class="style-flag">🇧🇷</span><span class="style-name">Brazilian</span><span class="style-sub">Tropical</span></div>
-          <div class="style-card" data-style="african" onclick="selectStyle(this)"><span class="style-flag">🌍</span><span class="style-name">African</span><span class="style-sub">Vibrant</span></div>
-          <div class="style-card" data-style="korean" onclick="selectStyle(this)"><span class="style-flag">🇰🇷</span><span class="style-name">Korean</span><span class="style-sub">K-style</span></div>
-          <div class="style-card" data-style="global" onclick="selectStyle(this)"><span class="style-flag">🌐</span><span class="style-name">Global</span><span class="style-sub">Universal</span></div>
-        </div>
-      </div>
-      <!-- Avatar Mode -->
-      <div id="avatarSection" class="avatar-section">
-        <div class="mode-note"><em>Static Avatar Mode:</em> A named person will be referenced in every image — consistent face across all generated images. Based on avatar description in the Google Sheet.</div>
-        <div class="av-market-tabs" id="avMarketTabs">
-          <div class="av-market-tab on" data-avmarket="indian" onclick="selectAvMarket(this)">🇮🇳 Indian</div>
-          <div class="av-market-tab" data-avmarket="american" onclick="selectAvMarket(this)">🇺🇸 American</div>
-          <div class="av-market-tab" data-avmarket="korean" onclick="selectAvMarket(this)">🇰🇷 Korean</div>
-        </div>
-        <div class="avatar-grid-wrap on" id="avGrid-indian">
-          <div class="avatar-grid">
-            <div class="av-card" data-avatar="avatar_sanjay" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Sanjay</div></div>
-            <div class="av-card" data-avatar="avatar_shashank" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Shashank</div></div>
-            <div class="av-card" data-avatar="avatar_ramya" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">👩</span></div><div class="av-name">Ramya</div></div>
-            <div class="av-card" data-avatar="avatar_keerthi" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">👩</span></div><div class="av-name">Keerthi</div></div>
-            <div class="av-card" data-avatar="avatar_rahul" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Rahul</div></div>
-            <div class="av-card" data-avatar="avatar_abhishek" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Abhishek</div></div>
-          </div>
-        </div>
-        <div class="avatar-grid-wrap" id="avGrid-american">
-          <div class="avatar-grid">
-            <div class="av-card" data-avatar="avatar_james" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">James</div></div>
-            <div class="av-card" data-avatar="avatar_emma" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">👩</span></div><div class="av-name">Emma</div></div>
-            <div class="av-card" data-avatar="avatar_liam" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Liam</div></div>
-            <div class="av-card" data-avatar="avatar_olivia" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">👩</span></div><div class="av-name">Olivia</div></div>
-            <div class="av-card" data-avatar="avatar_noah" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Noah</div></div>
-            <div class="av-card" data-avatar="avatar_ava" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">👩</span></div><div class="av-name">Ava</div></div>
-            <div class="av-card" data-avatar="avatar_elijah" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Elijah</div></div>
-            <div class="av-card" data-avatar="avatar_sophia" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">👩</span></div><div class="av-name">Sophia</div></div>
-            <div class="av-card" data-avatar="avatar_lucas" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Lucas</div></div>
-            <div class="av-card" data-avatar="avatar_isabella" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">👩</span></div><div class="av-name">Isabella</div></div>
-          </div>
-        </div>
-        <div class="avatar-grid-wrap" id="avGrid-korean">
-          <div class="avatar-grid">
-            <div class="av-card" data-avatar="avatar_minjun" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Minjun</div></div>
-            <div class="av-card" data-avatar="avatar_jiho" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Jiho</div></div>
-            <div class="av-card" data-avatar="avatar_seojun" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Seojun</div></div>
-            <div class="av-card" data-avatar="avatar_hajoon" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Hajoon</div></div>
-            <div class="av-card" data-avatar="avatar_dojun" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Dojun</div></div>
-            <div class="av-card" data-avatar="avatar_yejun" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Yejun</div></div>
-            <div class="av-card" data-avatar="avatar_minseok" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Minseok</div></div>
-            <div class="av-card" data-avatar="avatar_taeyang" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Taeyang</div></div>
-            <div class="av-card" data-avatar="avatar_hyunwoo" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Hyunwoo</div></div>
-            <div class="av-card" data-avatar="avatar_jisoo" onclick="selectAvatar(this)"><div class="av-thumb"><img src="" alt=""><span class="av-ph">🧑</span></div><div class="av-name">Jisoo</div></div>
-          </div>
+        <div class="field">
+          <label>Key Features <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(one per line — used as infographic callouts)</span></label>
+          <textarea id="features" placeholder="Double-wall insulation&#10;Leak-proof lid&#10;BPA free&#10;Keeps cold 24h"></textarea>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 4: Language -->
+    <!-- SECTION 3: Avatar (country + named/dynamic) -->
     <div class="fsec">
-      <div class="fsec-head"><div class="fsec-num">4</div><div class="fsec-title">Output Language</div><div class="fsec-hint">For prompts &amp; callouts</div></div>
+      <div class="fsec-head"><div class="fsec-num">3</div><div class="fsec-title">Model Avatar</div><div class="fsec-hint">Drives face &amp; location style</div></div>
+
+      <!-- Country tabs -->
+      <div class="av-country-tabs" id="avCountryTabs">
+        <div class="av-country-tab on" data-country="india" onclick="selectCountry(this)">🇮🇳 India</div>
+        <div class="av-country-tab" data-country="american" onclick="selectCountry(this)">🇺🇸 USA</div>
+        <div class="av-country-tab" data-country="chinese" onclick="selectCountry(this)">🇨🇳 China</div>
+        <div class="av-country-tab" data-country="japanese" onclick="selectCountry(this)">🇯🇵 Japan</div>
+        <div class="av-country-tab" data-country="korean" onclick="selectCountry(this)">🇰🇷 Korea</div>
+        <div class="av-country-tab" data-country="european" onclick="selectCountry(this)">🇪🇺 Europe</div>
+        <div class="av-country-tab" data-country="arabic" onclick="selectCountry(this)">🇦🇪 Arabic</div>
+        <div class="av-country-tab" data-country="australian" onclick="selectCountry(this)">🇦🇺 Australia</div>
+        <div class="av-country-tab" data-country="brazilian" onclick="selectCountry(this)">🇧🇷 Brazil</div>
+        <div class="av-country-tab" data-country="african" onclick="selectCountry(this)">🌍 Africa</div>
+        <div class="av-country-tab" data-country="global" onclick="selectCountry(this)">🌐 Global</div>
+      </div>
+
+      <!-- Avatar grids per country -->
+      <div id="avGrid-india" class="avatar-grid-wrap on">
+        <div class="av-dyn-card on" id="avDyn-india" data-avatar="dynamic" data-country="india" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — Indian</div><div class="av-dyn-sub">AI generates a natural Indian face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_rakesh" data-country="india" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Rakesh</div></div>
+          <div class="av-card" data-avatar="avatar_raj" data-country="india" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Raj</div></div>
+          <div class="av-card" data-avatar="avatar_sanju" data-country="india" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Sanju</div></div>
+          <div class="av-card" data-avatar="avatar_rena" data-country="india" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Rena</div></div>
+          <div class="av-card" data-avatar="avatar_geeta" data-country="india" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Geeta</div></div>
+          <div class="av-card" data-avatar="avatar_priya" data-country="india" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Priya</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-american" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-american" data-avatar="dynamic" data-country="american" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — American</div><div class="av-dyn-sub">AI generates a natural American face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_james" data-country="american" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">James</div></div>
+          <div class="av-card" data-avatar="avatar_emma" data-country="american" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Emma</div></div>
+          <div class="av-card" data-avatar="avatar_liam" data-country="american" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Liam</div></div>
+          <div class="av-card" data-avatar="avatar_olivia" data-country="american" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Olivia</div></div>
+          <div class="av-card" data-avatar="avatar_noah" data-country="american" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Noah</div></div>
+          <div class="av-card" data-avatar="avatar_ava" data-country="american" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Ava</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-chinese" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-chinese" data-avatar="dynamic" data-country="chinese" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — Chinese</div><div class="av-dyn-sub">AI generates a natural Chinese face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_wei" data-country="chinese" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Wei</div></div>
+          <div class="av-card" data-avatar="avatar_li" data-country="chinese" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Li</div></div>
+          <div class="av-card" data-avatar="avatar_ming" data-country="chinese" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Ming</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-japanese" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-japanese" data-avatar="dynamic" data-country="japanese" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — Japanese</div><div class="av-dyn-sub">AI generates a natural Japanese face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_kenji" data-country="japanese" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Kenji</div></div>
+          <div class="av-card" data-avatar="avatar_yuki" data-country="japanese" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Yuki</div></div>
+          <div class="av-card" data-avatar="avatar_hana" data-country="japanese" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Hana</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-korean" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-korean" data-avatar="dynamic" data-country="korean" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — Korean</div><div class="av-dyn-sub">AI generates a natural Korean face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_minjun" data-country="korean" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Minjun</div></div>
+          <div class="av-card" data-avatar="avatar_jisoo" data-country="korean" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Jisoo</div></div>
+          <div class="av-card" data-avatar="avatar_seojun" data-country="korean" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Seojun</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-european" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-european" data-avatar="dynamic" data-country="european" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — European</div><div class="av-dyn-sub">AI generates a natural European face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_max" data-country="european" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Max</div></div>
+          <div class="av-card" data-avatar="avatar_sophie" data-country="european" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Sophie</div></div>
+          <div class="av-card" data-avatar="avatar_luigi" data-country="european" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Luigi</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-arabic" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-arabic" data-avatar="dynamic" data-country="arabic" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — Arabic</div><div class="av-dyn-sub">AI generates a natural Arabic face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_omar" data-country="arabic" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Omar</div></div>
+          <div class="av-card" data-avatar="avatar_layla" data-country="arabic" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Layla</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-australian" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-australian" data-avatar="dynamic" data-country="australian" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — Australian</div><div class="av-dyn-sub">AI generates a natural Australian face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_jack" data-country="australian" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Jack</div></div>
+          <div class="av-card" data-avatar="avatar_grace" data-country="australian" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Grace</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-brazilian" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-brazilian" data-avatar="dynamic" data-country="brazilian" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — Brazilian</div><div class="av-dyn-sub">AI generates a natural Brazilian face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_lucas_br" data-country="brazilian" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Lucas</div></div>
+          <div class="av-card" data-avatar="avatar_isabela" data-country="brazilian" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Isabela</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-african" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-african" data-avatar="dynamic" data-country="african" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — African</div><div class="av-dyn-sub">AI generates a natural African face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+        <div class="avatar-grid">
+          <div class="av-card" data-avatar="avatar_kofi" data-country="african" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Kofi</div></div>
+          <div class="av-card" data-avatar="avatar_amara" data-country="african" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Amara</div></div>
+        </div>
+      </div>
+
+      <div id="avGrid-global" class="avatar-grid-wrap">
+        <div class="av-dyn-card on" id="avDyn-global" data-avatar="dynamic" data-country="global" onclick="selectAvatar(this)">
+          <span class="av-dyn-ico">🤖</span>
+          <div class="av-dyn-text"><div class="av-dyn-title">Dynamic AI — Global</div><div class="av-dyn-sub">AI generates a diverse face each run</div></div>
+          <div class="av-dyn-check">✓</div>
+        </div>
+      </div>
+
+      <!-- Location note -->
+      <div style="margin-top:12px;padding:10px 13px;background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.12);border-radius:9px;font-size:12px;color:var(--muted);line-height:1.5">
+        📍 <span id="locationNote">Location will be set to <strong style="color:var(--teal)">Indian context</strong> based on your avatar selection below.</span>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Location Variant -->
+    <div class="fsec">
+      <div class="fsec-head"><div class="fsec-num">4</div><div class="fsec-title">Location / Scene</div><div class="fsec-hint">Where should the lifestyle shot be set?</div></div>
+      <div class="location-grid" id="locationGrid">
+        <div class="loc-card on" data-loc="indoor home hall" onclick="selectLocation(this)"><span class="loc-ico">🛋️</span><span class="loc-name">Home Hall</span></div>
+        <div class="loc-card" data-loc="studio" onclick="selectLocation(this)"><span class="loc-ico">📸</span><span class="loc-name">Studio</span></div>
+        <div class="loc-card" data-loc="indoor home kitchen" onclick="selectLocation(this)"><span class="loc-ico">🍳</span><span class="loc-name">Kitchen</span></div>
+        <div class="loc-card" data-loc="indoor home bedroom" onclick="selectLocation(this)"><span class="loc-ico">🛏️</span><span class="loc-name">Bedroom</span></div>
+        <div class="loc-card" data-loc="indoor balcony" onclick="selectLocation(this)"><span class="loc-ico">🌤️</span><span class="loc-name">Balcony</span></div>
+        <div class="loc-card" data-loc="outdoor home garden" onclick="selectLocation(this)"><span class="loc-ico">🌿</span><span class="loc-name">Garden</span></div>
+        <div class="loc-card" data-loc="outdoor home parking" onclick="selectLocation(this)"><span class="loc-ico">🚗</span><span class="loc-name">Parking</span></div>
+        <div class="loc-card" data-loc="coastal" onclick="selectLocation(this)"><span class="loc-ico">🌊</span><span class="loc-name">Coastal</span></div>
+        <div class="loc-card" data-loc="busy city" onclick="selectLocation(this)"><span class="loc-ico">🏙️</span><span class="loc-name">City Street</span></div>
+        <div class="loc-card" data-loc="airport" onclick="selectLocation(this)"><span class="loc-ico">✈️</span><span class="loc-name">Airport</span></div>
+        <div class="loc-card" data-loc="metro station" onclick="selectLocation(this)"><span class="loc-ico">🚇</span><span class="loc-name">Metro</span></div>
+        <div class="loc-card" data-loc="bathroom" onclick="selectLocation(this)"><span class="loc-ico">🚿</span><span class="loc-name">Bathroom</span></div>
+        <div class="loc-card" data-loc="theater" onclick="selectLocation(this)"><span class="loc-ico">🎬</span><span class="loc-name">Theater</span></div>
+        <div class="loc-card" data-loc="mall" onclick="selectLocation(this)"><span class="loc-ico">🛍️</span><span class="loc-name">Mall</span></div>
+        <div class="loc-card" data-loc="park" onclick="selectLocation(this)"><span class="loc-ico">🌳</span><span class="loc-name">Park</span></div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: Language -->
+    <div class="fsec">
+      <div class="fsec-head"><div class="fsec-num">5</div><div class="fsec-title">Output Language</div><div class="fsec-hint">For prompts &amp; callouts</div></div>
       <div class="lang-row">
         <div class="lp on" data-lang="en">🇬🇧 English</div>
         <div class="lp" data-lang="hi">🇮🇳 Hindi</div>
@@ -799,7 +851,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
     </div>
 
     <div class="submit-strip">
-      <div class="submit-note"><strong>Step 1 — Analyse your product</strong>AI examines your image &amp; builds market-specific prompts.</div>
+      <div class="submit-note"><strong>Step 1 — Analyse your product</strong>AI examines your image &amp; builds tailored prompts.</div>
       <button class="btn-gen" id="analyseBtn" onclick="onAnalyseClick()" disabled>Analyse Image <span class="arr">→</span></button>
     </div>
 
@@ -816,11 +868,9 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
       <div class="pp-header">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span class="phase-badge p2">Phase 2</span><span style="font-size:12px;color:var(--muted);">Review &amp; select — then generate</span></div>
         <div class="pp-title">AI generated <span>prompts</span></div>
-        <div class="pp-sub">Prompts built from your Google Sheet config. Click ✓ to select/deselect. Edit any prompt directly. Changes are preserved when generating.</div>
+        <div class="pp-sub">Click ✓ to select/deselect. Edit any prompt before generating. Changes are preserved.</div>
       </div>
       <div class="pp-body">
-
-        <!-- 1. Hero -->
         <div class="prompt-card selected" id="card-hero">
           <div class="pc-head">
             <div class="pc-check" id="chk-hero" onclick="toggleCard(event,'hero')">✓</div>
@@ -835,22 +885,20 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
           </div>
         </div>
 
-        <!-- 2. Infographic -->
         <div class="prompt-card selected" id="card-infographic">
           <div class="pc-head">
             <div class="pc-check" id="chk-infographic" onclick="toggleCard(event,'infographic')">✓</div>
             <div class="pc-dot info"></div>
-            <div class="pc-label"><div class="pc-label-main">2 · Infographic</div><div class="pc-label-sub">Feature callout image with 4 labels</div></div>
+            <div class="pc-label"><div class="pc-label-main">2 · Infographic</div><div class="pc-label-sub">Feature callout with key labels</div></div>
             <span class="pc-badge optional">Optional</span>
           </div>
           <div class="pc-body">
             <textarea class="prompt-ta teal" id="ta-infographic" maxlength="500" placeholder="Infographic prompt…" oninput="updateCounter('infographic',500)"></textarea>
             <div class="char-counter" id="cc-infographic">0 / 500</div>
-            <div class="prompt-hint">💡 Product on right, features list on left. Pleasant background, no connector lines.</div>
+            <div class="prompt-hint">💡 Key features from Section 2 are used as callouts automatically.</div>
           </div>
         </div>
 
-        <!-- 3. Lifestyle 1 -->
         <div class="prompt-card selected teal" id="card-lifestyle">
           <div class="pc-head">
             <div class="pc-check" id="chk-lifestyle" onclick="toggleCard(event,'lifestyle')">✓</div>
@@ -861,56 +909,49 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
           <div class="pc-body">
             <textarea class="prompt-ta teal" id="ta-lifestyle" maxlength="600" placeholder="Lifestyle variant 1 prompt…" oninput="updateCounter('lifestyle',600)"></textarea>
             <div class="char-counter" id="cc-lifestyle">0 / 600</div>
-            <div class="prompt-hint">💡 Face, location &amp; lifestyle context pulled from Google Sheet config.</div>
+            <div class="prompt-hint">💡 Avatar, location &amp; context resolved from your selections above.</div>
           </div>
         </div>
 
-        <!-- 4. Lifestyle 2 -->
         <div class="prompt-card teal" id="card-lifestyle2">
           <div class="pc-head">
             <div class="pc-check" id="chk-lifestyle2" onclick="toggleCard(event,'lifestyle2')"></div>
             <div class="pc-dot life"></div>
-            <div class="pc-label"><div class="pc-label-main">4 · Lifestyle Variant 2</div><div class="pc-label-sub">Second scene — different angle or setting</div></div>
+            <div class="pc-label"><div class="pc-label-main">4 · Lifestyle Variant 2</div><div class="pc-label-sub">Second scene — different angle</div></div>
             <span class="pc-badge optional">Optional</span>
           </div>
           <div class="pc-body" style="display:none">
             <textarea class="prompt-ta teal" id="ta-lifestyle2" maxlength="600" placeholder="Lifestyle variant 2 prompt…" oninput="updateCounter('lifestyle2',600)"></textarea>
             <div class="char-counter" id="cc-lifestyle2">0 / 600</div>
-            <div class="prompt-hint">💡 Try a different background or activity for variety.</div>
           </div>
         </div>
 
-        <!-- 5. Lifestyle 3 -->
         <div class="prompt-card teal" id="card-lifestyle3">
           <div class="pc-head">
             <div class="pc-check" id="chk-lifestyle3" onclick="toggleCard(event,'lifestyle3')"></div>
             <div class="pc-dot life"></div>
-            <div class="pc-label"><div class="pc-label-main">5 · Lifestyle Variant 3</div><div class="pc-label-sub">Third scene — close-up or detail shot</div></div>
+            <div class="pc-label"><div class="pc-label-main">5 · Lifestyle Variant 3</div><div class="pc-label-sub">Close-up or detail shot</div></div>
             <span class="pc-badge optional">Optional</span>
           </div>
           <div class="pc-body" style="display:none">
             <textarea class="prompt-ta teal" id="ta-lifestyle3" maxlength="600" placeholder="Lifestyle variant 3 prompt…" oninput="updateCounter('lifestyle3',600)"></textarea>
             <div class="char-counter" id="cc-lifestyle3">0 / 600</div>
-            <div class="prompt-hint">💡 Try close-up detail, packaging reveal, or gifting moment.</div>
           </div>
         </div>
 
-        <!-- 5b. Lifestyle 4 -->
         <div class="prompt-card teal" id="card-lifestyle4">
           <div class="pc-head">
             <div class="pc-check" id="chk-lifestyle4" onclick="toggleCard(event,'lifestyle4')"></div>
             <div class="pc-dot life"></div>
-            <div class="pc-label"><div class="pc-label-main">5b · Lifestyle Variant 4</div><div class="pc-label-sub">Fourth scene — gifting, packaging or detail</div></div>
+            <div class="pc-label"><div class="pc-label-main">5b · Lifestyle Variant 4</div><div class="pc-label-sub">Gifting, packaging or detail</div></div>
             <span class="pc-badge optional">Optional</span>
           </div>
           <div class="pc-body" style="display:none">
             <textarea class="prompt-ta teal" id="ta-lifestyle4" maxlength="600" placeholder="Lifestyle variant 4 prompt…" oninput="updateCounter('lifestyle4',600)"></textarea>
             <div class="char-counter" id="cc-lifestyle4">0 / 600</div>
-            <div class="prompt-hint">💡 Gifting moment, packaging reveal, or close-up detail.</div>
           </div>
         </div>
 
-        <!-- 6. Dimensions -->
         <div class="prompt-card blue" id="card-dimensions">
           <div class="pc-head">
             <div class="pc-check" id="chk-dimensions" onclick="toggleCard(event,'dimensions')"></div>
@@ -930,7 +971,6 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
           </div>
         </div>
 
-        <!-- 7. Custom -->
         <div class="prompt-card purple" id="card-generic">
           <div class="pc-head">
             <div class="pc-check" id="chk-generic" onclick="toggleCard(event,'generic')"></div>
@@ -941,10 +981,9 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
           <div class="pc-body" style="display:none">
             <textarea class="prompt-ta purple" id="ta-generic" maxlength="600" placeholder="Describe any additional image…" oninput="updateCounter('generic',600)"></textarea>
             <div class="char-counter" id="cc-generic">0 / 600</div>
-            <div class="prompt-hint">💡 Free-form. Packaging, close-ups, or any creative concept.</div>
+            <div class="prompt-hint">💡 Packaging, close-ups, or any creative concept.</div>
           </div>
         </div>
-
       </div>
       <div class="gen-strip">
         <div class="gen-note"><strong>Step 2 — Generate images</strong><span id="selCount" class="sel-count-badge">3 prompts selected</span></div>
@@ -967,95 +1006,89 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
         <div class="done-title">Job <span>complete!</span></div>
         <div class="done-sub">Your images have been generated and saved to Google Drive.</div>
       </div>
-      <div class="email-confirm">
-        <div class="ec-head"><div class="ec-icon">📧</div><div><div class="ec-label">Results emailed to</div><div class="ec-sub">Drive folder link with all generated images</div></div></div>
-        <div class="ec-address"><div class="ec-bullet"></div><span id="emailConfirmAddr"></span></div>
+      <div id="imgsGrid" class="imgs-grid"></div>
+      <div class="done-actions">
+        <button class="btn-dl-all" id="btnDlAll" onclick="downloadAllImages()">⬇ Download All Images</button>
       </div>
-      <div id="imgsRow" class="imgs-row"></div>
-      <!-- Drive folder link removed — download via individual fileId buttons -->
       <button class="btn-reset" onclick="askFeedback()">← Generate for another product</button>
     </div>
-
   </div>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  SERVICE STATUS — edit only these lines to update banner
-//  state: 'operational' | 'degraded' | 'outage'
-// ══════════════════════════════════════════════════════
-const SERVICE_STATUS = {
-  state:   'operational',
-  title:   '',
-  message: ''
-};
-// Examples:
-// { state:'degraded', title:'Slower than usual', message:'Image generation may take longer. We are looking into it.' }
-// { state:'outage',   title:'Service disruption', message:'Generation is temporarily unavailable. Check back shortly.' }
-
-// ══════════════════════════════════════════════════════
-//  CONFIG
-// ══════════════════════════════════════════════════════
+// ══ CONFIG ══
+const SERVICE_STATUS = { state:'operational', title:'', message:'' };
 const SUPABASE_URL      = 'https://ekhpjzoqznkxhkuythmp.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_w52EUIDtKfZ5OwXrgxochw_lFNOtKuL';
 const ANALYSE_WEBHOOK   = 'https://n8n.vinmediaai.online/webhook/amazon-listing-analyse';
 const GENERATE_WEBHOOK  = 'https://n8n.vinmediaai.online/webhook/amazon-listing-generate';
-const REMBG_SAVE_WEBHOOK = 'https://n8n.vinmediaai.online/webhook/save-rembg-result';
+const FEEDBACK_WEBHOOK  = 'https://n8n.vinmediaai.online/webhook/amazon-listing-feedback';
 const DRIVE_FOLDER      = '1dOWQloKxJFNTU0PF2WfjF9AL0EPu-VA_';
-const SHEET_ID          = '17iyN3ZDFdaDKUTQWhkIfUGs2Dwy4cn7pIRj5rqcMLNg';
-const SHEET_API_KEY     = 'YOUR_GOOGLE_API_KEY';
-const MAX_USES          = 5;
-const USE_PERIOD_DAYS   = 10;
-
+const MAX_USES = 5;
+const USE_PERIOD_DAYS = 10;
 const CHAR_LIMITS = { hero:500, infographic:500, lifestyle:600, lifestyle2:600, lifestyle3:600, lifestyle4:600, dimensions:400, generic:600 };
 
-// ══════════════════════════════════════════════════════
-//  INIT STATUS BANNER
-// ══════════════════════════════════════════════════════
+// Subcategory map
+const SUBCATS = {
+  'ride-on-toys': ['Electric Cars','Motorcycles','Scooters','Tricycles','Balance Bikes'],
+  'outdoor-toys': ['Water Toys','Sand Toys','Swing Sets','Trampolines','Sports Sets'],
+  'educational-toys': ['Puzzles','Building Blocks','STEM Kits','Art & Craft','Flash Cards'],
+  'baby-products': ['Strollers','Car Seats','Baby Monitors','Feeding','Bath Products'],
+  'smartphones': ['Cases & Covers','Chargers','Screen Protectors','Stands','Cables'],
+  'headphones': ['Over-ear','In-ear','True Wireless','Gaming Headsets','Speaker'],
+  'cookware': ['Pans','Pots','Bakeware','Knives','Boards'],
+  'clothing': ['T-Shirts','Dresses','Tops','Bottoms','Outerwear'],
+  'footwear': ['Sneakers','Sandals','Formal','Boots','Sports'],
+  'skincare': ['Moisturizers','Serums','Sunscreen','Face Wash','Masks'],
+  'fitness': ['Yoga','Weights','Resistance Bands','Cardio','Recovery'],
+};
+
+// Location note map
+const LOCATION_NOTE = {
+  india:'Indian context', american:'American context', chinese:'Chinese context',
+  japanese:'Japanese context', korean:'Korean context', european:'European context',
+  arabic:'Arabic / Middle East context', australian:'Australian context',
+  brazilian:'Brazilian context', african:'African context', global:'Global / Neutral context'
+};
+
+// ══ STATUS BANNER ══
 (function(){
-  if(SERVICE_STATUS.state === 'operational') return;
-  const b = document.getElementById('statusBanner');
+  if(SERVICE_STATUS.state==='operational') return;
+  const b=document.getElementById('statusBanner');
   b.classList.add(SERVICE_STATUS.state);
-  document.getElementById('sbIco').textContent = SERVICE_STATUS.state === 'outage' ? '🚨' : '⚠️';
-  document.getElementById('statusTitle').textContent = SERVICE_STATUS.title;
-  document.getElementById('statusMsg').textContent   = ' ' + SERVICE_STATUS.message;
+  document.getElementById('sbIco').textContent=SERVICE_STATUS.state==='outage'?'🚨':'⚠️';
+  document.getElementById('statusTitle').textContent=SERVICE_STATUS.title;
+  document.getElementById('statusMsg').textContent=' '+SERVICE_STATUS.message;
 })();
 
-// ══════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════
-let currentUser   = null, usageData = null;
-let queueJobId    = null, queuePollInt = null;
-let pendingEmail  = '', pendingAnalyse = false;
-let faceMode      = 'market';
-let marketStyle   = 'indian';
-let avatarId      = '';
-let themeId       = '';
-let lang          = 'en';
+// ══ STATE ══
+let currentUser=null, usageData=null;
+let queueJobId=null, queuePollInt=null;
+let pendingEmail='', pendingAnalyse=false;
+let avatarId='dynamic', avatarCountry='india';
+let locationVariant='indoor home hall';
+let lang='en';
 let file=null, rembgBlobURL=null, rembgMode='use';
-let analysisData  = null, runFolderLink = null;
-let fbRating      = 0;
+let analysisData=null, runFolderLink=null;
+let fbRating=0;
+let generatedImages=[];
+const selectedCards=new Set(['hero','infographic','lifestyle']);
 
-const selectedCards = new Set(['hero','infographic','lifestyle']);
-
-// ══════════════════════════════════════════════════════
-//  CHAR COUNTER
-// ══════════════════════════════════════════════════════
-function updateCounter(key, max){
-  const ta=document.getElementById('ta-'+key), cc=document.getElementById('cc-'+key);
-  if(!ta||!cc) return;
+// ══ CHAR COUNTER ══
+function updateCounter(key,max){
+  const ta=document.getElementById('ta-'+key),cc=document.getElementById('cc-'+key);
+  if(!ta||!cc)return;
   const len=ta.value.length;
   cc.textContent=len+' / '+max;
   cc.className='char-counter'+(len>=max?' over':len>=max*.8?' warn':'');
 }
 
-// ══════════════════════════════════════════════════════
-//  AUTH MODAL
-// ══════════════════════════════════════════════════════
+// ══ AUTH MODAL ══
 function openModal(tab='signup'){ switchTab(tab); document.getElementById('authModal').classList.add('on'); }
 function closeModal(){ document.getElementById('authModal').classList.remove('on'); }
-document.getElementById('authModal').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+document.getElementById('authModal').addEventListener('click',function(e){ if(e.target===this)closeModal(); });
 function switchTab(tab){
   document.getElementById('tabSignup').classList.toggle('active',tab==='signup');
   document.getElementById('tabLogin').classList.toggle('active',tab==='login');
@@ -1068,9 +1101,7 @@ function switchTab(tab){
 function setBtnLoad(id,on){ const b=document.getElementById(id); b.classList.toggle('loading',on); b.disabled=on; }
 function setMsg(id,msg,type='err'){ const el=document.getElementById(id); el.textContent=msg; el.className='modal-msg '+type; }
 
-// ══════════════════════════════════════════════════════
-//  SUPABASE
-// ══════════════════════════════════════════════════════
+// ══ SUPABASE ══
 async function sbPost(path,body,token){
   const h={'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token||SUPABASE_ANON_KEY}`};
   const r=await fetch(SUPABASE_URL+path,{method:'POST',headers:h,body:JSON.stringify(body)});
@@ -1086,11 +1117,9 @@ async function sbDB(method,table,params,body){
   return r.json();
 }
 
-// ══════════════════════════════════════════════════════
-//  AUTH FLOWS
-// ══════════════════════════════════════════════════════
+// ══ AUTH FLOWS ══
 async function doSignup(){
-  const email=document.getElementById('suEmail').value.trim(), pass=document.getElementById('suPass').value;
+  const email=document.getElementById('suEmail').value.trim(),pass=document.getElementById('suPass').value;
   if(!email||!pass){ setMsg('suMsg','Please fill in all fields.'); return; }
   if(pass.length<6){ setMsg('suMsg','Password must be at least 6 characters.'); return; }
   setBtnLoad('btnSignup',true);
@@ -1139,7 +1168,7 @@ async function resendCode(){
   setTimeout(()=>{ document.getElementById('btnResend').disabled=false; },30000);
 }
 async function doLogin(){
-  const email=document.getElementById('liEmail').value.trim(), pass=document.getElementById('liPass').value;
+  const email=document.getElementById('liEmail').value.trim(),pass=document.getElementById('liPass').value;
   if(!email||!pass){ setMsg('liMsg','Please enter your email and password.'); return; }
   setBtnLoad('btnLogin',true);
   const d=await sbPost('/auth/v1/token?grant_type=password',{email,password:pass});
@@ -1168,17 +1197,15 @@ function doLogout(){
   resetForm(); toast('Signed out.','ok');
 }
 
-// ══════════════════════════════════════════════════════
-//  USAGE
-// ══════════════════════════════════════════════════════
+// ══ USAGE ══
 async function loadUsage(){
   if(!currentUser) return;
   try{
     const rows=await sbDB('GET','usage_tracking',`?email=eq.${encodeURIComponent(currentUser.email)}&select=count,period_start`);
-    const now=Date.now(), pMs=USE_PERIOD_DAYS*86400000;
+    const now=Date.now(),pMs=USE_PERIOD_DAYS*86400000;
     if(!rows||!rows.length){ usageData={count:0,remaining:MAX_USES,allowed:true}; }
     else{
-      const row=rows[0], ps=new Date(row.period_start).getTime();
+      const row=rows[0],ps=new Date(row.period_start).getTime();
       if(now-ps>pMs){
         await sbDB('PATCH','usage_tracking',`?email=eq.${encodeURIComponent(currentUser.email)}`,{count:0,period_start:new Date().toISOString(),updated_at:new Date().toISOString()});
         usageData={count:0,remaining:MAX_USES,allowed:true};
@@ -1214,9 +1241,7 @@ function updateUsageUI(){
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  QUEUE
-// ══════════════════════════════════════════════════════
+// ══ QUEUE ══
 async function joinQueue(){
   if(!currentUser) return {position:1};
   try{
@@ -1258,16 +1283,80 @@ async function waitForSlot(){
 function showQB(pos,sec){ document.getElementById('queueBanner').classList.add('on'); document.getElementById('qbNum').textContent='#'+pos; document.getElementById('qbMsg').textContent=pos===1?"you're next!":'position in queue'; document.getElementById('qbEta').textContent=sec?'~'+Math.round(sec/60)+' min wait':''; }
 function hideQB(){ document.getElementById('queueBanner').classList.remove('on'); }
 
-// ══════════════════════════════════════════════════════
-//  STYLE CONTEXT — resolved from Google Sheet in workflow
-//  Frontend just passes market/avatarId/themeId/category
-//  No hardcoded fallback map — sheet is single source of truth
-// ══════════════════════════════════════════════════════
+window.addEventListener('beforeunload',()=>{
+  if(queueJobId&&currentUser){
+    const url=`${SUPABASE_URL}/rest/v1/job_queue?job_id=eq.${queueJobId}`;
+    navigator.sendBeacon(url+'&_method=DELETE',JSON.stringify({}));
+    try{ const xhr=new XMLHttpRequest(); xhr.open('DELETE',url,false); xhr.setRequestHeader('apikey',SUPABASE_ANON_KEY); xhr.setRequestHeader('Authorization','Bearer '+(currentUser.access_token||SUPABASE_ANON_KEY)); xhr.send(); }catch(e){}
+  }
+});
 
-// ══════════════════════════════════════════════════════
-//  FILE UPLOAD
-// ══════════════════════════════════════════════════════
-const fileInput=document.getElementById('fileInput'), uploadZone=document.getElementById('uploadZone');
+// ══ CATEGORY / SUBCATEGORY ══
+function onCategoryChange(){
+  const cat=document.getElementById('category').value;
+  const wrap=document.getElementById('subcatWrap');
+  const sel=document.getElementById('subcategory');
+  const subs=SUBCATS[cat]||[];
+  if(subs.length){
+    sel.innerHTML='<option value="">Select sub-category…</option>'+subs.map(s=>`<option value="${s.toLowerCase().replace(/\s+/g,'-')}">${s}</option>`).join('');
+    wrap.style.display='block';
+  } else {
+    sel.innerHTML='<option value="">Select sub-category…</option>';
+    wrap.style.display='none';
+  }
+  validate();
+}
+
+// ══ AVATAR & COUNTRY ══
+function selectCountry(el){
+  document.querySelectorAll('.av-country-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  avatarCountry=el.dataset.country;
+  // Show correct grid
+  document.querySelectorAll('.avatar-grid-wrap').forEach(g=>g.classList.remove('on'));
+  const grid=document.getElementById('avGrid-'+avatarCountry);
+  if(grid) grid.classList.add('on');
+  // Auto-select dynamic for this country
+  avatarId='dynamic';
+  document.querySelectorAll('.av-dyn-card,.av-card').forEach(c=>c.classList.remove('on'));
+  const dynCard=document.getElementById('avDyn-'+avatarCountry);
+  if(dynCard){ dynCard.classList.add('on'); dynCard.querySelector('.av-dyn-check').textContent='✓'; }
+  // Update location note
+  document.getElementById('locationNote').innerHTML=`Location will be set to <strong style="color:var(--teal)">${LOCATION_NOTE[avatarCountry]||'global context'}</strong> based on your avatar selection.`;
+}
+
+function selectAvatar(el){
+  // Deselect all in current country grid
+  const grid=document.getElementById('avGrid-'+avatarCountry);
+  if(grid){
+    grid.querySelectorAll('.av-dyn-card,.av-card').forEach(c=>{
+      c.classList.remove('on');
+      const chk=c.querySelector('.av-dyn-check');
+      if(chk) chk.textContent='';
+    });
+  }
+  el.classList.add('on');
+  avatarId=el.dataset.avatar||'dynamic';
+  // Update check mark if dynamic card
+  const chk=el.querySelector('.av-dyn-check');
+  if(chk) chk.textContent='✓';
+}
+
+// ══ LOCATION ══
+function selectLocation(el){
+  document.querySelectorAll('.loc-card').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  locationVariant=el.dataset.loc;
+}
+
+// ══ LANGUAGE ══
+document.querySelectorAll('.lp').forEach(p=>p.addEventListener('click',()=>{
+  document.querySelectorAll('.lp').forEach(x=>x.classList.remove('on'));
+  p.classList.add('on'); lang=p.dataset.lang;
+}));
+
+// ══ FILE UPLOAD ══
+const fileInput=document.getElementById('fileInput'),uploadZone=document.getElementById('uploadZone');
 fileInput.addEventListener('change',e=>e.target.files[0]&&setFile(e.target.files[0]));
 uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag')});
 uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag'));
@@ -1292,65 +1381,26 @@ function setFile(f){
   };
   r.readAsDataURL(f);
 }
-function clearImage(){file=null;fileInput.value='';document.getElementById('prevWrap').classList.remove('on');uploadZone.style.display='block';document.getElementById('uploadRing').textContent='📷';document.getElementById('btnRembg').disabled=true;document.getElementById('rembgResult').classList.remove('on');document.getElementById('rembgProg').classList.remove('on');if(rembgBlobURL){URL.revokeObjectURL(rembgBlobURL);rembgBlobURL=null;}validate();}
-
-// ══════════════════════════════════════════════════════
-//  MODE (market vs avatar)
-// ══════════════════════════════════════════════════════
-function setMode(mode){
-  faceMode=mode;
-  document.getElementById('modeMarket').classList.toggle('active',mode==='market');
-  document.getElementById('modeAvatar').classList.toggle('active',mode==='avatar');
-  document.getElementById('marketStyleSection').style.display=mode==='market'?'block':'none';
-  document.getElementById('avatarSection').classList.toggle('on',mode==='avatar');
-  if(mode==='market') avatarId='';
-  else marketStyle='';
+function clearImage(){
+  file=null; fileInput.value='';
+  document.getElementById('prevWrap').classList.remove('on');
+  uploadZone.style.display='block';
+  document.getElementById('uploadRing').textContent='📷';
+  document.getElementById('btnRembg').disabled=true;
+  document.getElementById('rembgResult').classList.remove('on');
+  document.getElementById('rembgProg').classList.remove('on');
+  if(rembgBlobURL){URL.revokeObjectURL(rembgBlobURL);rembgBlobURL=null;}
+  validate();
 }
 
-// ══════════════════════════════════════════════════════
-//  MARKET STYLE
-// ══════════════════════════════════════════════════════
-function selectStyle(el){ document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('on')); el.classList.add('on'); marketStyle=el.dataset.style; }
-
-// ══════════════════════════════════════════════════════
-//  AVATAR
-// ══════════════════════════════════════════════════════
-function selectAvMarket(el){
-  document.querySelectorAll('.av-market-tab').forEach(t=>t.classList.remove('on')); el.classList.add('on');
-  document.querySelectorAll('.avatar-grid-wrap').forEach(g=>g.classList.remove('on'));
-  const g=document.getElementById('avGrid-'+el.dataset.avmarket); if(g) g.classList.add('on');
-  document.querySelectorAll('.av-card').forEach(c=>c.classList.remove('on')); avatarId='';
-}
-function selectAvatar(el){ document.querySelectorAll('.av-card').forEach(c=>c.classList.remove('on')); el.classList.add('on'); avatarId=el.dataset.avatar; }
-
-// ══════════════════════════════════════════════════════
-//  THEME (toggle — click again to deselect = auto)
-// ══════════════════════════════════════════════════════
-function selectTheme(el){
-  if(el.classList.contains('on')){ el.classList.remove('on'); themeId=''; }
-  else{ document.querySelectorAll('.theme-pill').forEach(t=>t.classList.remove('on')); el.classList.add('on'); themeId=el.dataset.theme; }
-}
-
-// ══════════════════════════════════════════════════════
-//  LANGUAGE
-// ══════════════════════════════════════════════════════
-document.querySelectorAll('.lp').forEach(p=>p.addEventListener('click',()=>{ document.querySelectorAll('.lp').forEach(x=>x.classList.remove('on')); p.classList.add('on'); lang=p.dataset.lang; }));
-
-// ══════════════════════════════════════════════════════
-//  VALIDATE
-// ══════════════════════════════════════════════════════
+// ══ VALIDATE ══
 function validate(){
   const ok=file&&document.getElementById('category').value&&document.getElementById('productName').value.trim()&&!(usageData&&!usageData.allowed);
   document.getElementById('analyseBtn').disabled=!ok;
 }
 
-// ══════════════════════════════════════════════════════
-//  PROMPT CARDS — UX FIXED
-//  ONLY the .pc-check div has onclick (toggleCard).
-//  The textarea is NEVER inside any clickable ancestor.
-//  This ensures tapping textarea never triggers deselect.
-// ══════════════════════════════════════════════════════
-function toggleCard(event, key){
+// ══ PROMPT CARDS ══
+function toggleCard(event,key){
   event.stopPropagation();
   const card=document.getElementById('card-'+key);
   const chk=document.getElementById('chk-'+key);
@@ -1365,30 +1415,9 @@ function toggleCard(event, key){
     card.classList.add('selected');
     chk.textContent='✓';
     body.style.display='block';
-    // immediately focus textarea so user can type without extra tap
-    setTimeout(()=>{ const ta=document.getElementById('ta-'+key); if(ta) ta.focus(); }, 60);
+    setTimeout(()=>{ const ta=document.getElementById('ta-'+key); if(ta) ta.focus(); },60);
   }
-  
-// ══════════════════════════════════════════════════════
-//  QUEUE — orphan cleanup on page close
-// ══════════════════════════════════════════════════════
-window.addEventListener('beforeunload', () => {
-  if(queueJobId && currentUser) {
-    // Use sendBeacon so it fires even when tab closes
-    const url = `${SUPABASE_URL}/rest/v1/job_queue?job_id=eq.${queueJobId}`;
-    navigator.sendBeacon(url + '&_method=DELETE', JSON.stringify({}));
-    // Also try sync XHR as fallback
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('DELETE', url, false); // synchronous
-      xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
-      xhr.setRequestHeader('Authorization', 'Bearer ' + (currentUser.access_token || SUPABASE_ANON_KEY));
-      xhr.send();
-    } catch(e) {}
-  }
-});
-
-updateSelCount();
+  updateSelCount();
 }
 function updateSelCount(){
   const n=selectedCards.size;
@@ -1396,7 +1425,7 @@ function updateSelCount(){
   document.getElementById('genBtn').disabled=(n===0);
 }
 function buildDimPrompt(){
-  const L=document.getElementById('dimLength').value.trim(), H=document.getElementById('dimHeight').value.trim(), W=document.getElementById('dimWidth').value.trim();
+  const L=document.getElementById('dimLength').value.trim(),H=document.getElementById('dimHeight').value.trim(),W=document.getElementById('dimWidth').value.trim();
   const name=document.getElementById('productName').value.trim()||'product';
   if(L||H||W){
     const dims=[L&&'Length: '+L,H&&'Height: '+H,W&&'Width: '+W].filter(Boolean).join(', ');
@@ -1405,9 +1434,7 @@ function buildDimPrompt(){
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  ANALYSE
-// ══════════════════════════════════════════════════════
+// ══ ANALYSE ══
 function onAnalyseClick(){
   if(!currentUser){ pendingAnalyse=true; openModal('signup'); return; }
   runAnalyse();
@@ -1415,7 +1442,7 @@ function onAnalyseClick(){
 const ASTEPS=[
   {id:'upload',ico:'☁️',name:'Uploading image to Google Drive',ms:4000},
   {id:'analyse',ico:'🔬',name:'AI analysing your product',ms:14000},
-  {id:'prompts',ico:'✍️',name:'Building market-specific prompts',ms:3000}
+  {id:'prompts',ico:'✍️',name:'Building tailored prompts',ms:3000}
 ];
 async function runAnalyse(){
   await loadUsage();
@@ -1429,34 +1456,31 @@ async function runAnalyse(){
       method:'POST',
       headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
       body:JSON.stringify({
-        imageBase64,imageName:file.name,imageMimeType:file.type||'image/jpeg',
+        imageBase64, imageName:file.name, imageMimeType:file.type||'image/jpeg',
         category:document.getElementById('category').value,
-        market:faceMode==='market'?marketStyle:'global',
-        avatarId:faceMode==='avatar'?avatarId:'',
-        themeId,faceMode,
+        subcategory:document.getElementById('subcategory').value||'',
+        avatarId, avatarCountry, locationVariant,
         productName:document.getElementById('productName').value.trim(),
         features:document.getElementById('features').value.trim(),
-        amazonLink:document.getElementById('amazonLink').value.trim(),
-        language:lang,userEmail:currentUser.email,email:currentUser.email,
+        language:lang, userEmail:currentUser.email, email:currentUser.email,
         driveFolderId:DRIVE_FOLDER
       })
     });
     if(!res.ok) throw new Error('Analyse error — HTTP '+res.status);
-    let raw; try{raw=await res.json();}catch(e){throw new Error('Non-JSON response');}
-    if(typeof raw==='string') try{raw=JSON.parse(raw);}catch(e){}
+    let raw; try{ raw=await res.json(); }catch(e){ throw new Error('Non-JSON response'); }
+    if(typeof raw==='string') try{ raw=JSON.parse(raw); }catch(e){}
     if(Array.isArray(raw)) raw=raw[0]||{};
     analysisData=raw;
     const a=raw, nest=a.analysis||{};
     const _fid=a.outputFolderId||a.driveFolderId||'';
     if(_fid) runFolderLink='https://drive.google.com/drive/folders/'+_fid+'?usp=sharing';
-    // Fill prompts
-    setTA('hero',  a.heroPrompt||nest.heroPrompt||'');
+    setTA('hero', a.heroPrompt||nest.heroPrompt||'');
     setTA('infographic', a.infographicPrompt||nest.infographicPrompt||'');
-    setTA('lifestyle',   a.lifestylePrompt||nest.lifestylePrompt||a.lifestylePrompt1||'');
-    setTA('lifestyle2',  a.lifestylePrompt2||nest.lifestylePrompt2||'');
-    setTA('lifestyle3',  a.lifestylePrompt3||nest.lifestylePrompt3||'');
-    setTA('lifestyle4',  a.lifestylePrompt4||nest.lifestylePrompt4||'');
-    setTA('dimensions',  a.dimensionPrompt||nest.dimensionPrompt||'');
+    setTA('lifestyle', a.lifestylePrompt||nest.lifestylePrompt||'');
+    setTA('lifestyle2', a.lifestylePrompt2||nest.lifestylePrompt2||'');
+    setTA('lifestyle3', a.lifestylePrompt3||nest.lifestylePrompt3||'');
+    setTA('lifestyle4', a.lifestylePrompt4||nest.lifestylePrompt4||'');
+    setTA('dimensions', a.dimensionPrompt||nest.dimensionPrompt||'');
     const callouts=a.infographicCallouts||nest.infographicCallouts||[];
     if(callouts.length) analysisData.infographicCallouts=callouts;
     Object.keys(CHAR_LIMITS).forEach(k=>updateCounter(k,CHAR_LIMITS[k]));
@@ -1473,12 +1497,10 @@ async function runAnalyse(){
     document.getElementById('analysePanel').classList.remove('on');
   }
 }
-function setTA(key, val){ const el=document.getElementById('ta-'+key); if(el) el.value=val.trim(); }
+function setTA(key,val){ const el=document.getElementById('ta-'+key); if(el) el.value=(val||'').trim(); }
 function getTA(key){ const el=document.getElementById('ta-'+key); return el?el.value.trim():''; }
 
-// ══════════════════════════════════════════════════════
-//  GENERATE
-// ══════════════════════════════════════════════════════
+// ══ GENERATE ══
 async function generate(){
   if(!currentUser){ openModal('login'); return; }
   if(!selectedCards.size) return toast('Select at least one prompt.','err');
@@ -1513,17 +1535,15 @@ async function generate(){
       headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
       signal:ctrl.signal,
       body:JSON.stringify({
-        imageBase64,imageName:file.name,imageMimeType:file.type||'image/jpeg',
+        imageBase64, imageName:file.name, imageMimeType:file.type||'image/jpeg',
         category:document.getElementById('category').value,
-        market:faceMode==='market'?marketStyle:'global',
-        avatarId:faceMode==='avatar'?avatarId:'',
-        themeId,faceMode,
+        subcategory:document.getElementById('subcategory').value||'',
+        avatarId, avatarCountry, locationVariant,
         productName:document.getElementById('productName').value.trim(),
         features:document.getElementById('features').value.trim(),
-        amazonLink:document.getElementById('amazonLink').value.trim(),
-        language:lang,userEmail:currentUser.email,email:currentUser.email,
+        language:lang, userEmail:currentUser.email, email:currentUser.email,
         driveFolderId:DRIVE_FOLDER,
-        selectedPrompts:sel,selectedPromptsJson:JSON.stringify(sel),
+        selectedPrompts:sel, selectedPromptsJson:JSON.stringify(sel),
         heroPrompt:getTA('hero'),
         infographicPrompt:getTA('infographic'),
         lifestylePrompt:getTA('lifestyle'),
@@ -1541,7 +1561,7 @@ async function generate(){
     const data=await res.json();
     forceAllDone('pstepsList'); document.getElementById('pbarFill').style.width='100%';
     await releaseQueue(); await incrementUsage(sel.length);
-    showDone(data,currentUser.email);
+    showDone(data);
   }catch(err){
     await releaseQueue();
     if(err.name==='AbortError'){
@@ -1555,36 +1575,78 @@ async function generate(){
     }
   }
 }
+
 const EMOJIS={hero:'🖼️',infographic:'📊',lifestyle:'🏠',lifestyle2:'🏡',lifestyle3:'🌿',lifestyle4:'🎁',dimensions:'📐',generic:'✨'};
-function showDone(data,email){
+const LABELS={hero:'Main Page',infographic:'Infographic',lifestyle:'Lifestyle 1',lifestyle2:'Lifestyle 2',lifestyle3:'Lifestyle 3',lifestyle4:'Lifestyle 4',dimensions:'Dimensions',generic:'Custom'};
+
+function showDone(data){
   document.getElementById('progPanel').classList.remove('on');
-  document.getElementById('emailConfirmAddr').textContent=email;
   const fl=data.driveLink||runFolderLink||('https://drive.google.com/drive/folders/'+DRIVE_FOLDER+'?usp=sharing');
   runFolderLink=fl;
-  const row=document.getElementById('imgsRow'); row.innerHTML='';
-  (data.images||[]).forEach(img=>{
+  generatedImages=data.images||[];
+  const grid=document.getElementById('imgsGrid');
+  grid.innerHTML='';
+
+  generatedImages.forEach(img=>{
     const label=(img.label||'image').toLowerCase();
-    const c=document.createElement('div'); c.className='img-thumb';
-    const _dlUrl=img.fileId?'https://drive.google.com/uc?export=download&id='+img.fileId:(img.downloadUrl||'');
-    c.innerHTML='<div class="img-thumb-head"><span class="img-thumb-emoji">'+(EMOJIS[label]||'🖼️')+'</span><div><div class="img-thumb-label">'+(img.label||'Image')+'</div><div class="img-thumb-name">'+(img.name||'')+'</div></div></div><div class="img-thumb-status">✓ Saved to Drive</div><div class="img-thumb-actions">'+(_dlUrl?'<a class="btn-dl dl" href="'+_dlUrl+'" target="_blank">↓ Download</a>':'')+'</div>';
-    row.appendChild(c);
+    const viewUrl=img.fileId?'https://drive.google.com/file/d/'+img.fileId+'/view':(img.viewUrl||'');
+    const dlUrl=img.fileId?'https://drive.google.com/uc?export=download&id='+img.fileId:(img.downloadUrl||'');
+    const thumbUrl=img.fileId?'https://drive.google.com/thumbnail?id='+img.fileId+'&sz=w400':(img.thumbnailUrl||'');
+
+    const card=document.createElement('div');
+    card.className='img-result-card';
+    card.innerHTML=`
+      <div class="img-result-thumb">
+        ${thumbUrl
+          ?`<img src="${thumbUrl}" alt="${img.label||'Image'}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          :''}
+        <span class="img-placeholder" style="display:${thumbUrl?'none':'flex'}">${EMOJIS[label]||'🖼️'}</span>
+      </div>
+      <div class="img-result-info">
+        <div class="img-result-label">${EMOJIS[label]||'🖼️'} ${LABELS[label]||img.label||'Image'}</div>
+        <div class="img-result-name">${img.name||''}</div>
+      </div>
+      <div class="img-result-status">✓ Saved to Drive</div>
+      <div class="img-result-actions">
+        ${viewUrl?`<a class="btn-dl view" href="${viewUrl}" target="_blank">👁 View</a>`:''}
+        ${dlUrl?`<a class="btn-dl dl" href="${dlUrl}" target="_blank">↓ Download</a>`:''}
+      </div>`;
+    grid.appendChild(card);
   });
+
   document.getElementById('donePanel').classList.add('on');
   document.getElementById('donePanel').scrollIntoView({behavior:'smooth',block:'start'});
-  loadUsage(); toast('🎉 Job complete! Drive link sent to your email.','ok');
+  loadUsage(); toast('🎉 Job complete! Check your Drive for all images.','ok');
 }
+
 function showDoneTimeout(){
   document.getElementById('progPanel').classList.remove('on');
-  document.getElementById('emailConfirmAddr').textContent=currentUser?.email||'';
-
+  generatedImages=[];
+  document.getElementById('imgsGrid').innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">⏳ Images are being processed — check your Google Drive folder shortly.</div>';
   document.getElementById('donePanel').classList.add('on');
   document.getElementById('donePanel').scrollIntoView({behavior:'smooth',block:'start'});
-  toast('⏳ Still processing — check your email or Drive folder.','warn');
+  toast('⏳ Still processing — check your Drive folder.','warn');
 }
 
-// ══════════════════════════════════════════════════════
-//  FEEDBACK
-// ══════════════════════════════════════════════════════
+function downloadAllImages(){
+  if(!generatedImages.length){
+    if(runFolderLink) window.open(runFolderLink,'_blank');
+    return;
+  }
+  generatedImages.forEach((img,i)=>{
+    if(img.fileId){
+      setTimeout(()=>{
+        const a=document.createElement('a');
+        a.href='https://drive.google.com/uc?export=download&id='+img.fileId;
+        a.download=img.name||'image-'+i+'.jpeg';
+        a.target='_blank';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      },i*400);
+    }
+  });
+}
+
+// ══ FEEDBACK ══
 function askFeedback(){
   fbRating=0; document.getElementById('fbText').value='';
   document.querySelectorAll('.star').forEach(s=>s.classList.remove('on'));
@@ -1593,38 +1655,42 @@ function askFeedback(){
 function setRating(v){ fbRating=v; document.querySelectorAll('.star').forEach(s=>s.classList.toggle('on',+s.dataset.val<=v)); }
 async function submitFeedback(){
   const text=document.getElementById('fbText').value.trim();
-  const category=document.getElementById('category').value||'';
-  const market=faceMode==='market'?marketStyle:'avatar:'+avatarId;
   try{
-    await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+'/values/feedback:append?valueInputOption=RAW&key='+SHEET_API_KEY,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({values:[[new Date().toISOString(),fbRating||'',text,category,market]]})
+    await fetch(FEEDBACK_WEBHOOK,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        rating:fbRating||'', feedback:text,
+        userEmail:currentUser?.email||'',
+        category:document.getElementById('category').value||'',
+        subcategory:document.getElementById('subcategory').value||'',
+        avatarId, avatarCountry, locationVariant,
+        productName:document.getElementById('productName').value.trim()
+      })
     });
     toast('Thanks for your feedback! 🙏','ok');
-  }catch(e){}
+  }catch(e){ toast('Feedback submitted.','ok'); }
   document.getElementById('feedbackModal').classList.remove('on');
   resetForm();
 }
 function skipFeedback(){ document.getElementById('feedbackModal').classList.remove('on'); resetForm(); }
 document.getElementById('feedbackModal').addEventListener('click',function(e){ if(e.target===this) skipFeedback(); });
 
-// ══════════════════════════════════════════════════════
-//  PROGRESS HELPERS
-// ══════════════════════════════════════════════════════
+// ══ PROGRESS HELPERS ══
 function showProgress(pid,lid,bid,steps){
   const list=document.getElementById(lid);
-  list.innerHTML=steps.map(s=>'<div class="pstep" id="ps-'+s.id+'"><div class="pstep-ico" id="pico-'+s.id+'">'+s.ico+'</div><div><div class="pstep-name">'+s.name+'</div><div class="pstep-stat" id="pstat-'+s.id+'">Waiting…</div></div></div>').join('');
+  list.innerHTML=steps.map(s=>`<div class="pstep" id="ps-${s.id}"><div class="pstep-ico" id="pico-${s.id}">${s.ico}</div><div><div class="pstep-name">${s.name}</div><div class="pstep-stat" id="pstat-${s.id}">Waiting…</div></div></div>`).join('');
   document.getElementById(pid).classList.add('on');
   document.getElementById(pid).scrollIntoView({behavior:'smooth',block:'center'});
 }
-function markRun(id){ const el=document.getElementById('ps-'+id); if(!el) return; el.classList.add('run'); document.getElementById('pstat-'+id).textContent='Processing…'; }
-function markDone(id){ const el=document.getElementById('ps-'+id); if(!el) return; el.classList.remove('run'); el.classList.add('done'); document.getElementById('pstat-'+id).textContent='Complete ✓'; document.getElementById('pico-'+id).textContent='✅'; }
-function forceAllDone(lid){ document.getElementById(lid)?.querySelectorAll('.pstep').forEach(el=>{ el.classList.remove('run'); el.classList.add('done'); const s=el.querySelector('.pstep-stat'); if(s) s.textContent='Complete ✓'; const i=el.querySelector('.pstep-ico'); if(i) i.textContent='✅'; }); }
+function markRun(id){ const el=document.getElementById('ps-'+id); if(!el)return; el.classList.add('run'); document.getElementById('pstat-'+id).textContent='Processing…'; }
+function markDone(id){ const el=document.getElementById('ps-'+id); if(!el)return; el.classList.remove('run'); el.classList.add('done'); document.getElementById('pstat-'+id).textContent='Complete ✓'; document.getElementById('pico-'+id).textContent='✅'; }
+function forceAllDone(lid){ document.getElementById(lid)?.querySelectorAll('.pstep').forEach(el=>{ el.classList.remove('run'); el.classList.add('done'); const s=el.querySelector('.pstep-stat'); if(s)s.textContent='Complete ✓'; const i=el.querySelector('.pstep-ico'); if(i)i.textContent='✅'; }); }
 async function runSteps(lid,bid,steps){
   const total=steps.reduce((s,x)=>s+x.ms,0); let elapsed=0;
   for(const s of steps){
     const el=document.getElementById('ps-'+s.id),stat=document.getElementById('pstat-'+s.id),ico=document.getElementById('pico-'+s.id);
-    if(!el) continue; el.classList.add('run'); stat.textContent='Processing…';
+    if(!el)continue; el.classList.add('run'); stat.textContent='Processing…';
     await wait(s.ms);
     if(!el.classList.contains('done')){ el.classList.remove('run'); el.classList.add('done'); stat.textContent='Complete ✓'; ico.textContent='✅'; }
     elapsed+=s.ms; document.getElementById(bid).style.width=Math.round(elapsed/total*100)+'%';
@@ -1634,7 +1700,7 @@ async function runStepsAfter(lid,bid,steps,from){
   const total=steps.reduce((s,x)=>s+x.ms,0); let elapsed=steps.slice(0,from).reduce((s,x)=>s+x.ms,0);
   for(const s of steps.slice(from)){
     const el=document.getElementById('ps-'+s.id),stat=document.getElementById('pstat-'+s.id),ico=document.getElementById('pico-'+s.id);
-    if(!el||el.classList.contains('done')) continue;
+    if(!el||el.classList.contains('done'))continue;
     el.classList.add('run'); stat.textContent='Processing…';
     await wait(s.ms);
     if(!el.classList.contains('done')){ el.classList.remove('run'); el.classList.add('done'); stat.textContent='Complete ✓'; ico.textContent='✅'; }
@@ -1644,13 +1710,8 @@ async function runStepsAfter(lid,bid,steps,from){
 function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function toBase64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=()=>rej(new Error('Read failed')); r.readAsDataURL(f); }); }
 
-
-// ══════════════════════════════════════════════════════
-//  REMBG — browser-side AI background removal
-//  Uses rembg-webgpu via esm.sh
-// ══════════════════════════════════════════════════════
+// ══ REMBG ══
 function toggleRembg(){ document.getElementById('rembgSection').classList.toggle('open'); }
-
 function setRembgMode(mode){
   rembgMode=mode;
   document.getElementById('rmodeUse').classList.toggle('on',mode==='use');
@@ -1658,19 +1719,15 @@ function setRembgMode(mode){
   document.getElementById('rembgActionRow').style.display=mode==='strip'?'flex':'none';
   if(mode==='use'){ document.getElementById('rembgResult').classList.remove('on'); document.getElementById('rembgProg').classList.remove('on'); }
 }
-
 async function runRembg(){
   if(!file) return toast('Upload an image first.','err');
-  if(!window._rembgRemoveBackground){
-    toast('AI model is still loading — try again in a moment.','warn'); return;
-  }
+  if(!window._rembgRemoveBackground){ toast('AI model is still loading — try again in a moment.','warn'); return; }
   document.getElementById('btnRembg').disabled=true;
   document.getElementById('rembgProg').classList.add('on');
   document.getElementById('rembgResult').classList.remove('on');
   document.getElementById('rembgProgBar').style.width='0%';
   document.getElementById('rembgProgLbl').textContent='Loading AI model…';
   document.getElementById('rembgProgPhase').textContent='First load ~40MB — cached after that';
-
   window._rembgOnProgress=({phase,progress})=>{
     const pct=Math.min(100,Math.round(progress||0));
     document.getElementById('rembgProgBar').style.width=pct+'%';
@@ -1678,7 +1735,6 @@ async function runRembg(){
     document.getElementById('rembgProgLbl').textContent=labels[phase]||'Working…';
     document.getElementById('rembgProgPhase').textContent=phase+' — '+pct+'%';
   };
-
   try{
     const objectURL=URL.createObjectURL(file);
     const resultURL=await window._rembgRemoveBackground(objectURL);
@@ -1698,7 +1754,6 @@ async function runRembg(){
     toast('❌ Failed: '+err.message,'err');
   }
 }
-
 function downloadRembg(){
   if(!rembgBlobURL){ toast('Nothing to download yet.','warn'); return; }
   const a=document.createElement('a');
@@ -1706,7 +1761,6 @@ function downloadRembg(){
   a.download=(file?.name?.replace(/\.[^.]+$/,'')||'product')+'-nobg.png';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
-
 async function useRembgImage(){
   if(!rembgBlobURL){ toast('Remove background first.','err'); return; }
   const r=await fetch(rembgBlobURL);
@@ -1724,12 +1778,10 @@ async function useRembgImage(){
   toast('✅ Using bg-removed image. Fill in details and Analyse!','ok');
 }
 
-
-// ══════════════════════════════════════════════════════
-//  RESET
-// ══════════════════════════════════════════════════════
+// ══ RESET ══
 function resetForm(){
   clearImage(); analysisData=null; runFolderLink=null; queueJobId=null; pendingAnalyse=false;
+  generatedImages=[];
   if(rembgBlobURL){URL.revokeObjectURL(rembgBlobURL);rembgBlobURL=null;}
   document.getElementById('rembgResult').classList.remove('on');
   document.getElementById('rembgProg').classList.remove('on');
@@ -1738,69 +1790,41 @@ function resetForm(){
   ['donePanel','progPanel','analysePanel','promptPanel'].forEach(id=>document.getElementById(id).classList.remove('on'));
   document.getElementById('pbarFill').style.width='0%';
   document.getElementById('apbarFill').style.width='0%';
-  ['category','productName','features','amazonLink','dimLength','dimHeight','dimWidth'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['category','productName','features','dimLength','dimHeight','dimWidth'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  document.getElementById('subcategory').value='';
+  document.getElementById('subcatWrap').style.display='none';
   Object.keys(CHAR_LIMITS).forEach(k=>{
     setTA(k,''); updateCounter(k,CHAR_LIMITS[k]);
-    const card=document.getElementById('card-'+k), chk=document.getElementById('chk-'+k), body=card?.querySelector('.pc-body');
-    if(!card) return;
-    if(['hero','infographic','lifestyle'].includes(k)){ card.classList.add('selected'); chk.textContent='✓'; if(body) body.style.display='block'; }
-    else{ card.classList.remove('selected'); chk.textContent=''; if(body) body.style.display='none'; }
+    const card=document.getElementById('card-'+k),chk=document.getElementById('chk-'+k),body=card?.querySelector('.pc-body');
+    if(!card)return;
+    if(['hero','infographic','lifestyle'].includes(k)){ card.classList.add('selected'); chk.textContent='✓'; if(body)body.style.display='block'; }
+    else{ card.classList.remove('selected'); chk.textContent=''; if(body)body.style.display='none'; }
   });
   document.querySelectorAll('.lp').forEach(p=>p.classList.remove('on'));
   document.querySelector('[data-lang="en"]').classList.add('on');
-  setMode('market');
-  document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('on'));
-  document.querySelector('[data-style="indian"]').classList.add('on');
-  document.querySelectorAll('.theme-pill').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.av-card').forEach(c=>c.classList.remove('on'));
-  lang='en'; marketStyle='indian'; avatarId=''; themeId='';
-  document.getElementById('imgsRow').innerHTML='';
-  hideQB(); 
-// ══════════════════════════════════════════════════════
-//  QUEUE — orphan cleanup on page close
-// ══════════════════════════════════════════════════════
-window.addEventListener('beforeunload', () => {
-  if(queueJobId && currentUser) {
-    // Use sendBeacon so it fires even when tab closes
-    const url = `${SUPABASE_URL}/rest/v1/job_queue?job_id=eq.${queueJobId}`;
-    navigator.sendBeacon(url + '&_method=DELETE', JSON.stringify({}));
-    // Also try sync XHR as fallback
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('DELETE', url, false); // synchronous
-      xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
-      xhr.setRequestHeader('Authorization', 'Bearer ' + (currentUser.access_token || SUPABASE_ANON_KEY));
-      xhr.send();
-    } catch(e) {}
-  }
-});
-
-updateSelCount(); validate();
+  // Reset avatar
+  avatarId='dynamic'; avatarCountry='india';
+  document.querySelectorAll('.av-country-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelector('[data-country="india"]').classList.add('on');
+  document.querySelectorAll('.avatar-grid-wrap').forEach(g=>g.classList.remove('on'));
+  document.getElementById('avGrid-india').classList.add('on');
+  document.querySelectorAll('.av-dyn-card,.av-card').forEach(c=>{ c.classList.remove('on'); const chk=c.querySelector('.av-dyn-check'); if(chk)chk.textContent=''; });
+  const dynIndia=document.getElementById('avDyn-india');
+  if(dynIndia){ dynIndia.classList.add('on'); dynIndia.querySelector('.av-dyn-check').textContent='✓'; }
+  // Reset location
+  locationVariant='indoor home hall';
+  document.querySelectorAll('.loc-card').forEach(c=>c.classList.remove('on'));
+  document.querySelector('[data-loc="indoor home hall"]').classList.add('on');
+  document.getElementById('locationNote').innerHTML='Location will be set to <strong style="color:var(--teal)">Indian context</strong> based on your avatar selection.';
+  document.getElementById('imgsGrid').innerHTML='';
+  lang='en'; hideQB();
+  updateSelCount(); validate();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function toast(msg,type='ok'){ const el=document.getElementById('toast'); el.innerHTML=msg; el.className='toast '+type+' show'; setTimeout(()=>el.classList.remove('show'),4500); }
 
-
-// ══════════════════════════════════════════════════════
-//  QUEUE — orphan cleanup on page close
-// ══════════════════════════════════════════════════════
-window.addEventListener('beforeunload', () => {
-  if(queueJobId && currentUser) {
-    // Use sendBeacon so it fires even when tab closes
-    const url = `${SUPABASE_URL}/rest/v1/job_queue?job_id=eq.${queueJobId}`;
-    navigator.sendBeacon(url + '&_method=DELETE', JSON.stringify({}));
-    // Also try sync XHR as fallback
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('DELETE', url, false); // synchronous
-      xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
-      xhr.setRequestHeader('Authorization', 'Bearer ' + (currentUser.access_token || SUPABASE_ANON_KEY));
-      xhr.send();
-    } catch(e) {}
-  }
-});
-
+// Init
 updateSelCount();
 </script>
 </body>
