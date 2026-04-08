@@ -471,10 +471,22 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
       <div class="google-coming">🔧 Google login coming soon</div>
       <div class="modal-divider"><span>or sign in with email</span></div>
       <div class="m-field"><label>Email</label><div class="iw"><span class="iico">✉️</span><input type="email" id="liEmail" placeholder="you@email.com" autocomplete="email"></div></div>
-      <div class="m-field"><label>Password</label><div class="iw"><span class="iico">🔒</span><input type="password" id="liPass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div></div>
+      <div class="m-field">
+        <label style="display:flex;align-items:center;justify-content:space-between">Password <a onclick="switchTab('reset')" style="font-size:10px;color:var(--accent);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600">Forgot password?</a></label>
+        <div class="iw"><span class="iico">🔒</span><input type="password" id="liPass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      </div>
       <div class="modal-msg" id="liMsg"></div>
       <button class="btn-modal" id="btnLogin" onclick="doLogin()"><div class="spin"></div><span class="lbl">Sign In →</span></button>
       <div class="modal-footer">No account yet? <a onclick="switchTab('signup')">Create one free</a></div>
+    </div>
+    <!-- PASSWORD RESET VIEW -->
+    <div class="modal-view" id="viewReset">
+      <div class="modal-heading">Reset password</div>
+      <div class="modal-sub">Enter your email and we'll send you a reset link.</div>
+      <div class="m-field"><label>Email</label><div class="iw"><span class="iico">✉️</span><input type="email" id="resetEmail" placeholder="you@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')doPasswordReset()"></div></div>
+      <div class="modal-msg" id="resetMsg"></div>
+      <button class="btn-modal" id="btnReset" onclick="doPasswordReset()"><div class="spin"></div><span class="lbl">Send Reset Link →</span></button>
+      <div class="modal-footer"><a onclick="switchTab('login')">← Back to sign in</a></div>
     </div>
   </div>
 </div>
@@ -501,12 +513,12 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
   </div>
 </div>
 
-<!-- QUEUE BANNER -->
+<!-- SENDING INDICATOR -->
 <div id="queueBanner">
   <div class="qb-inner">
     <div class="qb-pulse"></div>
-    <div class="qb-text">You're in the queue — <strong id="qbMsg">waiting for your slot</strong></div>
-    <div class="qb-badge" id="qbNum">#—</div>
+    <div class="qb-text"><strong id="qbMsg">Sending to AI…</strong></div>
+    <div class="qb-badge" id="qbNum" style="display:none"></div>
     <div class="qb-eta" id="qbEta"></div>
   </div>
 </div>
@@ -1022,12 +1034,14 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 const SERVICE_STATUS = { state:'operational', title:'', message:'' };
 const SUPABASE_URL      = 'https://ekhpjzoqznkxhkuythmp.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_w52EUIDtKfZ5OwXrgxochw_lFNOtKuL';
-const ANALYSE_WEBHOOK   = 'https://n8n.vinmediaai.online/webhook/amazon-listing-analyse';
-const GENERATE_WEBHOOK  = 'https://n8n.vinmediaai.online/webhook/amazon-listing-generate';
+const ANALYSE_SUBMIT    = 'https://n8n.vinmediaai.online/webhook/listing-analyse-submit';
+const QUEUE_SUBMIT      = 'https://n8n.vinmediaai.online/webhook/listing-queue-submit';
+const JOB_STATUS        = 'https://n8n.vinmediaai.online/webhook/listing-job-status';
 const FEEDBACK_WEBHOOK  = 'https://n8n.vinmediaai.online/webhook/amazon-listing-feedback';
 const DRIVE_FOLDER      = '1dOWQloKxJFNTU0PF2WfjF9AL0EPu-VA_';
-const MAX_USES = 5;
-const USE_PERIOD_DAYS = 10;
+const MAX_USES          = 5;
+const USE_PERIOD_DAYS   = 10;
+const POLL_INTERVAL_MS  = 4000;  // poll every 4 seconds
 const CHAR_LIMITS = { hero:500, infographic:500, lifestyle:600, lifestyle2:600, lifestyle3:600, lifestyle4:600, dimensions:400, generic:600 };
 
 // Subcategory map
@@ -1066,6 +1080,7 @@ const LOCATION_NOTE = {
 // ══ STATE ══
 let currentUser=null, usageData=null;
 let queueJobId=null, queuePollInt=null;
+let pollInterval=null, currentJobId=null, analyseJobId=null;
 let pendingEmail='', pendingAnalyse=false;
 let avatarId='dynamic', avatarCountry='india';
 let locationVariant='indoor home hall';
@@ -1091,15 +1106,16 @@ function closeModal(){ document.getElementById('authModal').classList.remove('on
 document.getElementById('authModal').addEventListener('click',function(e){ if(e.target===this)closeModal(); });
 function switchTab(tab){
   document.getElementById('tabSignup').classList.toggle('active',tab==='signup');
-  document.getElementById('tabLogin').classList.toggle('active',tab==='login');
-  ['viewSignup','viewVerify','viewLogin'].forEach(v=>document.getElementById(v).classList.remove('active'));
+  document.getElementById('tabLogin').classList.toggle('active',tab==='login'||tab==='reset');
+  ['viewSignup','viewVerify','viewLogin','viewReset'].forEach(v=>{ const el=document.getElementById(v); if(el) el.classList.remove('active'); });
   if(tab==='signup') document.getElementById('viewSignup').classList.add('active');
   else if(tab==='verify') document.getElementById('viewVerify').classList.add('active');
+  else if(tab==='reset') document.getElementById('viewReset').classList.add('active');
   else document.getElementById('viewLogin').classList.add('active');
-  ['suMsg','verifyMsg','liMsg'].forEach(id=>{ const el=document.getElementById(id); el.textContent=''; el.className='modal-msg'; });
+  ['suMsg','verifyMsg','liMsg','resetMsg'].forEach(id=>{ const el=document.getElementById(id); if(el){el.textContent='';el.className='modal-msg';} });
 }
-function setBtnLoad(id,on){ const b=document.getElementById(id); b.classList.toggle('loading',on); b.disabled=on; }
-function setMsg(id,msg,type='err'){ const el=document.getElementById(id); el.textContent=msg; el.className='modal-msg '+type; }
+function setBtnLoad(id,on){ const b=document.getElementById(id); if(!b)return; b.classList.toggle('loading',on); b.disabled=on; }
+function setMsg(id,msg,type='err'){ const el=document.getElementById(id); if(!el)return; el.textContent=msg; el.className='modal-msg '+type; }
 
 // ══ SUPABASE ══
 async function sbPost(path,body,token){
@@ -1125,10 +1141,36 @@ async function doSignup(){
   setBtnLoad('btnSignup',true);
   const d=await sbPost('/auth/v1/signup',{email,password:pass});
   setBtnLoad('btnSignup',false);
+  // Detect existing account — Supabase returns user with identities:[] when email already registered
+  const alreadyExists = d.user && Array.isArray(d.user.identities) && d.user.identities.length === 0;
+  if(alreadyExists){
+    setMsg('suMsg','This email already has an account.');
+    // Pre-fill sign-in email and switch to login after brief delay
+    setTimeout(()=>{
+      document.getElementById('liEmail').value=email;
+      switchTab('login');
+      setMsg('liMsg','Account found — enter your password to sign in.','ok');
+    },1200);
+    return;
+  }
   if(d.error||d.msg){ setMsg('suMsg',d.error?.message||d.msg||'Signup failed.'); return; }
   pendingEmail=email; document.getElementById('verifyEmailDisplay').textContent=email;
   clearOtp(); switchTab('verify'); setTimeout(()=>document.getElementById('otp0').focus(),100);
   toast('📧 Code sent to '+email,'ok');
+}
+
+// ══ PASSWORD RESET ══
+async function doPasswordReset(){
+  const email=document.getElementById('resetEmail').value.trim();
+  if(!email){ setMsg('resetMsg','Please enter your email address.'); return; }
+  setBtnLoad('btnReset',true);
+  try{
+    const d=await sbPost('/auth/v1/recover',{email});
+    setBtnLoad('btnReset',false);
+    if(d.error){ setMsg('resetMsg',d.error.message||'Reset failed. Check the email address.'); return; }
+    setMsg('resetMsg','✅ Reset link sent — check your inbox (and spam).','ok');
+    setTimeout(()=>switchTab('login'),3000);
+  }catch(e){ setBtnLoad('btnReset',false); setMsg('resetMsg','Something went wrong. Try again.'); }
 }
 function clearOtp(){ for(let i=0;i<6;i++){const e=document.getElementById('otp'+i);e.value='';e.classList.remove('filled');} }
 function getOtp(){ return Array.from({length:6},(_,i)=>document.getElementById('otp'+i).value).join(''); }
@@ -1241,55 +1283,112 @@ function updateUsageUI(){
   }
 }
 
-// ══ QUEUE ══
-async function joinQueue(){
-  if(!currentUser) return {position:1};
-  try{
-    const cutoff=new Date(Date.now()-600000).toISOString();
-    await sbDB('DELETE','job_queue',`?created_at=lt.${cutoff}&status=eq.waiting`);
-    const jobId='job-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
-    await sbDB('POST','job_queue',null,{job_id:jobId,email:currentUser.email,status:'waiting',created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
-    queueJobId=jobId;
-    const rows=await sbDB('GET','job_queue','?status=in.(waiting,processing)&order=created_at.asc&select=job_id');
-    const pos=(rows||[]).findIndex(r=>r.job_id===jobId)+1||1;
-    if(pos===1) await sbDB('PATCH','job_queue',`?job_id=eq.${jobId}`,{status:'processing',updated_at:new Date().toISOString()});
-    return {position:pos,estimatedWaitSec:Math.max(0,(pos-1)*90)};
-  }catch(e){ return {position:1}; }
+// ══ QUEUE — managed by Redis via n8n worker ══
+function showQB(msg,pos,eta){ 
+  const b=document.getElementById('queueBanner');
+  b.classList.add('on');
+  document.getElementById('qbMsg').textContent=msg||'Processing…';
+  const numEl=document.getElementById('qbNum');
+  if(pos){ numEl.style.display=''; numEl.textContent='#'+pos; } else { numEl.style.display='none'; }
+  document.getElementById('qbEta').textContent=eta||'';
 }
-async function checkQueuePos(){
-  if(!queueJobId||!currentUser) return null;
-  try{
-    const rows=await sbDB('GET','job_queue','?status=in.(waiting,processing)&order=created_at.asc&select=job_id,status');
-    const idx=(rows||[]).findIndex(r=>r.job_id===queueJobId);
-    if(idx===-1) return {status:'done',position:0};
-    const pos=idx+1;
-    if(pos===1&&rows[idx].status==='waiting') await sbDB('PATCH','job_queue',`?job_id=eq.${queueJobId}`,{status:'processing',updated_at:new Date().toISOString()});
-    return {position:pos,status:pos===1?'processing':'waiting',estimatedWaitSec:Math.max(0,(pos-1)*90)};
-  }catch(e){ return null; }
-}
-async function releaseQueue(){ if(!queueJobId||!currentUser) return; try{ await sbDB('DELETE','job_queue',`?job_id=eq.${queueJobId}`); }catch(e){} queueJobId=null; }
-async function waitForSlot(){
-  const j=await joinQueue();
-  if(!j||j.position===1) return true;
-  showQB(j.position,j.estimatedWaitSec);
-  return new Promise(res=>{
-    queuePollInt=setInterval(async()=>{
-      const s=await checkQueuePos();
-      if(!s||s.position===1||s.status==='processing'){ clearInterval(queuePollInt); hideQB(); res(true); }
-      else showQB(s.position,s.estimatedWaitSec);
-    },3000);
-  });
-}
-function showQB(pos,sec){ document.getElementById('queueBanner').classList.add('on'); document.getElementById('qbNum').textContent='#'+pos; document.getElementById('qbMsg').textContent=pos===1?"you're next!":'position in queue'; document.getElementById('qbEta').textContent=sec?'~'+Math.round(sec/60)+' min wait':''; }
 function hideQB(){ document.getElementById('queueBanner').classList.remove('on'); }
+function stopPolling(){ if(pollInterval){ clearInterval(pollInterval); pollInterval=null; } }
+async function releaseQueue(){ stopPolling(); currentJobId=null; }
 
-window.addEventListener('beforeunload',()=>{
-  if(queueJobId&&currentUser){
-    const url=`${SUPABASE_URL}/rest/v1/job_queue?job_id=eq.${queueJobId}`;
-    navigator.sendBeacon(url+'&_method=DELETE',JSON.stringify({}));
-    try{ const xhr=new XMLHttpRequest(); xhr.open('DELETE',url,false); xhr.setRequestHeader('apikey',SUPABASE_ANON_KEY); xhr.setRequestHeader('Authorization','Bearer '+(currentUser.access_token||SUPABASE_ANON_KEY)); xhr.send(); }catch(e){}
-  }
-});
+// Poll the Job Status webhook every 4s
+// mode: 'analyse' or 'generate'
+async function startPolling(jobId, sel, mode){
+  currentJobId=jobId;
+  stopPolling();
+  pollInterval=setInterval(async()=>{
+    try{
+      const r=await fetch(`${JOB_STATUS}?jobId=${encodeURIComponent(jobId)}`);
+      if(!r.ok) return;
+      const data=await r.json();
+
+      if(data.status==='waiting'){
+        const pos=data.position||'?';
+        const eta=data.etaMin?`~${data.etaMin} min wait`:'';
+        showQB(mode==='analyse'?'Waiting to analyse':'Position in queue',pos,eta);
+      }
+      else if(data.status==='processing'){
+        showQB(mode==='analyse'?'Analysing your product…':'Generating your images…',null,'');
+      }
+
+      // ── ANALYSE DONE ──────────────────────────────────────────────
+      else if(data.status==='analyse_done'){
+        stopPolling(); hideQB();
+        analysisData={
+          outputFolderId:      data.outputFolderId,
+          heroPrompt:          data.heroPrompt,
+          infographicPrompt:   data.infographicPrompt,
+          lifestylePrompt:     data.lifestylePrompt,
+          lifestylePrompt2:    data.lifestylePrompt2,
+          lifestylePrompt3:    data.lifestylePrompt3,
+          lifestylePrompt4:    data.lifestylePrompt4,
+          infographicCallouts: data.infographicCallouts||[],
+          sheetAvatarDesc:     data.sheetAvatarDesc,
+          sheetLocation:       data.sheetLocation,
+          sheetLighting:       data.sheetLighting
+        };
+        // Fill prompt text areas
+        setTA('hero',         data.heroPrompt||'');
+        setTA('infographic',  data.infographicPrompt||'');
+        setTA('lifestyle',    data.lifestylePrompt||'');
+        setTA('lifestyle2',   data.lifestylePrompt2||'');
+        setTA('lifestyle3',   data.lifestylePrompt3||'');
+        setTA('lifestyle4',   data.lifestylePrompt4||'');
+        Object.keys(CHAR_LIMITS).forEach(k=>updateCounter(k,CHAR_LIMITS[k]));
+        // Hide analyse panel, show prompt panel
+        document.getElementById('analysePanel').classList.remove('on');
+        document.getElementById('promptPanel').classList.add('on');
+        document.getElementById('promptPanel').scrollIntoView({behavior:'smooth',block:'start'});
+        const filled=[data.heroPrompt,data.infographicPrompt,data.lifestylePrompt].filter(Boolean).length;
+        toast(filled>0?`✅ ${filled} prompts generated!`:'⚠️ No prompts returned — type them manually.','ok');
+        document.getElementById('analyseBtn').disabled=false;
+      }
+
+      // ── GENERATE DONE ─────────────────────────────────────────────
+      else if(data.status==='done'){
+        stopPolling(); hideQB();
+        forceAllDone('pstepsList');
+        document.getElementById('pbarFill').style.width='100%';
+        await incrementUsage(sel.length);
+        showDone(data);
+      }
+
+      else if(data.status==='failed'){
+        stopPolling(); hideQB();
+        if(mode==='analyse'){
+          toast('❌ Analysis failed. Please try again.','err');
+          document.getElementById('analyseBtn').disabled=false;
+          document.getElementById('analysePanel').classList.remove('on');
+        } else {
+          toast('❌ Generation failed. Please try again.','err');
+          document.getElementById('genBtn').disabled=false;
+          document.getElementById('progPanel').classList.remove('on');
+          document.getElementById('promptPanel').classList.add('on');
+        }
+      }
+
+      else if(data.status==='not_found'){
+        stopPolling(); hideQB();
+        if(mode==='analyse'){
+          toast('⏳ Analysis timed out — please try again.','warn');
+          document.getElementById('analyseBtn').disabled=false;
+          document.getElementById('analysePanel').classList.remove('on');
+        } else {
+          forceAllDone('pstepsList');
+          document.getElementById('pbarFill').style.width='100%';
+          showDoneTimeout();
+        }
+      }
+    }catch(e){ /* network blip — keep polling */ }
+  }, POLL_INTERVAL_MS);
+}
+
+window.addEventListener('beforeunload',()=>{ stopPolling(); });
 
 // ══ CATEGORY / SUBCATEGORY ══
 function onCategoryChange(){
@@ -1449,10 +1548,12 @@ async function runAnalyse(){
   if(usageData&&!usageData.allowed){ toast('⛔ Generation limit reached.','err'); return; }
   document.getElementById('analyseBtn').disabled=true;
   showProgress('analysePanel','astepsList','apbarFill',ASTEPS);
-  const pp=runSteps('astepsList','apbarFill',ASTEPS);
+  // Start visual animation independently — real status comes from polling
+  runSteps('astepsList','apbarFill',ASTEPS);
   try{
     const imageBase64=await toBase64(file);
-    const res=await fetch(ANALYSE_WEBHOOK,{
+    showQB('Submitting for analysis…',null,'');
+    const res=await fetch(ANALYSE_SUBMIT,{
       method:'POST',
       headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
       body:JSON.stringify({
@@ -1462,41 +1563,32 @@ async function runAnalyse(){
         avatarId, avatarCountry, locationVariant,
         productName:document.getElementById('productName').value.trim(),
         features:document.getElementById('features').value.trim(),
-        language:lang, userEmail:currentUser.email, email:currentUser.email,
+        language:lang,
+        userEmail:currentUser.email, email:currentUser.email,
         driveFolderId:DRIVE_FOLDER
       })
     });
-    if(!res.ok) throw new Error('Analyse error — HTTP '+res.status);
-    let raw; try{ raw=await res.json(); }catch(e){ throw new Error('Non-JSON response'); }
-    if(typeof raw==='string') try{ raw=JSON.parse(raw); }catch(e){}
-    if(Array.isArray(raw)) raw=raw[0]||{};
-    analysisData=raw;
-    const a=raw, nest=a.analysis||{};
-    const _fid=a.outputFolderId||a.driveFolderId||'';
-    if(_fid) runFolderLink='https://drive.google.com/drive/folders/'+_fid+'?usp=sharing';
-    setTA('hero', a.heroPrompt||nest.heroPrompt||'');
-    setTA('infographic', a.infographicPrompt||nest.infographicPrompt||'');
-    setTA('lifestyle', a.lifestylePrompt||nest.lifestylePrompt||'');
-    setTA('lifestyle2', a.lifestylePrompt2||nest.lifestylePrompt2||'');
-    setTA('lifestyle3', a.lifestylePrompt3||nest.lifestylePrompt3||'');
-    setTA('lifestyle4', a.lifestylePrompt4||nest.lifestylePrompt4||'');
-    setTA('dimensions', a.dimensionPrompt||nest.dimensionPrompt||'');
-    const callouts=a.infographicCallouts||nest.infographicCallouts||[];
-    if(callouts.length) analysisData.infographicCallouts=callouts;
-    Object.keys(CHAR_LIMITS).forEach(k=>updateCounter(k,CHAR_LIMITS[k]));
-    await pp;
-    document.getElementById('analysePanel').classList.remove('on');
-    document.getElementById('promptPanel').classList.add('on');
-    document.getElementById('promptPanel').scrollIntoView({behavior:'smooth',block:'start'});
-    const filled=[getTA('hero'),getTA('infographic'),getTA('lifestyle')].filter(Boolean).length;
-    toast(filled>0?'✅ '+filled+' prompts generated!':'⚠️ No prompts returned — type them manually.','ok');
+    if(!res.ok) throw new Error('Analyse submit failed — HTTP '+res.status);
+    const qData=await res.json();
+    if(!qData.jobId) throw new Error('No jobId returned');
+    analyseJobId=qData.jobId;
+    const pos=qData.position;
+    if(pos&&pos>1){
+      showQB('Waiting to analyse',pos,`~${pos*1} min wait`);
+      toast(`📋 You're #${pos} in analyse queue — won't be long.`,'ok');
+    } else {
+      showQB('Analysing your product…',null,'');
+    }
+    // Start polling — mode 'analyse' so handler fills prompts on analyse_done
+    startPolling(qData.jobId,[],'analyse');
   }catch(err){
-    await pp;
+    stopPolling(); hideQB();
     toast('❌ Analysis failed: '+err.message,'err');
     document.getElementById('analyseBtn').disabled=false;
     document.getElementById('analysePanel').classList.remove('on');
   }
 }
+
 function setTA(key,val){ const el=document.getElementById('ta-'+key); if(el) el.value=(val||'').trim(); }
 function getTA(key){ const el=document.getElementById('ta-'+key); return el?el.value.trim():''; }
 
@@ -1510,30 +1602,26 @@ async function generate(){
   document.getElementById('promptPanel').classList.remove('on');
   const sel=[...selectedCards];
   const STEP_DEFS=[
-    {id:'queue',ico:'⏳',name:'Waiting in queue',ms:500},
-    {id:'hero',ico:'🖼️',name:'Generating Main Product Page',ms:22000},
-    {id:'infographic',ico:'📊',name:'Building Infographic',ms:22000},
-    {id:'lifestyle',ico:'🏠',name:'Rendering Lifestyle Variant 1',ms:25000},
-    {id:'lifestyle2',ico:'🏡',name:'Rendering Lifestyle Variant 2',ms:25000},
-    {id:'lifestyle3',ico:'🌿',name:'Rendering Lifestyle Variant 3',ms:25000},
-    {id:'lifestyle4',ico:'🎁',name:'Rendering Lifestyle Variant 4',ms:25000},
-    {id:'dimensions',ico:'📐',name:'Creating Dimensions Diagram',ms:18000},
-    {id:'generic',ico:'✨',name:'Generating Custom Image',ms:18000},
-    {id:'saving',ico:'💾',name:'Saving to Google Drive',ms:3000},
+    {id:'hero',       ico:'🖼️',name:'Generating Main Product Page',  ms:22000},
+    {id:'infographic',ico:'📊',name:'Building Infographic',          ms:22000},
+    {id:'lifestyle',  ico:'🏠',name:'Rendering Lifestyle Variant 1', ms:25000},
+    {id:'lifestyle2', ico:'🏡',name:'Rendering Lifestyle Variant 2', ms:25000},
+    {id:'lifestyle3', ico:'🌿',name:'Rendering Lifestyle Variant 3', ms:25000},
+    {id:'lifestyle4', ico:'🎁',name:'Rendering Lifestyle Variant 4', ms:25000},
+    {id:'dimensions', ico:'📐',name:'Creating Dimensions Diagram',   ms:18000},
+    {id:'generic',    ico:'✨',name:'Generating Custom Image',       ms:18000},
+    {id:'saving',     ico:'💾',name:'Saving to Google Drive',        ms:3000},
   ];
-  const activeSteps=[STEP_DEFS[0],...STEP_DEFS.slice(1,-1).filter(s=>sel.includes(s.id)),STEP_DEFS[STEP_DEFS.length-1]];
+  const activeSteps=[...STEP_DEFS.filter(s=>sel.includes(s.id)),STEP_DEFS[STEP_DEFS.length-1]];
   showProgress('progPanel','pstepsList','pbarFill',activeSteps);
-  markRun('queue'); await waitForSlot(); markDone('queue');
-  runStepsAfter('pstepsList','pbarFill',activeSteps,1);
+  runStepsAfter('pstepsList','pbarFill',activeSteps,0);
   try{
     const imageBase64=await toBase64(file);
-    const ctrl=new AbortController();
-    const tid=setTimeout(()=>ctrl.abort(),(sel.length*35000)+30000);
     const callouts=analysisData?.infographicCallouts||analysisData?.analysis?.infographicCallouts||[];
-    const res=await fetch(GENERATE_WEBHOOK,{
+    showQB('Submitting your job…',null,'');
+    const res=await fetch(QUEUE_SUBMIT,{
       method:'POST',
       headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
-      signal:ctrl.signal,
       body:JSON.stringify({
         imageBase64, imageName:file.name, imageMimeType:file.type||'image/jpeg',
         category:document.getElementById('category').value,
@@ -1544,35 +1632,35 @@ async function generate(){
         language:lang, userEmail:currentUser.email, email:currentUser.email,
         driveFolderId:DRIVE_FOLDER,
         selectedPrompts:sel, selectedPromptsJson:JSON.stringify(sel),
-        heroPrompt:getTA('hero'),
+        heroPrompt:       getTA('hero'),
         infographicPrompt:getTA('infographic'),
-        lifestylePrompt:getTA('lifestyle'),
-        lifestylePrompt2:getTA('lifestyle2'),
-        lifestylePrompt3:getTA('lifestyle3'),
-        lifestylePrompt4:getTA('lifestyle4'),
-        dimensionPrompt:getTA('dimensions'),
-        genericPrompt:getTA('generic'),
-        outputFolderId:analysisData?.outputFolderId||'',
+        lifestylePrompt:  getTA('lifestyle'),
+        lifestylePrompt2: getTA('lifestyle2'),
+        lifestylePrompt3: getTA('lifestyle3'),
+        lifestylePrompt4: getTA('lifestyle4'),
+        dimensionPrompt:  getTA('dimensions'),
+        genericPrompt:    getTA('generic'),
+        outputFolderId:   analysisData?.outputFolderId||'',
         infographicCallouts:callouts,
       })
     });
-    clearTimeout(tid);
-    if(!res.ok) throw new Error('Generate failed — HTTP '+res.status);
-    const data=await res.json();
-    forceAllDone('pstepsList'); document.getElementById('pbarFill').style.width='100%';
-    await releaseQueue(); await incrementUsage(sel.length);
-    showDone(data);
-  }catch(err){
-    await releaseQueue();
-    if(err.name==='AbortError'){
-      forceAllDone('pstepsList'); document.getElementById('pbarFill').style.width='100%';
-      await incrementUsage(sel.length); showDoneTimeout();
+    if(!res.ok) throw new Error('Queue submit failed — HTTP '+res.status);
+    const qData=await res.json();
+    if(!qData.jobId) throw new Error('No jobId returned');
+    const pos=qData.position;
+    if(pos&&pos>1){
+      showQB('You are in the queue',pos,`~${pos*2} min wait`);
+      toast(`📋 You're #${pos} in queue — processing shortly.`,'ok');
     } else {
-      toast('Generation failed. Check your workflow.','err');
-      document.getElementById('genBtn').disabled=false;
-      document.getElementById('progPanel').classList.remove('on');
-      document.getElementById('promptPanel').classList.add('on');
+      showQB('Processing your job…',null,'');
     }
+    startPolling(qData.jobId,sel,'generate');
+  }catch(err){
+    stopPolling(); hideQB();
+    toast('❌ Failed to submit: '+err.message,'err');
+    document.getElementById('genBtn').disabled=false;
+    document.getElementById('progPanel').classList.remove('on');
+    document.getElementById('promptPanel').classList.add('on');
   }
 }
 
@@ -1589,7 +1677,6 @@ function showDone(data){
 
   generatedImages.forEach(img=>{
     const label=(img.label||'image').toLowerCase();
-    const viewUrl=img.fileId?'https://drive.google.com/file/d/'+img.fileId+'/view':(img.viewUrl||'');
     const dlUrl=img.fileId?'https://drive.google.com/uc?export=download&id='+img.fileId:(img.downloadUrl||'');
     const thumbUrl=img.fileId?'https://drive.google.com/thumbnail?id='+img.fileId+'&sz=w400':(img.thumbnailUrl||'');
 
@@ -1608,8 +1695,7 @@ function showDone(data){
       </div>
       <div class="img-result-status">✓ Saved to Drive</div>
       <div class="img-result-actions">
-        ${viewUrl?`<a class="btn-dl view" href="${viewUrl}" target="_blank">👁 View</a>`:''}
-        ${dlUrl?`<a class="btn-dl dl" href="${dlUrl}" target="_blank">↓ Download</a>`:''}
+        ${dlUrl?`<a class="btn-dl dl" href="${dlUrl}" download="${img.name||'image.jpeg'}" target="_blank" rel="noopener">↓ Download</a>`:'<span style="font-size:11px;color:var(--dim);padding:6px 8px">Processing…</span>'}
       </div>`;
     grid.appendChild(card);
   });
@@ -1780,6 +1866,7 @@ async function useRembgImage(){
 
 // ══ RESET ══
 function resetForm(){
+  stopPolling(); hideQB(); currentJobId=null; analyseJobId=null;
   clearImage(); analysisData=null; runFolderLink=null; queueJobId=null; pendingAnalyse=false;
   generatedImages=[];
   if(rembgBlobURL){URL.revokeObjectURL(rembgBlobURL);rembgBlobURL=null;}
