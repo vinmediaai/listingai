@@ -1071,6 +1071,16 @@ const LOCATION_NOTE = {
   brazilian:'Brazilian context', african:'African context', global:'Global / Neutral context'
 };
 
+// ── STARTUP KEY CHECK ──────────────────────────────────────────────────────
+(function(){
+  if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === 'PASTE_YOUR_ANON_KEY_HERE') {
+    console.error('%c⛔ ListingAI — SUPABASE_ANON_KEY not set!', 'color:red;font-size:14px;font-weight:bold');
+  }
+  if (!SUPABASE_URL || SUPABASE_URL === 'https://your-project.supabase.co') {
+    console.error('%c⛔ ListingAI — SUPABASE_URL not set!', 'color:red;font-size:14px;font-weight:bold');
+  }
+})();
+
 // ══ STATUS BANNER ══
 (function(){
   if(SERVICE_STATUS.state==='operational') return;
@@ -1318,41 +1328,60 @@ try{
 
 async function queueDeleteRow(id, keepalive=false){
   if(!id) return;
-  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
+  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
   try{
     await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}?id=eq.${encodeURIComponent(id)}`,{
-      method:'DELETE',
-      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`},
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`
+      },
       keepalive
     });
-  }catch(e){}
+  }catch(e){ console.warn('queueDeleteRow:', e.message); }
 }
 async function queueUpdateRow(id, patch){
   if(!id) return;
-  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
+  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
   try{
     await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}?id=eq.${encodeURIComponent(id)}`,{
-      method:'PATCH',
-      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify(patch)
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(patch)
     });
-  }catch(e){}
+  }catch(e){ console.warn('queueUpdateRow:', e.message); }
 }
 async function queueInsertRow(mode){
-  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
-  const rows = await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}`,{
-    method:'POST',
-    headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=representation'},
-    body:JSON.stringify({
-      client_id: queueClientId,
+  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify({
+      client_id:  queueClientId,
       mode,
-      status: 'waiting',
+      email:      currentUser?.email || '',
+      status:     'waiting',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      last_seen: new Date().toISOString()
+      last_seen:  new Date().toISOString()
     })
-  }).then(r=>r.json());
-  if(!rows || !rows.length) throw new Error('Queue insert failed');
+  });
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`Queue insert failed (${resp.status}): ${err}`);
+  }
+  const rows = await resp.json();
+  if (!rows || !rows.length) throw new Error('Queue insert returned empty');
   return rows[0];
 }
 async function queueListActive(){
