@@ -1042,6 +1042,10 @@ const DRIVE_FOLDER      = '1dOWQloKxJFNTU0PF2WfjF9AL0EPu-VA_';
 const MAX_USES          = 5;
 const USE_PERIOD_DAYS   = 10;
 const POLL_INTERVAL_MS  = 4000;  // poll every 4 seconds
+const QUEUE_TABLE       = 'job_queue';
+const QUEUE_POLL_MS     = 3000;
+const QUEUE_HEARTBEAT_MS= 10000;
+const QUEUE_STALE_MS    = 45000;
 const CHAR_LIMITS = { hero:500, infographic:500, lifestyle:600, lifestyle2:600, lifestyle3:600, lifestyle4:600, dimensions:400, generic:600 };
 
 // Subcategory map
@@ -1283,7 +1287,7 @@ function updateUsageUI(){
   }
 }
 
-// ══ QUEUE — managed by Redis via n8n worker ══
+// ══ QUEUE — Supabase-backed FIFO queue ══
 function showQB(msg,pos,eta){ 
   const b=document.getElementById('queueBanner');
   b.classList.add('on');
@@ -1293,8 +1297,139 @@ function showQB(msg,pos,eta){
   document.getElementById('qbEta').textContent=eta||'';
 }
 function hideQB(){ document.getElementById('queueBanner').classList.remove('on'); }
-function stopPolling(){ if(pollInterval){ clearInterval(pollInterval); pollInterval=null; } }
-async function releaseQueue(){ stopPolling(); currentJobId=null; }
+function stopQueuePolling(){ if(queuePollInt){ clearInterval(queuePollInt); queuePollInt=null; } }
+function stopQueueHeartbeat(){ if(queueHeartbeatInt){ clearInterval(queueHeartbeatInt); queueHeartbeatInt=null; } }
+function stopPolling(){ 
+  if(pollInterval){ clearInterval(pollInterval); pollInterval=null; } 
+}
+let queueHeartbeatInt=null;
+let queueStatus='waiting';
+let queueDispatching=false;
+let queueClientId='';
+try{
+  queueClientId = localStorage.getItem('listingai_queue_client_id') || '';
+  if(!queueClientId){
+    queueClientId = crypto.randomUUID();
+    localStorage.setItem('listingai_queue_client_id', queueClientId);
+  }
+}catch(e){
+  queueClientId = crypto.randomUUID();
+}
+
+async function queueDeleteRow(id, keepalive=false){
+  if(!id) return;
+  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}?id=eq.${encodeURIComponent(id)}`,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`},
+      keepalive
+    });
+  }catch(e){}
+}
+async function queueUpdateRow(id, patch){
+  if(!id) return;
+  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}?id=eq.${encodeURIComponent(id)}`,{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify(patch)
+    });
+  }catch(e){}
+}
+async function queueInsertRow(mode){
+  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
+  const rows = await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}`,{
+    method:'POST',
+    headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify({
+      client_id: queueClientId,
+      mode,
+      status: 'waiting',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      last_seen: new Date().toISOString()
+    })
+  }).then(r=>r.json());
+  if(!rows || !rows.length) throw new Error('Queue insert failed');
+  return rows[0];
+}
+async function queueListActive(){
+  const rows = await sbDB('GET', QUEUE_TABLE, `?status=in.(waiting,processing)&select=id,client_id,status,mode,created_at,last_seen,updated_at&order=created_at.asc`);
+  return Array.isArray(rows) ? rows : [];
+}
+function isFreshRow(row){
+  const ts = row.last_seen || row.updated_at || row.created_at;
+  const t = Date.parse(ts);
+  return Number.isFinite(t) && (Date.now() - t) <= QUEUE_STALE_MS;
+}
+function queuePosition(rows){
+  const fresh = rows.filter(isFreshRow).sort((a,b)=>Date.parse(a.created_at)-Date.parse(b.created_at));
+  return { fresh, pos: fresh.findIndex(r=>r.id===queueJobId)+1 };
+}
+async function queueFinalize(keepalive=false){
+  const id = queueJobId;
+  stopQueueHeartbeat();
+  stopQueuePolling();
+  queueDispatching=false;
+  queueStatus='waiting';
+  queueJobId=null;
+  if(id) await queueDeleteRow(id, keepalive);
+}
+function startQueueHeartbeat(){
+  stopQueueHeartbeat();
+  queueHeartbeatInt=setInterval(()=>{
+    if(!queueJobId) return;
+    queueUpdateRow(queueJobId,{status:queueStatus,last_seen:new Date().toISOString(),updated_at:new Date().toISOString()});
+  }, QUEUE_HEARTBEAT_MS);
+}
+async function startQueuePolling(mode, submitFn, sel=[]){
+  if(!queueJobId){
+    const row = await queueInsertRow(mode);
+    queueJobId = row.id;
+    queueStatus = 'waiting';
+    queueDispatching = false;
+    showQB(mode==='analyse' ? 'Joining analyse queue…' : 'Joining generation queue…', null, '');
+    startQueueHeartbeat();
+  }
+  stopQueuePolling();
+  queuePollInt=setInterval(()=>evaluateQueue(mode, submitFn, sel).catch(()=>{}), QUEUE_POLL_MS);
+  evaluateQueue(mode, submitFn, sel).catch(()=>{});
+}
+async function evaluateQueue(mode, submitFn, sel=[]){
+  if(!queueJobId || queueDispatching) return;
+  const rows = await queueListActive();
+  const { fresh, pos } = queuePosition(rows);
+  const mine = fresh.find(r=>r.id===queueJobId);
+  if(!mine){
+    toast('⏳ Your queue entry expired. Please try again.','warn');
+    await queueFinalize();
+    return;
+  }
+  if(pos > 1){
+    showQB(mode==='analyse' ? 'Waiting to analyse…' : 'Waiting in queue…', pos, pos>1 ? `#${pos} in queue` : '');
+    return;
+  }
+
+  queueDispatching = true;
+  queueStatus = 'processing';
+  showQB(mode==='analyse' ? 'Processing your analysis…' : 'Processing your images…', 1, '');
+  await queueUpdateRow(queueJobId,{status:'processing',last_seen:new Date().toISOString(),updated_at:new Date().toISOString()});
+
+  try{
+    const qData = await submitFn();
+    if(!qData || !qData.jobId) throw new Error('No jobId returned');
+    stopQueuePolling();
+    startPolling(qData.jobId, sel, mode);
+  }catch(err){
+    queueDispatching = false;
+    queueStatus = 'waiting';
+    await queueUpdateRow(queueJobId,{status:'waiting',last_seen:new Date().toISOString(),updated_at:new Date().toISOString()});
+    toast('❌ Queue dispatch failed: '+err.message,'err');
+    showQB(mode==='analyse' ? 'Waiting to analyse…' : 'Waiting in queue…', pos || 1, '');
+  }
+}
 
 // Poll the Job Status webhook every 4s
 // mode: 'analyse' or 'generate'
@@ -1319,6 +1454,7 @@ async function startPolling(jobId, sel, mode){
       // ── ANALYSE DONE ──────────────────────────────────────────────
       else if(data.status==='analyse_done'){
         stopPolling(); hideQB();
+        await queueFinalize();
         analysisData={
           outputFolderId:      data.outputFolderId,
           heroPrompt:          data.heroPrompt,
@@ -1352,6 +1488,7 @@ async function startPolling(jobId, sel, mode){
       // ── GENERATE DONE ─────────────────────────────────────────────
       else if(data.status==='done'){
         stopPolling(); hideQB();
+        await queueFinalize();
         forceAllDone('pstepsList');
         document.getElementById('pbarFill').style.width='100%';
         await incrementUsage(sel.length);
@@ -1360,6 +1497,7 @@ async function startPolling(jobId, sel, mode){
 
       else if(data.status==='failed'){
         stopPolling(); hideQB();
+        await queueFinalize();
         if(mode==='analyse'){
           toast('❌ Analysis failed. Please try again.','err');
           document.getElementById('analyseBtn').disabled=false;
@@ -1374,6 +1512,7 @@ async function startPolling(jobId, sel, mode){
 
       else if(data.status==='not_found'){
         stopPolling(); hideQB();
+        await queueFinalize();
         if(mode==='analyse'){
           toast('⏳ Analysis timed out — please try again.','warn');
           document.getElementById('analyseBtn').disabled=false;
@@ -1388,7 +1527,8 @@ async function startPolling(jobId, sel, mode){
   }, POLL_INTERVAL_MS);
 }
 
-window.addEventListener('beforeunload',()=>{ stopPolling(); });
+window.addEventListener('pagehide',()=>{ if(queueJobId) queueDeleteRow(queueJobId, true); stopQueueHeartbeat(); stopQueuePolling(); });
+window.addEventListener('beforeunload',()=>{ if(queueJobId) queueDeleteRow(queueJobId, true); stopQueueHeartbeat(); stopQueuePolling(); });
 
 // ══ CATEGORY / SUBCATEGORY ══
 function onCategoryChange(){
@@ -1533,6 +1673,60 @@ function buildDimPrompt(){
   }
 }
 
+async function submitAnalyseToN8n(){
+  const imageBase64=await toBase64(file);
+  showQB('Submitting for analysis…',null,'');
+  const res=await fetch(ANALYSE_SUBMIT,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
+    body:JSON.stringify({
+      imageBase64, imageName:file.name, imageMimeType:file.type||'image/jpeg',
+      category:document.getElementById('category').value,
+      subcategory:document.getElementById('subcategory').value||'',
+      avatarId, avatarCountry, locationVariant,
+      productName:document.getElementById('productName').value.trim(),
+      features:document.getElementById('features').value.trim(),
+      language:lang,
+      userEmail:currentUser.email, email:currentUser.email,
+      driveFolderId:DRIVE_FOLDER
+    })
+  });
+  if(!res.ok) throw new Error('Analyse submit failed — HTTP '+res.status);
+  return await res.json();
+}
+async function submitGenerateToN8n(sel){
+  const imageBase64=await toBase64(file);
+  const callouts=analysisData?.infographicCallouts||analysisData?.analysis?.infographicCallouts||[];
+  showQB('Submitting your job…',null,'');
+  const res=await fetch(QUEUE_SUBMIT,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
+    body:JSON.stringify({
+      imageBase64, imageName:file.name, imageMimeType:file.type||'image/jpeg',
+      category:document.getElementById('category').value,
+      subcategory:document.getElementById('subcategory').value||'',
+      avatarId, avatarCountry, locationVariant,
+      productName:document.getElementById('productName').value.trim(),
+      features:document.getElementById('features').value.trim(),
+      language:lang, userEmail:currentUser.email, email:currentUser.email,
+      driveFolderId:DRIVE_FOLDER,
+      selectedPrompts:sel, selectedPromptsJson:JSON.stringify(sel),
+      heroPrompt:       getTA('hero'),
+      infographicPrompt:getTA('infographic'),
+      lifestylePrompt:  getTA('lifestyle'),
+      lifestylePrompt2: getTA('lifestyle2'),
+      lifestylePrompt3: getTA('lifestyle3'),
+      lifestylePrompt4: getTA('lifestyle4'),
+      dimensionPrompt:  getTA('dimensions'),
+      genericPrompt:    getTA('generic'),
+      outputFolderId:   analysisData?.outputFolderId||'',
+      infographicCallouts:callouts,
+    })
+  });
+  if(!res.ok) throw new Error('Queue submit failed — HTTP '+res.status);
+  return await res.json();
+}
+
 // ══ ANALYSE ══
 function onAnalyseClick(){
   if(!currentUser){ pendingAnalyse=true; openModal('signup'); return; }
@@ -1551,37 +1745,9 @@ async function runAnalyse(){
   // Start visual animation independently — real status comes from polling
   runSteps('astepsList','apbarFill',ASTEPS);
   try{
-    const imageBase64=await toBase64(file);
-    showQB('Submitting for analysis…',null,'');
-    const res=await fetch(ANALYSE_SUBMIT,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
-      body:JSON.stringify({
-        imageBase64, imageName:file.name, imageMimeType:file.type||'image/jpeg',
-        category:document.getElementById('category').value,
-        subcategory:document.getElementById('subcategory').value||'',
-        avatarId, avatarCountry, locationVariant,
-        productName:document.getElementById('productName').value.trim(),
-        features:document.getElementById('features').value.trim(),
-        language:lang,
-        userEmail:currentUser.email, email:currentUser.email,
-        driveFolderId:DRIVE_FOLDER
-      })
-    });
-    if(!res.ok) throw new Error('Analyse submit failed — HTTP '+res.status);
-    const qData=await res.json();
-    if(!qData.jobId) throw new Error('No jobId returned');
-    analyseJobId=qData.jobId;
-    const pos=qData.position;
-    if(pos&&pos>1){
-      showQB('Waiting to analyse',pos,`~${pos*1} min wait`);
-      toast(`📋 You're #${pos} in analyse queue — won't be long.`,'ok');
-    } else {
-      showQB('Analysing your product…',null,'');
-    }
-    // Start polling — mode 'analyse' so handler fills prompts on analyse_done
-    startPolling(qData.jobId,[],'analyse');
+    await startQueuePolling('analyse', submitAnalyseToN8n);
   }catch(err){
+    await queueFinalize();
     stopPolling(); hideQB();
     toast('❌ Analysis failed: '+err.message,'err');
     document.getElementById('analyseBtn').disabled=false;
@@ -1616,46 +1782,9 @@ async function generate(){
   showProgress('progPanel','pstepsList','pbarFill',activeSteps);
   runStepsAfter('pstepsList','pbarFill',activeSteps,0);
   try{
-    const imageBase64=await toBase64(file);
-    const callouts=analysisData?.infographicCallouts||analysisData?.analysis?.infographicCallouts||[];
-    showQB('Submitting your job…',null,'');
-    const res=await fetch(QUEUE_SUBMIT,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
-      body:JSON.stringify({
-        imageBase64, imageName:file.name, imageMimeType:file.type||'image/jpeg',
-        category:document.getElementById('category').value,
-        subcategory:document.getElementById('subcategory').value||'',
-        avatarId, avatarCountry, locationVariant,
-        productName:document.getElementById('productName').value.trim(),
-        features:document.getElementById('features').value.trim(),
-        language:lang, userEmail:currentUser.email, email:currentUser.email,
-        driveFolderId:DRIVE_FOLDER,
-        selectedPrompts:sel, selectedPromptsJson:JSON.stringify(sel),
-        heroPrompt:       getTA('hero'),
-        infographicPrompt:getTA('infographic'),
-        lifestylePrompt:  getTA('lifestyle'),
-        lifestylePrompt2: getTA('lifestyle2'),
-        lifestylePrompt3: getTA('lifestyle3'),
-        lifestylePrompt4: getTA('lifestyle4'),
-        dimensionPrompt:  getTA('dimensions'),
-        genericPrompt:    getTA('generic'),
-        outputFolderId:   analysisData?.outputFolderId||'',
-        infographicCallouts:callouts,
-      })
-    });
-    if(!res.ok) throw new Error('Queue submit failed — HTTP '+res.status);
-    const qData=await res.json();
-    if(!qData.jobId) throw new Error('No jobId returned');
-    const pos=qData.position;
-    if(pos&&pos>1){
-      showQB('You are in the queue',pos,`~${pos*2} min wait`);
-      toast(`📋 You're #${pos} in queue — processing shortly.`,'ok');
-    } else {
-      showQB('Processing your job…',null,'');
-    }
-    startPolling(qData.jobId,sel,'generate');
+    await startQueuePolling('generate', ()=>submitGenerateToN8n(sel), sel);
   }catch(err){
+    await queueFinalize();
     stopPolling(); hideQB();
     toast('❌ Failed to submit: '+err.message,'err');
     document.getElementById('genBtn').disabled=false;
@@ -1867,6 +1996,7 @@ async function useRembgImage(){
 // ══ RESET ══
 function resetForm(){
   stopPolling(); hideQB(); currentJobId=null; analyseJobId=null;
+  queueFinalize(true);
   clearImage(); analysisData=null; runFolderLink=null; queueJobId=null; pendingAnalyse=false;
   generatedImages=[];
   if(rembgBlobURL){URL.revokeObjectURL(rembgBlobURL);rembgBlobURL=null;}
