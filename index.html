@@ -1340,12 +1340,10 @@ async function queueUpdateRow(id, patch){
 }
 async function queueInsertRow(mode){
   const token=currentUser?.access_token||SUPABASE_ANON_KEY;
-  const jobId='q-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}`,{
     method:'POST',
     headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify({
-      job_id: jobId,
       client_id: queueClientId,
       mode,
       status: 'waiting',
