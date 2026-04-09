@@ -1032,8 +1032,8 @@ body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-
 <script>
 // ══ CONFIG ══
 const SERVICE_STATUS = { state:'operational', title:'', message:'' };
-const SUPABASE_URL      = 'https://foogdpgrkiawdnfvhxbn.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_TrLnz3U1EjrLxZLlKsqqJg_zzxr8C8B';
+const SUPABASE_URL      = 'https://ekhpjzoqznkxhkuythmp.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_w52EUIDtKfZ5OwXrgxochw_lFNOtKuL';
 const ANALYSE_SUBMIT    = 'https://n8n.vinmediaai.online/webhook/listing-analyse-submit';
 const QUEUE_SUBMIT      = 'https://n8n.vinmediaai.online/webhook/listing-queue-submit';
 const JOB_STATUS        = 'https://n8n.vinmediaai.online/webhook/listing-job-status';
@@ -1047,6 +1047,12 @@ const QUEUE_POLL_MS     = 3000;
 const QUEUE_HEARTBEAT_MS= 10000;
 const QUEUE_STALE_MS    = 45000;
 const CHAR_LIMITS = { hero:500, infographic:500, lifestyle:600, lifestyle2:600, lifestyle3:600, lifestyle4:600, dimensions:400, generic:600 };
+// UUID Generator for the Job IDs
+function uuidv4() {
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+    (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+  );
+}
 
 // Subcategory map
 const SUBCATS = {
@@ -1434,82 +1440,91 @@ async function evaluateQueue(mode, submitFn, sel=[]){
 // Poll the Job Status webhook every 4s
 // mode: 'analyse' or 'generate'
 async function startPolling(jobId, sel, mode){
-  currentJobId=jobId;
+  currentJobId = jobId;
   stopPolling();
-  pollInterval=setInterval(async()=>{
-    try{
-      const r=await fetch(`${JOB_STATUS}?jobId=${encodeURIComponent(jobId)}`);
-      if(!r.ok) return;
-      const data=await r.json();
+  
+  pollInterval = setInterval(async () => {
+    try {
+      // Ping the job_results table directly using Supabase REST API
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/job_results?job_id=eq.${jobId}&select=*`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+      
+      if (!r.ok) return;
+      const rows = await r.json();
 
-      if(data.status==='waiting'){
-        const pos=data.position||'?';
-        const eta=data.etaMin?`~${data.etaMin} min wait`:'';
-        showQB(mode==='analyse'?'Waiting to analyse':'Position in queue',pos,eta);
-      }
-      else if(data.status==='processing'){
-        showQB(mode==='analyse'?'Analysing your product…':'Generating your images…',null,'');
+      // If no row exists yet, it's still in the queue or processing
+      if (rows.length === 0) {
+        showQB(mode === 'analyse' ? 'Analysing your product…' : 'Generating your images…', null, '');
+        return; 
       }
 
-      // ── ANALYSE DONE ──────────────────────────────────────────────
-      else if(data.status==='analyse_done'){
+      const response = rows[0]; // Get the result row
+
+      // ── DONE STATE ──────────────────────────────────────────────
+      // Assuming your n8n workflow updates status to 'done' or 'analyse_done'
+      if (response.status === 'done' || response.status === 'analyse_done' || response.status === 'completed') {
         stopPolling(); hideQB();
-        await queueFinalize();
-        analysisData={
-          outputFolderId:      data.outputFolderId,
-          heroPrompt:          data.heroPrompt,
-          infographicPrompt:   data.infographicPrompt,
-          lifestylePrompt:     data.lifestylePrompt,
-          lifestylePrompt2:    data.lifestylePrompt2,
-          lifestylePrompt3:    data.lifestylePrompt3,
-          lifestylePrompt4:    data.lifestylePrompt4,
-          infographicCallouts: data.infographicCallouts||[],
-          sheetAvatarDesc:     data.sheetAvatarDesc,
-          sheetLocation:       data.sheetLocation,
-          sheetLighting:       data.sheetLighting
-        };
-        // Fill prompt text areas
-        setTA('hero',         data.heroPrompt||'');
-        setTA('infographic',  data.infographicPrompt||'');
-        setTA('lifestyle',    data.lifestylePrompt||'');
-        setTA('lifestyle2',   data.lifestylePrompt2||'');
-        setTA('lifestyle3',   data.lifestylePrompt3||'');
-        setTA('lifestyle4',   data.lifestylePrompt4||'');
-        Object.keys(CHAR_LIMITS).forEach(k=>updateCounter(k,CHAR_LIMITS[k]));
-        // Hide analyse panel, show prompt panel
-        document.getElementById('analysePanel').classList.remove('on');
-        document.getElementById('promptPanel').classList.add('on');
-        document.getElementById('promptPanel').scrollIntoView({behavior:'smooth',block:'start'});
-        const filled=[data.heroPrompt,data.infographicPrompt,data.lifestylePrompt].filter(Boolean).length;
-        toast(filled>0?`✅ ${filled} prompts generated!`:'⚠️ No prompts returned — type them manually.','ok');
-        document.getElementById('analyseBtn').disabled=false;
-      }
+        
+        // Extract the saved payload from Supabase (assuming n8n saves it to result_data or payload)
+        const data = response.result_data || response.payload || {}; 
 
-      // ── GENERATE DONE ─────────────────────────────────────────────
-      else if(data.status==='done'){
-        stopPolling(); hideQB();
-        await queueFinalize();
-        forceAllDone('pstepsList');
-        document.getElementById('pbarFill').style.width='100%';
-        await incrementUsage(sel.length);
-        showDone(data);
-      }
-
-      else if(data.status==='failed'){
-        stopPolling(); hideQB();
-        await queueFinalize();
-        if(mode==='analyse'){
-          toast('❌ Analysis failed. Please try again.','err');
-          document.getElementById('analyseBtn').disabled=false;
-          document.getElementById('analysePanel').classList.remove('on');
+        if (mode === 'analyse'){
+            analysisData = {
+              outputFolderId:      data.outputFolderId,
+              heroPrompt:          data.heroPrompt,
+              infographicPrompt:   data.infographicPrompt,
+              lifestylePrompt:     data.lifestylePrompt,
+              lifestylePrompt2:    data.lifestylePrompt2,
+              lifestylePrompt3:    data.lifestylePrompt3,
+              lifestylePrompt4:    data.lifestylePrompt4,
+              infographicCallouts: data.infographicCallouts || [],
+              sheetAvatarDesc:     data.sheetAvatarDesc,
+              sheetLocation:       data.sheetLocation,
+              sheetLighting:       data.sheetLighting
+            };
+            
+            setTA('hero',         data.heroPrompt || '');
+            setTA('infographic',  data.infographicPrompt || '');
+            setTA('lifestyle',    data.lifestylePrompt || '');
+            setTA('lifestyle2',   data.lifestylePrompt2 || '');
+            setTA('lifestyle3',   data.lifestylePrompt3 || '');
+            setTA('lifestyle4',   data.lifestylePrompt4 || '');
+            
+            Object.keys(CHAR_LIMITS).forEach(k => updateCounter(k, CHAR_LIMITS[k]));
+            
+            document.getElementById('analysePanel').classList.remove('on');
+            document.getElementById('promptPanel').classList.add('on');
+            document.getElementById('promptPanel').scrollIntoView({behavior: 'smooth', block: 'start'});
+            toast('✅ Prompts generated successfully!', 'ok');
+            document.getElementById('analyseBtn').disabled = false;
         } else {
-          toast('❌ Generation failed. Please try again.','err');
-          document.getElementById('genBtn').disabled=false;
-          document.getElementById('progPanel').classList.remove('on');
-          document.getElementById('promptPanel').classList.add('on');
+            forceAllDone('pstepsList');
+            document.getElementById('pbarFill').style.width = '100%';
+            await incrementUsage(sel.length);
+            showDone(data); // Assumes data contains the URLs your showDone function expects
         }
       }
 
+      else if (response.status === 'failed') {
+        stopPolling(); hideQB();
+        toast('❌ Job failed in the background. Please try again.', 'err');
+        if (mode === 'analyse'){
+            document.getElementById('analyseBtn').disabled = false;
+            document.getElementById('analysePanel').classList.remove('on');
+        } else {
+            document.getElementById('genBtn').disabled = false;
+            document.getElementById('progPanel').classList.remove('on');
+        }
+      }
+    } catch(e) { 
+      console.log("Polling check missed, retrying...");
+    }
+  }, 4000); // 4 seconds
+}
       else if(data.status==='not_found'){
         stopPolling(); hideQB();
         await queueFinalize();
@@ -1739,22 +1754,64 @@ const ASTEPS=[
 ];
 async function runAnalyse(){
   await loadUsage();
-  if(usageData&&!usageData.allowed){ toast('⛔ Generation limit reached.','err'); return; }
-  document.getElementById('analyseBtn').disabled=true;
+  if(usageData && !usageData.allowed){ toast('⛔ Generation limit reached.','err'); return; }
+  
+  document.getElementById('analyseBtn').disabled = true;
   showProgress('analysePanel','astepsList','apbarFill',ASTEPS);
-  // Start visual animation independently — real status comes from polling
   runSteps('astepsList','apbarFill',ASTEPS);
+  
   try{
-    await startQueuePolling('analyse', submitAnalyseToN8n);
-  }catch(err){
-    await queueFinalize();
+    const imageBase64 = await toBase64(file);
+    showQB('Queuing your product analysis…', null, '');
+    
+    const jobId = uuidv4();
+    
+    // 1. Send the request to Supabase job_queue (Fire and Forget)
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/job_queue`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        job_id: jobId,
+        email: currentUser.email,
+        mode: 'analyse',
+        status: 'waiting',
+        payload: {
+          imageBase64: imageBase64,
+          imageName: file.name,
+          imageMimeType: file.type || 'image/jpeg',
+          category: document.getElementById('category').value,
+          subcategory: document.getElementById('subcategory').value || '',
+          avatarId: avatarId,
+          avatarCountry: avatarCountry,
+          locationVariant: locationVariant,
+          productName: document.getElementById('productName').value.trim(),
+          features: document.getElementById('features').value.trim(),
+          language: lang,
+          driveFolderId: DRIVE_FOLDER
+        }
+      })
+    });
+    
+    if(!res.ok) throw new Error('Failed to queue job — HTTP ' + res.status);
+    
+    analyseJobId = jobId;
+    showQB('Analysing your product in the background…', null, '');
+    
+    // 2. Start polling the database for results
+    startPolling(analyseJobId, [], 'analyse');
+    
+  } catch(err){
     stopPolling(); hideQB();
-    toast('❌ Analysis failed: '+err.message,'err');
-    document.getElementById('analyseBtn').disabled=false;
+    toast('❌ Analysis failed: ' + err.message, 'err');
+    document.getElementById('analyseBtn').disabled = false;
     document.getElementById('analysePanel').classList.remove('on');
   }
 }
-
 function setTA(key,val){ const el=document.getElementById('ta-'+key); if(el) el.value=(val||'').trim(); }
 function getTA(key){ const el=document.getElementById('ta-'+key); return el?el.value.trim():''; }
 
