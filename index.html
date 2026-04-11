@@ -1042,10 +1042,10 @@ const DRIVE_FOLDER      = '1dOWQloKxJFNTU0PF2WfjF9AL0EPu-VA_';
 const MAX_USES          = 5;
 const USE_PERIOD_DAYS   = 10;
 const POLL_INTERVAL_MS  = 4000;
-const QUEUE_TABLE       = 'job_queue';
-const QUEUE_POLL_MS     = 3000;
-const QUEUE_HEARTBEAT_MS= 10000;
-const QUEUE_STALE_MS    = 45000;
+// Queue tables defined in queue section below
+// QUEUE_POLL_MS defined in queue section
+// QUEUE_HEARTBEAT_MS defined in queue section
+// QUEUE_STALE_MS defined in queue section
 
 const CHAR_LIMITS = { hero:500, infographic:500, lifestyle:600, lifestyle2:600, lifestyle3:600, dimensions:400, generic:600 };
 
@@ -1151,8 +1151,7 @@ const AVATAR_DESCS = {
 
 // ══ STATE ══
 let currentUser=null, usageData=null;
-let queueJobId=null, queuePollInt=null, queueDispatching=false, queueStatus='waiting';
-let queueHeartbeatInt=null;
+// Queue state — declared in queue section below
 let pollInterval=null, currentJobId=null;
 let pendingAnalyse=false;
 let avatarId='dynamic', avatarCountry='india';
@@ -1554,14 +1553,20 @@ async function sbPost(path,body,token){
 }
 async function sbDB(method,table,params,body){
   const token=currentUser?.access_token||SUPABASE_ANON_KEY;
-  const h={'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=representation'};
+  const h={
+    'apikey':SUPABASE_ANON_KEY,
+    'Authorization':`Bearer ${token}`,
+    'Content-Type':'application/json',
+  };
+  // Only add Prefer header for mutations, not GETs
+  if(method!=='GET') h['Prefer']='return=representation';
   const opts={method,headers:h};
   if(body) opts.body=JSON.stringify(body);
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}${params||''}`,opts);
   if(r.status===204) return [];
-  if(r.status===400||r.status===404||r.status===403){
+  if(r.status===400||r.status===401||r.status===403||r.status===404){
     const err=await r.json().catch(()=>({}));
-    const e=new Error(err.message||`HTTP ${r.status}`);
+    const e=new Error(err.message||`HTTP ${r.status} on ${table}`);
     e.status=r.status; throw e;
   }
   return r.json();
@@ -1671,123 +1676,224 @@ async function incrementUsage(n){
 }
 
 // ══ QUEUE ══
-function showQB(msg,pos,eta,gen=false){
-  const banner=document.getElementById(gen?'queueBannerGen':'queueBanner');
-  const msgEl=document.getElementById(gen?'qbMsgGen':'qbMsg');
-  const etaEl=document.getElementById(gen?'qbEtaGen':'qbEta');
+// Two separate queues: analyse_queue and generate_queue
+// One execution at a time per queue. Position shown to user.
+// Heartbeat every 10s keeps row alive. Stale rows (90s) auto-cleaned.
+
+const AQ_TABLE = 'analyse_queue';
+const GQ_TABLE = 'generate_queue';
+const HEARTBEAT_MS  = 10000;
+const STALE_MS      = 90000;
+const QUEUE_POLL_MS = 3000;
+
+let queueRowId       = null;   // our row id in the queue table
+let queueTable       = null;   // which table we're in
+let queuePollInt     = null;
+let queueHeartbeatInt= null;
+let queueDispatching = false;
+
+function showQB(msg, pos, eta, gen=false){
+  const banner = document.getElementById(gen ? 'queueBannerGen' : 'queueBanner');
+  const msgEl  = document.getElementById(gen ? 'qbMsgGen' : 'qbMsg');
+  const etaEl  = document.getElementById(gen ? 'qbEtaGen' : 'qbEta');
   if(!banner) return;
   banner.classList.add('on');
-  if(msgEl) msgEl.textContent=msg;
-  if(etaEl) etaEl.textContent=eta||'';
+  if(msgEl) msgEl.textContent = msg;
+  if(etaEl) etaEl.textContent = eta || '';
 }
 function hideQB(gen=false){
-  const b=document.getElementById(gen?'queueBannerGen':'queueBanner');
+  const b = document.getElementById(gen ? 'queueBannerGen' : 'queueBanner');
   if(b) b.classList.remove('on');
 }
-async function queueInsertRow(mode){
-  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}`,{
-    method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=representation'},
-    body:JSON.stringify({client_id:queueClientId,mode,status:'waiting',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),last_seen:new Date().toISOString()})
+
+// ── Supabase REST helpers for queue ──
+async function queueFetch(method, table, params='', body=null){
+  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
+  const h = {
+    'apikey':        SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type':  'application/json',
+  };
+  if(method !== 'GET') h['Prefer'] = 'return=representation';
+  const opts = { method, headers: h };
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, opts);
+  if(r.status === 204) return [];
+  const data = await r.json();
+  if(r.status >= 400){
+    throw Object.assign(new Error(data?.message || `Queue HTTP ${r.status}`), { status: r.status });
+  }
+  return data;
+}
+
+async function queueInsert(table, mode){
+  return await queueFetch('POST', table, '', {
+    client_id:  'c-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
+    user_id:    currentUser?.id || null,
+    mode,
+    status:     'waiting',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    last_seen:  new Date().toISOString(),
   });
-  if(r.status===401||r.status===403){
-    // RLS on job_queue blocking — skip queue, submit directly
-    console.log('Queue table RLS blocked — submitting directly');
-    return {id:'direct-'+Date.now(), _skipQueue:true};
-  }
-  if(r.status===400||r.status===404){
-    console.log('Queue table unavailable — submitting directly');
-    return {id:'direct-'+Date.now(), _skipQueue:true};
-  }
-  const rows=await r.json();
-  return Array.isArray(rows)?rows[0]:rows;
 }
-async function queueDeleteRow(id,keepalive=false){
+async function queueUpdate(table, id, patch){
+  await queueFetch('PATCH', table, `?id=eq.${id}`, {
+    ...patch, updated_at: new Date().toISOString(), last_seen: new Date().toISOString()
+  }).catch(()=>{});
+}
+async function queueDelete(table, id){
   if(!id) return;
-  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
-  try{ await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`},keepalive}); }catch(e){}
+  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
+  await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
+    keepalive: true
+  }).catch(()=>{});
 }
-async function queueUpdateRow(id,patch){
-  if(!id) return;
-  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
-  try{ await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(patch)}); }catch(e){}
+async function queueList(table){
+  // Get all fresh rows ordered by created_at — used to compute position
+  const staleTs = new Date(Date.now() - STALE_MS).toISOString();
+  return await queueFetch('GET', table,
+    `?last_seen=gte.${encodeURIComponent(staleTs)}&order=created_at.asc&select=id,status,created_at,last_seen`
+  );
 }
-async function queueListActive(){
-  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
-  const staleTs=new Date(Date.now()-QUEUE_STALE_MS).toISOString();
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/${QUEUE_TABLE}?last_seen=gte.${staleTs}&order=created_at.asc`,{headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Accept':'application/json'}});
-  return r.json();
+async function cleanStaleQueue(){
+  // Call the Supabase function to clean stale rows
+  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
+  await fetch(`${SUPABASE_URL}/rest/v1/rpc/clean_stale_queue`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: '{}'
+  }).catch(()=>{});
 }
-function queuePosition(rows){
-  const now=Date.now();
-  const fresh=(rows||[]).filter(r=>r.status!=='done'&&(now-new Date(r.last_seen).getTime())<QUEUE_STALE_MS);
-  const pos=fresh.findIndex(r=>r.id===queueJobId)+1||1;
-  return{fresh,pos};
-}
-const queueClientId='client-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
-async function queueFinalize(keepalive=false){
-  const id=queueJobId;
-  stopQueueHeartbeat(); stopQueuePolling();
-  queueDispatching=false; queueStatus='waiting'; queueJobId=null;
-  if(id) await queueDeleteRow(id,keepalive);
-}
+
+function stopQueueHeartbeat(){ clearInterval(queueHeartbeatInt); queueHeartbeatInt = null; }
+function stopQueuePolling(){   clearInterval(queuePollInt);      queuePollInt = null; }
+
 function startQueueHeartbeat(){
   stopQueueHeartbeat();
-  queueHeartbeatInt=setInterval(()=>{
-    if(!queueJobId) return;
-    queueUpdateRow(queueJobId,{status:queueStatus,last_seen:new Date().toISOString(),updated_at:new Date().toISOString()});
-  },QUEUE_HEARTBEAT_MS);
-}
-function stopQueueHeartbeat(){ clearInterval(queueHeartbeatInt); queueHeartbeatInt=null; }
-function stopQueuePolling(){ clearInterval(queuePollInt); queuePollInt=null; }
-async function startQueuePolling(mode,submitFn,sel=[]){
-  if(!queueJobId){
-    const row=await queueInsertRow(mode);
-    queueJobId=row.id; queueStatus='waiting'; queueDispatching=false;
-    const isGen=mode==='generate';
-    showQB('Joining queue…',null,'',isGen);
-    startQueueHeartbeat();
-  }
-  stopQueuePolling();
-  queuePollInt=setInterval(()=>evaluateQueue(mode,submitFn,sel).catch(()=>{}),QUEUE_POLL_MS);
-  evaluateQueue(mode,submitFn,sel).catch(()=>{});
-}
-async function evaluateQueue(mode,submitFn,sel=[]){
-  if(!queueJobId||queueDispatching) return;
-  const isGen=mode==='generate';
-  // If queue was bypassed due to RLS, submit directly
-  if(queueJobId.startsWith('direct-')){
-    queueDispatching=true; queueStatus='processing';
-    showQB(isGen?'Processing your images…':'Processing your analysis…',1,'',isGen);
-    try{
-      const qData=await submitFn();
-      if(!qData||!qData.jobId) throw new Error('No jobId returned');
-      stopQueuePolling();
-      startPolling(qData.jobId,sel,mode);
-    }catch(err){
-      queueDispatching=false; queueStatus='waiting';
-      toast('❌ Dispatch failed: '+err.message,'err');
+  queueHeartbeatInt = setInterval(async () => {
+    if(queueRowId && queueTable){
+      await queueUpdate(queueTable, queueRowId, { last_seen: new Date().toISOString() });
     }
+  }, HEARTBEAT_MS);
+}
+
+async function queueFinalize(keepalive=false){
+  stopQueueHeartbeat();
+  stopQueuePolling();
+  queueDispatching = false;
+  if(queueRowId && queueTable){
+    await queueDelete(queueTable, queueRowId);
+  }
+  queueRowId = null;
+  queueTable = null;
+}
+
+// ── Main entry point ──
+async function startQueuePolling(mode, submitFn, sel=[]){
+  const table  = mode === 'analyse' ? AQ_TABLE : GQ_TABLE;
+  const isGen  = mode === 'generate';
+  queueDispatching = false;
+  queueTable = table;
+
+  // Clean stale rows first
+  await cleanStaleQueue();
+
+  // Insert our row
+  try{
+    const rows = await queueInsert(table, mode);
+    const row  = Array.isArray(rows) ? rows[0] : rows;
+    if(!row?.id) throw new Error('Queue insert failed — no id returned');
+    queueRowId = row.id;
+  } catch(err){
+    // If queue table unavailable — submit directly
+    console.warn('Queue insert failed, submitting directly:', err.message);
+    showQB(isGen ? 'Submitting job…' : 'Submitting for analysis…', null, '', isGen);
+    const qData = await submitFn();
+    if(!qData?.jobId) throw new Error('No jobId returned');
+    hideQB(isGen);
+    startPolling(qData.jobId, sel, mode);
     return;
   }
-  const rows=await queueListActive();
-  const{fresh,pos}=queuePosition(rows);
-  const mine=fresh.find(r=>r.id===queueJobId);
-  if(!mine){ toast('⏳ Queue entry expired. Please try again.','warn'); await queueFinalize(); return; }
-  if(pos>1){ showQB(isGen?'Waiting in queue…':'Waiting to analyse…',pos,`#${pos} in queue`,isGen); return; }
-  queueDispatching=true; queueStatus='processing';
-  showQB(isGen?'Processing your images…':'Processing your analysis…',1,'',isGen);
-  await queueUpdateRow(queueJobId,{status:'processing',last_seen:new Date().toISOString(),updated_at:new Date().toISOString()});
+
+  startQueueHeartbeat();
+  showQB(isGen ? 'Joining queue…' : 'Joining analyse queue…', null, '', isGen);
+
+  // Poll queue position
+  stopQueuePolling();
+  queuePollInt = setInterval(() => evaluateQueue(mode, submitFn, sel).catch(()=>{}), QUEUE_POLL_MS);
+  await evaluateQueue(mode, submitFn, sel).catch(()=>{});
+}
+
+async function evaluateQueue(mode, submitFn, sel=[]){
+  if(!queueRowId || queueDispatching) return;
+  const table = mode === 'analyse' ? AQ_TABLE : GQ_TABLE;
+  const isGen = mode === 'generate';
+
+  let rows;
   try{
-    const qData=await submitFn();
-    if(!qData||!qData.jobId) throw new Error('No jobId returned');
+    rows = await queueList(table);
+  } catch(err){
+    console.warn('Queue list failed:', err.message);
+    // Queue table read failed — submit directly
     stopQueuePolling();
-    startPolling(qData.jobId,sel,mode);
-  }catch(err){
-    queueDispatching=false; queueStatus='waiting';
-    await queueUpdateRow(queueJobId,{status:'waiting',last_seen:new Date().toISOString(),updated_at:new Date().toISOString()});
-    toast('❌ Dispatch failed: '+err.message,'err');
-    showQB(isGen?'Waiting in queue…':'Waiting to analyse…',pos||1,'',isGen);
+    queueDispatching = true;
+    showQB(isGen ? 'Processing…' : 'Analysing…', null, '', isGen);
+    const qData = await submitFn();
+    if(!qData?.jobId) throw new Error('No jobId returned');
+    await queueDelete(table, queueRowId);
+    queueRowId = null;
+    hideQB(isGen);
+    startPolling(qData.jobId, sel, mode);
+    return;
+  }
+
+  const fresh = (rows || []).filter(r => (Date.now() - new Date(r.last_seen).getTime()) < STALE_MS);
+  const myIdx = fresh.findIndex(r => r.id === queueRowId);
+
+  // Our row not found — expired or cleaned
+  if(myIdx === -1){
+    toast('⏳ Queue entry expired — please try again.', 'warn');
+    stopQueuePolling(); stopQueueHeartbeat();
+    queueRowId = null; queueDispatching = false;
+    return;
+  }
+
+  const pos = myIdx + 1;
+  const processing = fresh.find(r => r.status === 'processing');
+
+  // Show position to user
+  if(pos > 1 || processing){
+    const waitPos = pos;
+    const eta     = pos > 1 ? `~${Math.round(pos * 25)} sec wait` : 'Almost your turn…';
+    showQB(
+      isGen ? `Queue position #${waitPos}` : `#${waitPos} in analyse queue`,
+      waitPos, eta, isGen
+    );
+    return; // Not our turn yet
+  }
+
+  // Position 1 and nothing processing — our turn!
+  queueDispatching = true;
+  showQB(isGen ? 'Starting generation…' : 'Starting analysis…', 1, '', isGen);
+
+  // Mark our row as processing
+  await queueUpdate(table, queueRowId, { status: 'processing' });
+
+  try{
+    const qData = await submitFn();
+    if(!qData?.jobId) throw new Error('No jobId returned from server');
+    stopQueuePolling();
+    hideQB(isGen);
+    startPolling(qData.jobId, sel, mode);
+  } catch(err){
+    // Reset to waiting if submit failed
+    queueDispatching = false;
+    await queueUpdate(table, queueRowId, { status: 'waiting' });
+    toast('❌ Submit failed: ' + err.message, 'err');
+    showQB(isGen ? 'Waiting in queue…' : 'Waiting to analyse…', pos, '', isGen);
   }
 }
 
