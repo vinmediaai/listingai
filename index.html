@@ -203,10 +203,11 @@ input#fileInput{display:none}
 
 /* ── BACKGROUND COLOR ── */
 .bg-colors{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.bg-swatch{width:36px;height:36px;border-radius:8px;border:2px solid transparent;cursor:pointer;transition:.2s;position:relative}
-.bg-swatch:hover{transform:scale(1.1)}
-.bg-swatch.on{border-color:var(--accent);transform:scale(1.1)}
-.bg-swatch.on::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.bg-swatch{width:40px;height:40px;border-radius:10px;border:3px solid var(--border);cursor:pointer;transition:.2s;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.bg-swatch:hover{transform:scale(1.12);border-color:var(--accent2)}
+.bg-swatch.on{border-color:var(--accent);transform:scale(1.12);box-shadow:0 0 0 2px var(--accent)}
+.bg-swatch.on::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#333;text-shadow:0 1px 2px rgba(255,255,255,.8)}
+.bg-swatch[data-color="midnight_black"].on::after{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8)}
 .bg-label{font-size:11px;color:var(--dim);margin-bottom:8px}
 
 /* ── DIMENSION INPUTS ── */
@@ -788,20 +789,36 @@ input#fileInput{display:none}
   <div class="prompt-cards">
 
     <!-- 1. HERO / MAIN PRODUCT -->
-    <div class="pc selected" id="pc-hero" onclick="toggleCard('hero')">
-      <div class="pc-head">
+    <div class="pc selected" id="pc-hero">
+      <div class="pc-head" onclick="toggleCard('hero',event)" style="cursor:pointer">
         <div class="pc-check">✓</div>
         <div class="pc-ico">🖼️</div>
         <div class="pc-info"><div class="pc-title">Main Product Image</div><div class="pc-desc">Clean product shot — pure background, centered, 85% frame fill</div></div>
       </div>
       <div class="pc-body">
         <div class="bg-label">Background Color</div>
-        <div class="bg-colors" id="bgColors">
-          <div class="bg-swatch on" data-color="white" data-modifier="pure white seamless background, no shadows, no gradients" style="background:#FFFFFF;border-color:#ddd" title="Pure White" onclick="selectBgColor(this)"></div>
-          <div class="bg-swatch" data-color="soft_grey" data-modifier="soft light grey seamless background, subtle and neutral" style="background:#F2F2F2;border-color:#ddd" title="Soft Grey" onclick="selectBgColor(this)"></div>
-          <div class="bg-swatch" data-color="pale_cream" data-modifier="warm pale cream background, soft and inviting" style="background:#FFF8F0;border-color:#ddd" title="Pale Cream" onclick="selectBgColor(this)"></div>
-          <div class="bg-swatch" data-color="midnight_black" data-modifier="deep midnight black studio background, dramatic and premium" style="background:#1A1A1A" title="Midnight Black" onclick="selectBgColor(this)"></div>
-          <div class="bg-swatch" data-color="pastel_blue" data-modifier="soft pastel blue background, fresh and clean" style="background:#E8F4FD;border-color:#ddd" title="Pastel Blue" onclick="selectBgColor(this)"></div>
+        <div style="font-size:11px;color:var(--dim);margin-bottom:6px">Select background color for product shot:</div>
+        <div class="bg-colors" id="bgColors" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
+          <div style="text-align:center">
+            <div class="bg-swatch on" data-color="white" data-modifier="pure white seamless background, no shadows, no gradients" style="background:#FFFFFF" title="Pure White" onclick="selectBgColor(this)"></div>
+            <div style="font-size:9px;color:var(--dim);margin-top:3px;text-align:center">White</div>
+          </div>
+          <div style="text-align:center">
+            <div class="bg-swatch" data-color="soft_grey" data-modifier="soft light grey seamless background, subtle and neutral" style="background:#D0D0D0" title="Soft Grey" onclick="selectBgColor(this)"></div>
+            <div style="font-size:9px;color:var(--dim);margin-top:3px">Grey</div>
+          </div>
+          <div style="text-align:center">
+            <div class="bg-swatch" data-color="pale_cream" data-modifier="warm pale cream background, soft and inviting" style="background:#F0E8D8" title="Pale Cream" onclick="selectBgColor(this)"></div>
+            <div style="font-size:9px;color:var(--dim);margin-top:3px">Cream</div>
+          </div>
+          <div style="text-align:center">
+            <div class="bg-swatch" data-color="midnight_black" data-modifier="deep midnight black studio background, dramatic and premium" style="background:#1A1A1A" title="Midnight Black" onclick="selectBgColor(this)"></div>
+            <div style="font-size:9px;color:var(--dim);margin-top:3px">Black</div>
+          </div>
+          <div style="text-align:center">
+            <div class="bg-swatch" data-color="pastel_blue" data-modifier="soft pastel blue background, fresh and clean" style="background:#A8D4F0" title="Pastel Blue" onclick="selectBgColor(this)"></div>
+            <div style="font-size:9px;color:var(--dim);margin-top:3px">Blue</div>
+          </div>
         </div>
         <div class="prompt-ta-wrap">
           <textarea class="prompt-ta" id="ta-hero" oninput="updateCounter('hero',500)" placeholder="Hero product prompt will appear here after analysis…"></textarea>
@@ -811,8 +828,8 @@ input#fileInput{display:none}
     </div>
 
     <!-- 2. INFOGRAPHIC -->
-    <div class="pc selected" id="pc-infographic" onclick="toggleCard('infographic')">
-      <div class="pc-head">
+    <div class="pc selected" id="pc-infographic">
+      <div class="pc-head" onclick="toggleCard('infographic',event)" style="cursor:pointer">
         <div class="pc-check">✓</div>
         <div class="pc-ico">📊</div>
         <div class="pc-info"><div class="pc-title">Infographic</div><div class="pc-desc">Product with feature callouts — pick a style</div></div>
@@ -859,8 +876,8 @@ input#fileInput{display:none}
     </div>
 
     <!-- 3. LIFESTYLE 1 -->
-    <div class="pc selected" id="pc-lifestyle" onclick="toggleCard('lifestyle')">
-      <div class="pc-head">
+    <div class="pc selected" id="pc-lifestyle">
+      <div class="pc-head" onclick="toggleCard('lifestyle',event)" style="cursor:pointer">
         <div class="pc-check">✓</div>
         <div class="pc-ico">🏠</div>
         <div class="pc-info"><div class="pc-title">Lifestyle 1</div><div class="pc-desc">Front-facing, person using product in selected scene</div></div>
@@ -874,8 +891,8 @@ input#fileInput{display:none}
     </div>
 
     <!-- 4. LIFESTYLE 2 -->
-    <div class="pc" id="pc-lifestyle2" onclick="toggleCard('lifestyle2')">
-      <div class="pc-head">
+    <div class="pc" id="pc-lifestyle2">
+      <div class="pc-head" onclick="toggleCard('lifestyle2',event)" style="cursor:pointer">
         <div class="pc-check"></div>
         <div class="pc-ico">🏡</div>
         <div class="pc-info"><div class="pc-title">Lifestyle 2</div><div class="pc-desc">Side angle, different scene or activity</div></div>
@@ -889,8 +906,8 @@ input#fileInput{display:none}
     </div>
 
     <!-- 5. LIFESTYLE 3 -->
-    <div class="pc" id="pc-lifestyle3" onclick="toggleCard('lifestyle3')">
-      <div class="pc-head">
+    <div class="pc" id="pc-lifestyle3">
+      <div class="pc-head" onclick="toggleCard('lifestyle3',event)" style="cursor:pointer">
         <div class="pc-check"></div>
         <div class="pc-ico">🌄</div>
         <div class="pc-info"><div class="pc-title">Lifestyle 3</div><div class="pc-desc">Random pose, Gemini-guided angle & detail shot</div></div>
@@ -904,8 +921,8 @@ input#fileInput{display:none}
     </div>
 
     <!-- 6. DIMENSION -->
-    <div class="pc" id="pc-dimensions" onclick="toggleCard('dimensions')">
-      <div class="pc-head">
+    <div class="pc" id="pc-dimensions">
+      <div class="pc-head" onclick="toggleCard('dimensions',event)" style="cursor:pointer">
         <div class="pc-check"></div>
         <div class="pc-ico">📐</div>
         <div class="pc-info"><div class="pc-title">Dimension Image</div><div class="pc-desc">Product with size measurements — enter H × W × D</div></div>
@@ -957,8 +974,8 @@ input#fileInput{display:none}
     </div>
 
     <!-- 7. CUSTOM PROMPT -->
-    <div class="pc" id="pc-generic" onclick="toggleCard('generic')">
-      <div class="pc-head">
+    <div class="pc" id="pc-generic">
+      <div class="pc-head" onclick="toggleCard('generic',event)" style="cursor:pointer">
         <div class="pc-check"></div>
         <div class="pc-ico">✏️</div>
         <div class="pc-info"><div class="pc-title">Custom Prompt</div><div class="pc-desc">Write your own image prompt — full creative control</div></div>
@@ -1346,7 +1363,8 @@ const CARD_LABELS={
   dimensions: {ico:'📐',name:'Dimension'},
   generic:    {ico:'✏️',name:'Custom'},
 };
-function toggleCard(key){
+function toggleCard(key, event){
+  if(event) event.stopPropagation();
   const pc=document.getElementById('pc-'+key);
   if(!pc) return;
   if(selectedCards.has(key)){ selectedCards.delete(key); pc.classList.remove('selected'); }
@@ -1358,7 +1376,8 @@ function updateGenBtn(){
   const info=document.getElementById('genInfo');
   const count=selectedCards.size;
   btn.disabled=count===0||!currentUser;
-  info.textContent=count>0?count+' image'+(count>1?'s':'')+' selected — ~'+Math.round(count*27)+' sec':'Select at least one prompt';
+  if(count===0) info.textContent='Tap a card above to select';
+  else info.textContent=count+' image'+(count>1?'s':'')+' selected — ~'+Math.round(count*27)+' sec';
 }
 
 // ══ UPLOAD ══
@@ -1393,10 +1412,113 @@ function resetUpload(){
 }
 
 // ══ REMBG ══
+let rembgSession = null;
+async function initRembg(){
+  if(rembgSession) return rembgSession;
+  try{
+    // Load ONNX Runtime Web (WebGPU/WASM)
+    if(!window.ort){
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort.min.js';
+        s.onload=res; s.onerror=rej;
+        document.head.appendChild(s);
+      });
+    }
+    ort.env.wasm.wasmPaths='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/';
+    const modelUrl='https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx';
+    rembgSession=await ort.InferenceSession.create(modelUrl,{executionProviders:['wasm']});
+    return rembgSession;
+  }catch(e){ console.error('REMBG init failed:',e); return null; }
+}
+async function removeBackground(imgFile){
+  const btn=document.getElementById('rembgRemove');
+  btn.style.opacity='.5';
+  btn.querySelector('.rembg-sub').textContent='Loading model…';
+  try{
+    const session=await initRembg();
+    if(!session) throw new Error('Model unavailable');
+    btn.querySelector('.rembg-sub').textContent='Removing background…';
+    // Load image into canvas
+    const img=new Image();
+    const blobUrl=URL.createObjectURL(imgFile);
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=blobUrl;});
+    URL.revokeObjectURL(blobUrl);
+    const SIZE=1024;
+    const canvas=document.createElement('canvas');
+    canvas.width=SIZE; canvas.height=SIZE;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(img,0,0,SIZE,SIZE);
+    const imageData=ctx.getImageData(0,0,SIZE,SIZE);
+    // Normalize to float32 [-1,1] and reshape to [1,3,H,W]
+    const {data}=imageData;
+    const r=new Float32Array(SIZE*SIZE);
+    const g=new Float32Array(SIZE*SIZE);
+    const b=new Float32Array(SIZE*SIZE);
+    for(let i=0;i<SIZE*SIZE;i++){
+      r[i]=(data[i*4]/255-0.5)/0.5;
+      g[i]=(data[i*4+1]/255-0.5)/0.5;
+      b[i]=(data[i*4+2]/255-0.5)/0.5;
+    }
+    const input=new Float32Array(3*SIZE*SIZE);
+    input.set(r,0); input.set(g,SIZE*SIZE); input.set(b,SIZE*SIZE*2);
+    const tensor=new ort.Tensor('float32',input,[1,3,SIZE,SIZE]);
+    const results=await session.run({input:tensor});
+    const mask=Object.values(results)[0].data;
+    // Apply mask to original image
+    const origCanvas=document.createElement('canvas');
+    origCanvas.width=img.naturalWidth||SIZE;
+    origCanvas.height=img.naturalHeight||SIZE;
+    const origCtx=origCanvas.getContext('2d');
+    origCtx.drawImage(img,0,0);
+    const origData=origCtx.getImageData(0,0,origCanvas.width,origCanvas.height);
+    // Resize mask to original dimensions
+    const maskCanvas=document.createElement('canvas');
+    maskCanvas.width=SIZE; maskCanvas.height=SIZE;
+    const maskCtx=maskCanvas.getContext('2d');
+    const maskImgData=maskCtx.createImageData(SIZE,SIZE);
+    for(let i=0;i<SIZE*SIZE;i++){
+      const v=Math.round(mask[i]*255);
+      maskImgData.data[i*4]=v;
+      maskImgData.data[i*4+1]=v;
+      maskImgData.data[i*4+2]=v;
+      maskImgData.data[i*4+3]=255;
+    }
+    maskCtx.putImageData(maskImgData,0,0);
+    // Scale mask to original size
+    const scaledMaskCanvas=document.createElement('canvas');
+    scaledMaskCanvas.width=origCanvas.width;
+    scaledMaskCanvas.height=origCanvas.height;
+    const sCtx=scaledMaskCanvas.getContext('2d');
+    sCtx.drawImage(maskCanvas,0,0,origCanvas.width,origCanvas.height);
+    const scaledMask=sCtx.getImageData(0,0,origCanvas.width,origCanvas.height);
+    // Apply alpha
+    for(let i=0;i<origData.data.length/4;i++){
+      origData.data[i*4+3]=scaledMask.data[i*4];
+    }
+    origCtx.putImageData(origData,0,0);
+    // Convert to blob
+    const resultBlob=await new Promise(res=>origCanvas.toBlob(res,'image/png'));
+    rembgBlobURL=URL.createObjectURL(resultBlob);
+    // Show preview
+    document.getElementById('previewImg').src=rembgBlobURL;
+    btn.querySelector('.rembg-sub').textContent='Done ✓ Background removed';
+    btn.style.opacity='1';
+    toast('✅ Background removed!','ok');
+  }catch(e){
+    btn.querySelector('.rembg-sub').textContent='Failed — try again';
+    btn.style.opacity='1';
+    toast('❌ Background removal failed: '+e.message,'err');
+    rembgMode='use';
+    document.getElementById('rembgUse').classList.add('active');
+    document.getElementById('rembgRemove').classList.remove('active');
+  }
+}
 function setRembg(mode){
   rembgMode=mode;
   document.getElementById('rembgUse').classList.toggle('active',mode==='use');
   document.getElementById('rembgRemove').classList.toggle('active',mode==='remove');
+  if(mode==='remove'&&file) removeBackground(file);
 }
 function toBase64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(f); }); }
 
@@ -1437,6 +1559,11 @@ async function sbDB(method,table,params,body){
   if(body) opts.body=JSON.stringify(body);
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}${params||''}`,opts);
   if(r.status===204) return [];
+  if(r.status===400||r.status===404||r.status===403){
+    const err=await r.json().catch(()=>({}));
+    const e=new Error(err.message||`HTTP ${r.status}`);
+    e.status=r.status; throw e;
+  }
   return r.json();
 }
 
@@ -1482,6 +1609,12 @@ function onLogin(){
   const btn=document.getElementById('btnHeaderAuth');
   btn.textContent='Sign Out'; btn.onclick=doLogout; btn.className='btn-auth btn-signout';
   loadUsage();
+  // Auto-trigger analysis if user clicked Analyse before signing in
+  if(pendingAnalyse){
+    pendingAnalyse=false;
+    closeModal();
+    setTimeout(runAnalyse, 300);
+  }
 }
 function onLogout(){
   const btn=document.getElementById('btnHeaderAuth');
@@ -1491,7 +1624,7 @@ function onLogout(){
 
 // ══ USAGE ══
 async function loadUsage(){
-  if(!currentUser) return;
+  if(!currentUser){ document.getElementById('usageBadge').textContent='Sign in to use'; return; }
   try{
     const rows=await sbDB('GET','usage_tracking',`?user_id=eq.${currentUser.id}&select=uses_count,period_start`);
     const now=new Date();
@@ -1507,7 +1640,11 @@ async function loadUsage(){
     const badge=document.getElementById('usageBadge');
     if(usageData.allowed) badge.textContent=`${usageData.max-usageData.uses} credits left`;
     else badge.textContent='Limit reached';
-  }catch(e){ usageData={allowed:true,uses:0,max:MAX_USES}; }
+  }catch(e){
+    // Table may not exist or RLS blocking — allow usage, show generic badge
+    usageData={allowed:true,uses:0,max:MAX_USES};
+    document.getElementById('usageBadge').textContent='Active';
+  }
 }
 async function incrementUsage(n){
   if(!currentUser) return;
@@ -1527,7 +1664,10 @@ async function incrementUsage(n){
       }
     }
     await loadUsage();
-  }catch(e){}
+  }catch(e){
+    // Table unavailable — skip tracking silently, don't block user
+    console.log('Usage tracking skipped:', e.message);
+  }
 }
 
 // ══ QUEUE ══
@@ -1550,6 +1690,15 @@ async function queueInsertRow(mode){
     method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify({client_id:queueClientId,mode,status:'waiting',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),last_seen:new Date().toISOString()})
   });
+  if(r.status===401||r.status===403){
+    // RLS on job_queue blocking — skip queue, submit directly
+    console.log('Queue table RLS blocked — submitting directly');
+    return {id:'direct-'+Date.now(), _skipQueue:true};
+  }
+  if(r.status===400||r.status===404){
+    console.log('Queue table unavailable — submitting directly');
+    return {id:'direct-'+Date.now(), _skipQueue:true};
+  }
   const rows=await r.json();
   return Array.isArray(rows)?rows[0]:rows;
 }
@@ -1605,10 +1754,25 @@ async function startQueuePolling(mode,submitFn,sel=[]){
 }
 async function evaluateQueue(mode,submitFn,sel=[]){
   if(!queueJobId||queueDispatching) return;
+  const isGen=mode==='generate';
+  // If queue was bypassed due to RLS, submit directly
+  if(queueJobId.startsWith('direct-')){
+    queueDispatching=true; queueStatus='processing';
+    showQB(isGen?'Processing your images…':'Processing your analysis…',1,'',isGen);
+    try{
+      const qData=await submitFn();
+      if(!qData||!qData.jobId) throw new Error('No jobId returned');
+      stopQueuePolling();
+      startPolling(qData.jobId,sel,mode);
+    }catch(err){
+      queueDispatching=false; queueStatus='waiting';
+      toast('❌ Dispatch failed: '+err.message,'err');
+    }
+    return;
+  }
   const rows=await queueListActive();
   const{fresh,pos}=queuePosition(rows);
   const mine=fresh.find(r=>r.id===queueJobId);
-  const isGen=mode==='generate';
   if(!mine){ toast('⏳ Queue entry expired. Please try again.','warn'); await queueFinalize(); return; }
   if(pos>1){ showQB(isGen?'Waiting in queue…':'Waiting to analyse…',pos,`#${pos} in queue`,isGen); return; }
   queueDispatching=true; queueStatus='processing';
@@ -1861,6 +2025,9 @@ function showDone(data){
   const progWrap=document.getElementById('progPanelWrap');
   if(progWrap) progWrap.style.display='none';
   document.getElementById('progPanel').classList.remove('on');
+  // Disable analyse button while on done page
+  const ab=document.getElementById('analyseBtn');
+  if(ab) ab.disabled=true;
   const fl=data.driveLink||runFolderLink||('https://drive.google.com/drive/folders/'+DRIVE_FOLDER+'?usp=sharing');
   runFolderLink=fl;
   const driveBtn=document.getElementById('btnDriveLink');
@@ -1906,13 +2073,9 @@ function showDoneTimeout(){
   toast('⚠️ Job may still be processing — check cloud storage.','warn');
 }
 function startOver(){
-  document.getElementById('donePanel').classList.remove('on');
-  document.getElementById('donePanel').style.display='none';
-  const progWrapS=document.getElementById('progPanelWrap');
-  if(progWrapS) progWrapS.style.display='none';
-  document.getElementById('promptPanel').classList.add('on');
-  document.getElementById('promptPanel').scrollIntoView({behavior:'smooth',block:'start'});
-  document.getElementById('genBtn').disabled=false;
+  // Store token before reload so user stays logged in
+  // token already in localStorage — just reload
+  location.reload();
 }
 
 // ══ FEEDBACK ══
