@@ -230,11 +230,11 @@ input#fileInput{display:none}
 .btn-gen:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
 /* ── GENERATE PROGRESS ── */
-.gen-prog-panel{display:none;padding:20px;animation:fadeUp .3s ease both}
-.gen-prog-panel.on{display:block}
+.gen-prog-panel{display:block;padding:20px;animation:fadeUp .3s ease both}
 
 /* ── DONE PANEL ── */
 .done-panel{display:none;animation:fadeUp .4s ease both}
+.done-panel.on{display:block}
 .done-panel.on{display:block}
 .done-top{text-align:center;padding:28px 20px 20px}
 .done-check{font-size:48px;margin-bottom:10px}
@@ -979,8 +979,11 @@ input#fileInput{display:none}
     <button class="btn-gen" id="genBtn" onclick="generate()" disabled>Generate Images →</button>
   </div>
 
-  <!-- GEN PROGRESS -->
-  <div class="gen-prog-panel" id="progPanel">
+</div><!-- /prompt-panel -->
+
+<!-- GEN PROGRESS PANEL (outside promptPanel so it shows independently) -->
+<div class="fsec" id="progPanelWrap" style="display:none">
+  <div class="gen-prog-panel on" id="progPanel">
     <div class="prog-title">⚡ Generating your <span style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">images</span>…</div>
     <div class="prog-sub">AI is working on each image. ~25–30 sec per image.</div>
     <div class="pbar-wrap"><div class="pbar-fill" id="pbarFill"></div></div>
@@ -990,25 +993,24 @@ input#fileInput{display:none}
       <div class="qb-text"><div class="qb-msg" id="qbMsgGen">Processing…</div><div class="qb-eta" id="qbEtaGen"></div></div>
     </div>
   </div>
+</div>
 
-  <!-- DONE PANEL -->
-  <div class="done-panel" id="donePanel">
-    <div class="done-top">
-      <div class="done-check">✅</div>
-      <div class="done-title">Job <span>complete!</span></div>
-      <div class="done-sub">Your images have been generated and saved to cloud storage.</div>
-      <div class="done-actions">
-        <a class="btn-drive" id="btnDriveLink" href="#" target="_blank" rel="noopener">☁️ View in Cloud Storage</a>
-        <button class="btn-again" onclick="startOver()">Generate More</button>
-      </div>
-    </div>
-    <div class="imgs-grid" id="imgsGrid"></div>
-    <div style="padding:0 20px 20px;text-align:center">
-      <button class="btn-drive" onclick="askFeedback()" style="display:inline-flex">💬 Share Feedback</button>
+<!-- DONE PANEL (outside promptPanel) -->
+<div class="fsec done-panel" id="donePanel" style="display:none">
+  <div class="done-top">
+    <div class="done-check">✅</div>
+    <div class="done-title">Job <span>complete!</span></div>
+    <div class="done-sub">Your images have been generated and saved to cloud storage.</div>
+    <div class="done-actions">
+      <a class="btn-drive" id="btnDriveLink" href="#" target="_blank" rel="noopener">☁️ View in Cloud Storage</a>
+      <button class="btn-again" onclick="startOver()">Generate More</button>
     </div>
   </div>
-
-</div><!-- /prompt-panel -->
+  <div class="imgs-grid" id="imgsGrid"></div>
+  <div style="padding:0 20px 20px;text-align:center">
+    <button class="btn-drive" onclick="askFeedback()" style="display:inline-flex">💬 Share Feedback</button>
+  </div>
+</div>
 </div><!-- /page -->
 <script>
 // ══ CONFIG ══
@@ -1684,6 +1686,8 @@ async function startPolling(jobId,sel,mode){
         if(isGen){
           toast('❌ Generation failed. Please try again.','err');
           document.getElementById('genBtn').disabled=false;
+          const progWrapF=document.getElementById('progPanelWrap');
+          if(progWrapF) progWrapF.style.display='none';
           document.getElementById('progPanel').classList.remove('on');
           document.getElementById('promptPanel').classList.add('on');
         } else {
@@ -1778,6 +1782,8 @@ async function generate(){
     await queueFinalize(); stopPolling(); hideQB(true);
     toast('❌ Generation failed: '+err.message,'err');
     document.getElementById('genBtn').disabled=false;
+    const progWrapE=document.getElementById('progPanelWrap');
+    if(progWrapE) progWrapE.style.display='none';
     document.getElementById('progPanel').classList.remove('on');
     document.getElementById('promptPanel').classList.add('on');
   }
@@ -1822,6 +1828,9 @@ async function submitGenerateToN8n(sel){
 function showProgress(pid,lid,bid,steps){
   const panel=document.getElementById(pid);
   if(panel) panel.classList.add('on');
+  // Show wrapper if it exists (progPanel is wrapped)
+  const wrap=document.getElementById(pid+'Wrap');
+  if(wrap) wrap.style.display='';
   const list=document.getElementById(lid);
   if(list) list.innerHTML=steps.map(s=>`<div class="pstep" id="ps-${s.id}"><div class="pstep-ico" id="pico-${s.id}">${s.ico}</div><div><div class="pstep-name">${s.name}</div><div class="pstep-stat" id="pstat-${s.id}">Waiting…</div></div></div>`).join('');
 }
@@ -1849,6 +1858,8 @@ function forceAllDone(lid){
 const EMOJIS={hero:'🖼️',infographic:'📊',lifestyle:'🏠',lifestyle2:'🏡',lifestyle3:'🌄',dimensions:'📐',generic:'✏️'};
 const LABELS={hero:'Main Product',infographic:'Infographic',lifestyle:'Lifestyle 1',lifestyle2:'Lifestyle 2',lifestyle3:'Lifestyle 3',dimensions:'Dimension',generic:'Custom'};
 function showDone(data){
+  const progWrap=document.getElementById('progPanelWrap');
+  if(progWrap) progWrap.style.display='none';
   document.getElementById('progPanel').classList.remove('on');
   const fl=data.driveLink||runFolderLink||('https://drive.google.com/drive/folders/'+DRIVE_FOLDER+'?usp=sharing');
   runFolderLink=fl;
@@ -1878,6 +1889,7 @@ function showDone(data){
       </div>`;
     grid.appendChild(card);
   });
+  document.getElementById('donePanel').style.display='block';
   document.getElementById('donePanel').classList.add('on');
   document.getElementById('donePanel').scrollIntoView({behavior:'smooth',block:'start'});
   loadUsage();
@@ -1885,13 +1897,19 @@ function showDone(data){
   setTimeout(askFeedback,2000);
 }
 function showDoneTimeout(){
+  const progWrap=document.getElementById('progPanelWrap');
+  if(progWrap) progWrap.style.display='none';
   document.getElementById('progPanel').classList.remove('on');
+  document.getElementById('donePanel').style.display='block';
   document.getElementById('donePanel').classList.add('on');
   document.getElementById('donePanel').scrollIntoView({behavior:'smooth',block:'start'});
   toast('⚠️ Job may still be processing — check cloud storage.','warn');
 }
 function startOver(){
   document.getElementById('donePanel').classList.remove('on');
+  document.getElementById('donePanel').style.display='none';
+  const progWrapS=document.getElementById('progPanelWrap');
+  if(progWrapS) progWrapS.style.display='none';
   document.getElementById('promptPanel').classList.add('on');
   document.getElementById('promptPanel').scrollIntoView({behavior:'smooth',block:'start'});
   document.getElementById('genBtn').disabled=false;
@@ -1919,10 +1937,20 @@ async function submitFeedback(){
 // ══ INIT ══
 setMode('dynamic');
 (async()=>{
+  const token=localStorage.getItem('sb_token')||'';
+  if(!token) return;
   try{
-    const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+(localStorage.getItem('sb_token')||'')}});
+    const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+token}});
+    if(r.status===401||r.status===403){
+      localStorage.removeItem('sb_token');
+      return; // expired token — stay logged out
+    }
     const d=await r.json();
-    if(d&&d.id){ currentUser=d; currentUser.access_token=localStorage.getItem('sb_token'); onLogin(); }
+    if(d&&d.id){
+      currentUser=d;
+      currentUser.access_token=token;
+      onLogin();
+    }
   }catch(e){}
 })();
 
@@ -1936,7 +1964,9 @@ window.doLogin=async function(){
     const d=await sbPost('/auth/v1/token?grant_type=password',{email,password:pass});
     if(d.error) setMsg('liMsg',d.error.message||d.error);
     else{
-      currentUser=d.user||{email,id:d.user?.id};
+      currentUser=d.user||{};
+      currentUser.email = currentUser.email || email;
+      currentUser.id = currentUser.id || d.user?.id || d.sub || '';
       currentUser.access_token=d.access_token;
       localStorage.setItem('sb_token',d.access_token);
       onLogin(); closeModal();
