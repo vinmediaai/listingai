@@ -1032,8 +1032,8 @@ input#fileInput{display:none}
 <script>
 // ══ CONFIG ══
 const SERVICE_STATUS    = { state:'operational', title:'', message:'' };
-const SUPABASE_URL      = 'https://rqzflfyqazklfnfxefct.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_U6qIg---Zohv4CXqn1OGaw_hBtwLkms';
+const SUPABASE_URL      = 'https://foogdpgrkiawdnfvhxbn.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_TrLnz3U1EjrLxZLlKsqqJg_zzxr8C8B';
 const ANALYSE_SUBMIT    = 'https://n8n.vinmediaai.online/webhook/listing-analyse-submit';
 const QUEUE_SUBMIT      = 'https://n8n.vinmediaai.online/webhook/listing-queue-submit';
 const JOB_STATUS        = 'https://n8n.vinmediaai.online/webhook/listing-job-status';
@@ -1755,16 +1755,26 @@ async function queueList(table){
   // Get all fresh rows ordered by created_at — used to compute position
   const staleTs = new Date(Date.now() - STALE_MS).toISOString();
   return await queueFetch('GET', table,
-    `?last_seen=gte.${encodeURIComponent(staleTs)}&order=created_at.asc&select=id,status,created_at,last_seen`
+    `?last_seen=gte.${encodeURIComponent(staleTs)}&order=created_at.asc&select=id,status,created_at,updated_at,last_seen`
   );
 }
 async function cleanStaleQueue(){
-  // Call the Supabase function to clean stale rows
   const token = currentUser?.access_token || SUPABASE_ANON_KEY;
   await fetch(`${SUPABASE_URL}/rest/v1/rpc/clean_stale_queue`, {
     method: 'POST',
     headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: '{}'
+  }).catch(()=>{});
+}
+async function cleanStuckProcessing(table){
+  // Delete processing rows older than 3 minutes — these are from crashed sessions
+  // Any authenticated user can delete stuck rows (needed to unblock queue)
+  // We do this via the RPC function which runs as SECURITY DEFINER
+  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
+  await fetch(`${SUPABASE_URL}/rest/v1/rpc/clean_stuck_processing`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ queue_table: table })
   }).catch(()=>{});
 }
 
@@ -1798,8 +1808,9 @@ async function startQueuePolling(mode, submitFn, sel=[]){
   queueDispatching = false;
   queueTable = table;
 
-  // Clean stale rows first
+  // Clean stale rows AND stuck processing rows before joining
   await cleanStaleQueue();
+  await cleanStuckProcessing(table);
 
   // Insert our row
   try{
@@ -1862,20 +1873,32 @@ async function evaluateQueue(mode, submitFn, sel=[]){
   }
 
   const pos = myIdx + 1;
-  const processing = fresh.find(r => r.status === 'processing');
+  // Find processing rows that are NOT ours
+  const otherProcessing = fresh.find(r => r.status === 'processing' && r.id !== queueRowId);
+  // Find stale processing rows (stuck > 3 min) — treat as free
+  const MAX_PROCESS_MS = 3 * 60 * 1000;
+  const stuckProcessing = fresh.find(r =>
+    r.status === 'processing' &&
+    r.id !== queueRowId &&
+    (Date.now() - new Date(r.updated_at || r.last_seen).getTime()) > MAX_PROCESS_MS
+  );
+  // A processing row is only a real blocker if it's fresh (not stuck)
+  const realBlocker = otherProcessing && !stuckProcessing;
 
-  // Show position to user
-  if(pos > 1 || processing){
+  // Not our turn yet
+  if(pos > 1 || realBlocker){
     const waitPos = pos;
-    const eta     = pos > 1 ? `~${Math.round(pos * 25)} sec wait` : 'Almost your turn…';
+    const eta = pos > 1
+      ? `~${Math.round((pos - 1) * 30)} sec wait`
+      : 'Almost your turn…';
     showQB(
       isGen ? `Queue position #${waitPos}` : `#${waitPos} in analyse queue`,
       waitPos, eta, isGen
     );
-    return; // Not our turn yet
+    return;
   }
 
-  // Position 1 and nothing processing — our turn!
+  // Position 1 and no real blocker — our turn!
   queueDispatching = true;
   showQB(isGen ? 'Starting generation…' : 'Starting analysis…', 1, '', isGen);
 
