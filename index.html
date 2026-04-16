@@ -1033,7 +1033,7 @@ input#fileInput{display:none}
 // ══ CONFIG ══
 const SERVICE_STATUS    = { state:'operational', title:'', message:'' };
 const SUPABASE_URL      = 'https://rqzflfyqazklfnfxefct.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_U6qIg---Zohv4CXqn1OGaw_hBtwLkms';
+const SUPABASE_ANON_KEY = 'sb_publishable_U6qIgZohv4CXqn1OGaw_hBtwLkms';
 const ANALYSE_SUBMIT    = 'https://n8n.vinmediaai.online/webhook/listing-analyse-submit';
 const QUEUE_SUBMIT      = 'https://n8n.vinmediaai.online/webhook/listing-queue-submit';
 const JOB_STATUS        = 'https://n8n.vinmediaai.online/webhook/listing-job-status';
@@ -2256,10 +2256,13 @@ window.doLogin=async function(){
     const d=await sbPost('/auth/v1/token?grant_type=password',{email,password:pass});
     if(d.error) setMsg('liMsg',d.error.message||d.error);
     else{
-      currentUser=d.user||{};
-      currentUser.email = currentUser.email || email;
-      currentUser.id = currentUser.id || d.user?.id || d.sub || '';
-      currentUser.access_token=d.access_token;
+      // Handle both anon key and publishable key response formats
+      const userData = d.user || d;
+      currentUser = {
+        id:           userData.id || d.sub || '',
+        email:        userData.email || email,
+        access_token: d.access_token || ''
+      };
       localStorage.setItem('sb_token',d.access_token);
       onLogin(); closeModal();
     }
