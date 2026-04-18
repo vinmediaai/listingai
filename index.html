@@ -1033,7 +1033,7 @@ input#fileInput{display:none}
 // ══ CONFIG ══
 const SERVICE_STATUS    = { state:'operational', title:'', message:'' };
 const SUPABASE_URL      = 'https://rqzflfyqazklfnfxefct.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_U6qIg---Zohv4CXqn1OGaw_hBtwLkms';
+const SUPABASE_ANON_KEY = 'sb_publishable_U6qIgZohv4CXqn1OGaw_hBtwLkms';
 const ANALYSE_SUBMIT    = 'https://n8n.vinmediaai.online/webhook/listing-analyse-submit';
 const QUEUE_SUBMIT      = 'https://n8n.vinmediaai.online/webhook/listing-queue-submit';
 const JOB_STATUS        = 'https://n8n.vinmediaai.online/webhook/listing-job-status';
@@ -1727,9 +1727,15 @@ async function queueFetch(method, table, params='', body=null){
 }
 
 async function queueInsert(table, mode){
+  // Require a valid authenticated session before touching the queue.
+  // An empty id means the JWT didn't decode properly — fail fast with a
+  // clear message so the caller falls through to direct submit.
+  if(!currentUser?.id || !currentUser?.access_token){
+    throw new Error('No authenticated session — using direct submit');
+  }
   return await queueFetch('POST', table, '', {
     client_id:  'c-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
-    user_id:    currentUser?.id || null,
+    user_id:    currentUser.id,
     mode,
     status:     'waiting',
     created_at: new Date().toISOString(),
@@ -2226,11 +2232,30 @@ async function submitFeedback(){
   closeFeedback(); toast('Thanks for your feedback! 🙏','ok');
 }
 
+// ══ JWT DECODE HELPER ══
+// Extracts the payload from a JWT without verifying signature.
+// Used as a reliable fallback to get user id (sub) from the access token
+// when the auth response object doesn't include it in the expected place.
+function parseJWT(token){
+  try{
+    const b64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(atob(b64));
+  }catch(e){ return {}; }
+}
+
 // ══ INIT ══
 setMode('dynamic');
 (async()=>{
   const token=localStorage.getItem('sb_token')||'';
   if(!token) return;
+  // Decode the JWT first — gives us user id (sub) immediately,
+  // without waiting for a network round-trip.
+  const payload = parseJWT(token);
+  // If token is clearly expired, skip the network call entirely.
+  if(payload.exp && payload.exp * 1000 < Date.now()){
+    localStorage.removeItem('sb_token');
+    return;
+  }
   try{
     const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+token}});
     if(r.status===401||r.status===403){
@@ -2238,9 +2263,13 @@ setMode('dynamic');
       return; // expired token — stay logged out
     }
     const d=await r.json();
-    if(d&&d.id){
-      currentUser=d;
-      currentUser.access_token=token;
+    // Use the user object from the API, but always guarantee id is populated
+    // by falling back to the JWT sub claim if the response object is missing it.
+    const userId = (d&&d.id) ? d.id : (payload.sub||'');
+    if(userId){
+      currentUser = d || {};
+      currentUser.id = userId;
+      currentUser.access_token = token;
       onLogin();
     }
   }catch(e){}
@@ -2254,16 +2283,20 @@ window.doLogin=async function(){
   setBtnLoad('btnLogin',true);
   try{
     const d=await sbPost('/auth/v1/token?grant_type=password',{email,password:pass});
-    if(d.error) setMsg('liMsg',d.error.message||d.error);
-    else{
-      // Handle both anon key and publishable key response formats
+    if(d.error){
+      // Surface a clear message for the most common 400 cause on fresh projects
+      const msg = d.error_description || d.error?.message || d.error || 'Login failed.';
+      setMsg('liMsg', msg.includes('confirmed') ? '⚠️ Please confirm your email first, then sign in.' : msg);
+    } else {
       const userData = d.user || d;
+      // Always decode the JWT as a reliable fallback for user id
+      const payload = parseJWT(d.access_token||'');
       currentUser = {
-        id:           userData.id || d.sub || '',
+        id:           userData.id || payload.sub || d.sub || '',
         email:        userData.email || email,
         access_token: d.access_token || ''
       };
-      localStorage.setItem('sb_token',d.access_token);
+      localStorage.setItem('sb_token', d.access_token);
       onLogin(); closeModal();
     }
   }catch(e){ setMsg('liMsg','Network error — try again.'); }
