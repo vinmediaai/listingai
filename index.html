@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ListingAI — Product Image Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ── RESET & BASE ── */
@@ -363,9 +364,18 @@ input#fileInput{display:none}
       <div class="modal-or">Already have an account? <span class="modal-link" onclick="switchTab('login')">Sign In</span></div>
     </div>
     <div class="modal-view" id="viewVerify">
-      <p style="font-size:14px;color:var(--dim2);margin-bottom:16px">Check your email and click the verification link, then come back and sign in.</p>
-      <button class="modal-btn" onclick="switchTab('login')">Go to Sign In</button>
+      <p style="font-size:14px;color:var(--dim2);margin-bottom:16px">We sent a 6-digit code to <strong id="verifyEmailDisplay" style="color:var(--text)"></strong>. Enter it below to activate your account.</p>
+      <div class="modal-field">
+        <label>Verification Code</label>
+        <input type="text" id="otpInput" placeholder="123456" maxlength="6"
+          inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code"
+          style="font-size:22px;letter-spacing:6px;text-align:center;font-weight:700"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+          onkeydown="if(event.key==='Enter')doVerifyOtp()">
+      </div>
+      <button class="modal-btn" id="btnVerify" onclick="doVerifyOtp()">Verify &amp; Sign In</button>
       <div class="modal-msg" id="verifyMsg"></div>
+      <div class="modal-or">Didn't get a code? <span class="modal-link" onclick="doResendOtp()">Resend</span></div>
     </div>
     <div class="modal-view" id="viewLogin">
       <div class="modal-field"><label>Email</label><input type="email" id="liEmail" placeholder="you@email.com"></div>
@@ -1033,7 +1043,8 @@ input#fileInput{display:none}
 // ══ CONFIG ══
 const SERVICE_STATUS    = { state:'operational', title:'', message:'' };
 const SUPABASE_URL      = 'https://rqzflfyqazklfnfxefct.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_U6qIgZohv4CXqn1OGaw_hBtwLkms';
+// sb_publishable_* keys are safe for public repos — they enforce RLS just like the JWT anon key
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_U6qIgZohv4CXqn1OGaw_hBtwLkms';
 const ANALYSE_SUBMIT    = 'https://n8n.vinmediaai.online/webhook/listing-analyse-submit';
 const QUEUE_SUBMIT      = 'https://n8n.vinmediaai.online/webhook/listing-queue-submit';
 const JOB_STATUS        = 'https://n8n.vinmediaai.online/webhook/listing-job-status';
@@ -1545,70 +1556,78 @@ function switchTab(tab){
 function setBtnLoad(id,on){ const b=document.getElementById(id); if(!b)return; b.classList.toggle('loading',on); b.disabled=on; }
 function setMsg(id,msg,type='err'){ const el=document.getElementById(id); if(!el)return; el.textContent=msg; el.className='modal-msg '+type; }
 
-// ══ SUPABASE ══
-async function sbPost(path,body,token){
-  const h={'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${token||SUPABASE_ANON_KEY}`};
-  const r=await fetch(SUPABASE_URL+path,{method:'POST',headers:h,body:JSON.stringify(body)});
-  return r.json();
-}
-async function sbDB(method,table,params,body){
-  const token=currentUser?.access_token||SUPABASE_ANON_KEY;
-  const h={
-    'apikey':SUPABASE_ANON_KEY,
-    'Authorization':`Bearer ${token}`,
-    'Content-Type':'application/json',
-  };
-  // Only add Prefer header for mutations, not GETs
-  if(method!=='GET') h['Prefer']='return=representation';
-  const opts={method,headers:h};
-  if(body) opts.body=JSON.stringify(body);
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}${params||''}`,opts);
-  if(r.status===204) return [];
-  if(r.status===400||r.status===401||r.status===403||r.status===404){
-    const err=await r.json().catch(()=>({}));
-    const e=new Error(err.message||`HTTP ${r.status} on ${table}`);
-    e.status=r.status; throw e;
-  }
-  return r.json();
-}
+// ══ SUPABASE CLIENT ══
+// Initialise the official SDK with the publishable key (safe for public repos).
+// The SDK manages sessions, token refresh and auth state automatically.
+const { createClient } = window.supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 // ══ AUTH FLOWS ══
+let pendingVerifyEmail = '';
+
 async function doSignup(){
   const email=document.getElementById('suEmail').value.trim(),pass=document.getElementById('suPass').value;
   if(!email||!pass){ setMsg('suMsg','Please fill in all fields.'); return; }
   if(pass.length<6){ setMsg('suMsg','Password must be at least 6 characters.'); return; }
   setBtnLoad('btnSignup',true);
-  try{
-    const d=await sbPost('/auth/v1/signup',{email,password:pass});
-    if(d.error) setMsg('suMsg',d.error.message||d.error);
-    else{ setMsg('suMsg','Account created! Check your email to verify.','ok'); switchTab('verify'); }
-  }catch(e){ setMsg('suMsg','Network error — try again.'); }
+  const {error}=await sb.auth.signUp({email,password:pass});
+  if(error){ setMsg('suMsg',error.message||'Signup failed.'); }
+  else{
+    pendingVerifyEmail=email;
+    const el=document.getElementById('verifyEmailDisplay');
+    if(el) el.textContent=email;
+    document.getElementById('otpInput').value='';
+    switchTab('verify');
+  }
   setBtnLoad('btnSignup',false);
+}
+async function doVerifyOtp(){
+  const otp=document.getElementById('otpInput').value.trim();
+  if(otp.length!==6){ setMsg('verifyMsg','Enter the full 6-digit code.'); return; }
+  if(!pendingVerifyEmail){ setMsg('verifyMsg','Session expired — please sign up again.'); return; }
+  setBtnLoad('btnVerify',true);
+  const {error}=await sb.auth.verifyOtp({email:pendingVerifyEmail,token:otp,type:'signup'});
+  if(error){ setMsg('verifyMsg',error.message||'Invalid code — try again.'); }
+  else{
+    pendingVerifyEmail='';
+    setMsg('verifyMsg','✅ Verified! Signing you in…','ok');
+    // onAuthStateChange fires SIGNED_IN automatically — just close the modal
+    setTimeout(()=>closeModal(),900);
+  }
+  setBtnLoad('btnVerify',false);
+}
+async function doResendOtp(){
+  if(!pendingVerifyEmail){ setMsg('verifyMsg','Session expired — please sign up again.'); return; }
+  const {error}=await sb.auth.resend({type:'signup',email:pendingVerifyEmail});
+  if(error) setMsg('verifyMsg',error.message||'Could not resend.');
+  else setMsg('verifyMsg','New code sent! Check your inbox.','ok');
 }
 async function doLogin(){
   const email=document.getElementById('liEmail').value.trim(),pass=document.getElementById('liPass').value;
   if(!email||!pass){ setMsg('liMsg','Please fill in all fields.'); return; }
   setBtnLoad('btnLogin',true);
-  try{
-    const d=await sbPost('/auth/v1/token?grant_type=password',{email,password:pass});
-    if(d.error) setMsg('liMsg',d.error.message||d.error);
-    else{ currentUser=d.user||{email,access_token:d.access_token}; currentUser.access_token=d.access_token; onLogin(); closeModal(); }
-  }catch(e){ setMsg('liMsg','Network error — try again.'); }
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){
+    const msg=error.message||'';
+    setMsg('liMsg', msg.toLowerCase().includes('confirm') ? '⚠️ Please confirm your email first.' : msg||'Login failed.');
+  } else {
+    // onAuthStateChange fires SIGNED_IN and sets currentUser automatically
+    closeModal();
+  }
   setBtnLoad('btnLogin',false);
 }
 async function doReset(){
   const email=document.getElementById('resetEmail').value.trim();
   if(!email){ setMsg('resetMsg','Enter your email.'); return; }
   setBtnLoad('btnReset',true);
-  try{
-    await sbPost('/auth/v1/recover',{email});
-    setMsg('resetMsg','Reset link sent! Check your email.','ok');
-  }catch(e){ setMsg('resetMsg','Network error — try again.'); }
+  const {error}=await sb.auth.resetPasswordForEmail(email);
+  if(error) setMsg('resetMsg',error.message||'Reset failed.');
+  else setMsg('resetMsg','Reset link sent! Check your email.','ok');
   setBtnLoad('btnReset',false);
 }
 async function doLogout(){
-  try{ await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+(currentUser?.access_token||'')}}); }catch(e){}
-  currentUser=null; usageData=null; onLogout();
+  await sb.auth.signOut();
+  // onAuthStateChange fires SIGNED_OUT and calls onLogout() automatically
 }
 function onLogin(){
   const btn=document.getElementById('btnHeaderAuth');
@@ -1630,49 +1649,40 @@ function onLogout(){
 // ══ USAGE ══
 async function loadUsage(){
   if(!currentUser){ document.getElementById('usageBadge').textContent='Sign in to use'; return; }
-  try{
-    const rows=await sbDB('GET','usage_tracking',`?user_id=eq.${currentUser.id}&select=uses_count,period_start`);
-    const now=new Date();
-    if(!rows||!rows.length||!rows[0]){
-      usageData={allowed:true,uses:0,max:MAX_USES};
-    } else {
-      const row=rows[0];
-      const start=new Date(row.period_start);
-      const daysDiff=(now-start)/(1000*60*60*24);
-      if(daysDiff>USE_PERIOD_DAYS){ usageData={allowed:true,uses:0,max:MAX_USES}; }
-      else { usageData={allowed:row.uses_count<MAX_USES,uses:row.uses_count,max:MAX_USES}; }
-    }
-    const badge=document.getElementById('usageBadge');
-    if(usageData.allowed) badge.textContent=`${usageData.max-usageData.uses} credits left`;
-    else badge.textContent='Limit reached';
-  }catch(e){
-    // Table may not exist or RLS blocking — allow usage, show generic badge
+  const {data:rows}=await sb.from('usage_tracking')
+    .select('uses_count,period_start')
+    .eq('user_id',currentUser.id);
+  const now=new Date();
+  if(!rows||!rows.length){
     usageData={allowed:true,uses:0,max:MAX_USES};
-    document.getElementById('usageBadge').textContent='Active';
+  } else {
+    const row=rows[0];
+    const daysDiff=(now-new Date(row.period_start))/(1000*60*60*24);
+    if(daysDiff>USE_PERIOD_DAYS){ usageData={allowed:true,uses:0,max:MAX_USES}; }
+    else { usageData={allowed:row.uses_count<MAX_USES,uses:row.uses_count,max:MAX_USES}; }
   }
+  const badge=document.getElementById('usageBadge');
+  if(usageData.allowed) badge.textContent=`${usageData.max-usageData.uses} credits left`;
+  else badge.textContent='Limit reached';
 }
 async function incrementUsage(n){
   if(!currentUser) return;
   try{
-    const rows=await sbDB('GET','usage_tracking',`?user_id=eq.${currentUser.id}`);
+    const {data:rows}=await sb.from('usage_tracking').select().eq('user_id',currentUser.id);
     const now=new Date().toISOString();
     if(!rows||!rows.length){
-      await sbDB('POST','usage_tracking','',{user_id:currentUser.id,uses_count:n,period_start:now,updated_at:now});
+      await sb.from('usage_tracking').insert({user_id:currentUser.id,uses_count:n,period_start:now,updated_at:now});
     } else {
       const row=rows[0];
-      const start=new Date(row.period_start);
-      const daysDiff=(new Date()-start)/(1000*60*60*24);
-      if(daysDiff>USE_PERIOD_DAYS){
-        await sbDB('PATCH','usage_tracking',`?user_id=eq.${currentUser.id}`,{uses_count:n,period_start:now,updated_at:now});
-      } else {
-        await sbDB('PATCH','usage_tracking',`?user_id=eq.${currentUser.id}`,{uses_count:(row.uses_count||0)+n,updated_at:now});
-      }
+      const daysDiff=(new Date()-new Date(row.period_start))/(1000*60*60*24);
+      const newCount=daysDiff>USE_PERIOD_DAYS ? n : (row.uses_count||0)+n;
+      const patch=daysDiff>USE_PERIOD_DAYS
+        ? {uses_count:n,period_start:now,updated_at:now}
+        : {uses_count:newCount,updated_at:now};
+      await sb.from('usage_tracking').update(patch).eq('user_id',currentUser.id);
     }
     await loadUsage();
-  }catch(e){
-    // Table unavailable — skip tracking silently, don't block user
-    console.log('Usage tracking skipped:', e.message);
-  }
+  }catch(e){ console.log('Usage tracking skipped:',e.message); }
 }
 
 // ══ QUEUE ══
@@ -1706,82 +1716,42 @@ function hideQB(gen=false){
   if(b) b.classList.remove('on');
 }
 
-// ── Supabase REST helpers for queue ──
-async function queueFetch(method, table, params='', body=null){
-  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
-  const h = {
-    'apikey':        SUPABASE_ANON_KEY,
-    'Authorization': `Bearer ${token}`,
-    'Content-Type':  'application/json',
-  };
-  if(method !== 'GET') h['Prefer'] = 'return=representation';
-  const opts = { method, headers: h };
-  if(body) opts.body = JSON.stringify(body);
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, opts);
-  if(r.status === 204) return [];
-  const data = await r.json();
-  if(r.status >= 400){
-    throw Object.assign(new Error(data?.message || `Queue HTTP ${r.status}`), { status: r.status });
-  }
+// ── Queue helpers (all via Supabase SDK) ──
+async function queueInsert(table, mode){
+  if(!currentUser?.id) throw new Error('No authenticated session — using direct submit');
+  const {data,error}=await sb.from(table).insert({
+    client_id: 'c-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
+    user_id:   currentUser.id,
+    mode, status:'waiting',
+    created_at:new Date().toISOString(),
+    updated_at:new Date().toISOString(),
+    last_seen: new Date().toISOString(),
+  }).select();
+  if(error) throw new Error(error.message||'Queue insert failed');
   return data;
 }
-
-async function queueInsert(table, mode){
-  // Require a valid authenticated session before touching the queue.
-  // An empty id means the JWT didn't decode properly — fail fast with a
-  // clear message so the caller falls through to direct submit.
-  if(!currentUser?.id || !currentUser?.access_token){
-    throw new Error('No authenticated session — using direct submit');
-  }
-  return await queueFetch('POST', table, '', {
-    client_id:  'c-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
-    user_id:    currentUser.id,
-    mode,
-    status:     'waiting',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    last_seen:  new Date().toISOString(),
-  });
-}
 async function queueUpdate(table, id, patch){
-  await queueFetch('PATCH', table, `?id=eq.${id}`, {
-    ...patch, updated_at: new Date().toISOString(), last_seen: new Date().toISOString()
-  }).catch(()=>{});
+  await sb.from(table).update({
+    ...patch, updated_at:new Date().toISOString(), last_seen:new Date().toISOString()
+  }).eq('id',id).catch(()=>{});
 }
 async function queueDelete(table, id){
   if(!id) return;
-  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
-  await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
-    method: 'DELETE',
-    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
-    keepalive: true
-  }).catch(()=>{});
+  await sb.from(table).delete().eq('id',id).catch(()=>{});
 }
 async function queueList(table){
-  // Get all fresh rows ordered by created_at — used to compute position
-  const staleTs = new Date(Date.now() - STALE_MS).toISOString();
-  return await queueFetch('GET', table,
-    `?last_seen=gte.${encodeURIComponent(staleTs)}&order=created_at.asc&select=id,status,created_at,updated_at,last_seen`
-  );
+  const staleTs=new Date(Date.now()-STALE_MS).toISOString();
+  const {data}=await sb.from(table)
+    .select('id,status,created_at,updated_at,last_seen')
+    .gte('last_seen',staleTs)
+    .order('created_at',{ascending:true});
+  return data||[];
 }
 async function cleanStaleQueue(){
-  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
-  await fetch(`${SUPABASE_URL}/rest/v1/rpc/clean_stale_queue`, {
-    method: 'POST',
-    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: '{}'
-  }).catch(()=>{});
+  await sb.rpc('clean_stale_queue').catch(()=>{});
 }
 async function cleanStuckProcessing(table){
-  // Delete processing rows older than 3 minutes — these are from crashed sessions
-  // Any authenticated user can delete stuck rows (needed to unblock queue)
-  // We do this via the RPC function which runs as SECURITY DEFINER
-  const token = currentUser?.access_token || SUPABASE_ANON_KEY;
-  await fetch(`${SUPABASE_URL}/rest/v1/rpc/clean_stuck_processing`, {
-    method: 'POST',
-    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ queue_table: table })
-  }).catch(()=>{});
+  await sb.rpc('clean_stuck_processing',{queue_table:table}).catch(()=>{});
 }
 
 function stopQueueHeartbeat(){ clearInterval(queueHeartbeatInt); queueHeartbeatInt = null; }
@@ -2232,81 +2202,26 @@ async function submitFeedback(){
   closeFeedback(); toast('Thanks for your feedback! 🙏','ok');
 }
 
-// ══ JWT DECODE HELPER ══
-// Extracts the payload from a JWT without verifying signature.
-// Used as a reliable fallback to get user id (sub) from the access token
-// when the auth response object doesn't include it in the expected place.
-function parseJWT(token){
-  try{
-    const b64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    return JSON.parse(atob(b64));
-  }catch(e){ return {}; }
-}
-
 // ══ INIT ══
 setMode('dynamic');
-(async()=>{
-  const token=localStorage.getItem('sb_token')||'';
-  if(!token) return;
-  // Decode the JWT first — gives us user id (sub) immediately,
-  // without waiting for a network round-trip.
-  const payload = parseJWT(token);
-  // If token is clearly expired, skip the network call entirely.
-  if(payload.exp && payload.exp * 1000 < Date.now()){
-    localStorage.removeItem('sb_token');
+
+// The Supabase SDK restores any stored session automatically on page load.
+// onAuthStateChange is the single source of truth for auth state — it fires:
+//   INITIAL_SESSION  on page load (session = valid session or null)
+//   SIGNED_IN        after login or OTP verify
+//   SIGNED_OUT       after signOut()
+//   TOKEN_REFRESHED  when the access token is silently refreshed
+sb.auth.onAuthStateChange((event, session) => {
+  if(event === 'SIGNED_OUT' || !session){
+    if(currentUser){ currentUser=null; usageData=null; onLogout(); }
     return;
   }
-  try{
-    const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+token}});
-    if(r.status===401||r.status===403){
-      localStorage.removeItem('sb_token');
-      return; // expired token — stay logged out
-    }
-    const d=await r.json();
-    // Use the user object from the API, but always guarantee id is populated
-    // by falling back to the JWT sub claim if the response object is missing it.
-    const userId = (d&&d.id) ? d.id : (payload.sub||'');
-    if(userId){
-      currentUser = d || {};
-      currentUser.id = userId;
-      currentUser.access_token = token;
-      onLogin();
-    }
-  }catch(e){}
-})();
-
-// Override doLogin to persist token
-const _origLogin=doLogin;
-window.doLogin=async function(){
-  const email=document.getElementById('liEmail').value.trim(),pass=document.getElementById('liPass').value;
-  if(!email||!pass){ setMsg('liMsg','Please fill in all fields.'); return; }
-  setBtnLoad('btnLogin',true);
-  try{
-    const d=await sbPost('/auth/v1/token?grant_type=password',{email,password:pass});
-    if(d.error){
-      // Surface a clear message for the most common 400 cause on fresh projects
-      const msg = d.error_description || d.error?.message || d.error || 'Login failed.';
-      setMsg('liMsg', msg.includes('confirmed') ? '⚠️ Please confirm your email first, then sign in.' : msg);
-    } else {
-      const userData = d.user || d;
-      // Always decode the JWT as a reliable fallback for user id
-      const payload = parseJWT(d.access_token||'');
-      currentUser = {
-        id:           userData.id || payload.sub || d.sub || '',
-        email:        userData.email || email,
-        access_token: d.access_token || ''
-      };
-      localStorage.setItem('sb_token', d.access_token);
-      onLogin(); closeModal();
-    }
-  }catch(e){ setMsg('liMsg','Network error — try again.'); }
-  setBtnLoad('btnLogin',false);
-};
-window.doLogout=async function(){
-  try{ await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+(currentUser?.access_token||'')}}); }catch(e){}
-  localStorage.removeItem('sb_token');
-  currentUser=null; usageData=null; onLogout();
-};
+  const wasLoggedIn = !!currentUser;
+  // session.user is always populated and has a valid .id (UUID)
+  currentUser = session.user;
+  currentUser.access_token = session.access_token;
+  if(!wasLoggedIn || event === 'SIGNED_IN') onLogin();
+});
 </script>
 </body>
 </html>
