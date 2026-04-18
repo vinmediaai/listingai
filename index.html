@@ -363,9 +363,18 @@ input#fileInput{display:none}
       <div class="modal-or">Already have an account? <span class="modal-link" onclick="switchTab('login')">Sign In</span></div>
     </div>
     <div class="modal-view" id="viewVerify">
-      <p style="font-size:14px;color:var(--dim2);margin-bottom:16px">Check your email and click the verification link, then come back and sign in.</p>
-      <button class="modal-btn" onclick="switchTab('login')">Go to Sign In</button>
+      <p style="font-size:14px;color:var(--dim2);margin-bottom:16px">We sent a 6-digit code to <strong id="verifyEmailDisplay" style="color:var(--text)"></strong>. Enter it below to activate your account.</p>
+      <div class="modal-field">
+        <label>Verification Code</label>
+        <input type="text" id="otpInput" placeholder="123456" maxlength="6"
+          inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code"
+          style="font-size:22px;letter-spacing:6px;text-align:center;font-weight:700"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+          onkeydown="if(event.key==='Enter')doVerifyOtp()">
+      </div>
+      <button class="modal-btn" id="btnVerify" onclick="doVerifyOtp()">Verify &amp; Sign In</button>
       <div class="modal-msg" id="verifyMsg"></div>
+      <div class="modal-or">Didn't get a code? <span class="modal-link" onclick="doResendOtp()">Resend</span></div>
     </div>
     <div class="modal-view" id="viewLogin">
       <div class="modal-field"><label>Email</label><input type="email" id="liEmail" placeholder="you@email.com"></div>
@@ -1573,6 +1582,10 @@ async function sbDB(method,table,params,body){
 }
 
 // ══ AUTH FLOWS ══
+// Store the email being verified so we can show it on the OTP screen
+// and use it when calling /auth/v1/verify
+let pendingVerifyEmail = '';
+
 async function doSignup(){
   const email=document.getElementById('suEmail').value.trim(),pass=document.getElementById('suPass').value;
   if(!email||!pass){ setMsg('suMsg','Please fill in all fields.'); return; }
@@ -1580,10 +1593,55 @@ async function doSignup(){
   setBtnLoad('btnSignup',true);
   try{
     const d=await sbPost('/auth/v1/signup',{email,password:pass});
-    if(d.error) setMsg('suMsg',d.error.message||d.error);
-    else{ setMsg('suMsg','Account created! Check your email to verify.','ok'); switchTab('verify'); }
+    if(d.error){ setMsg('suMsg',d.error.message||d.error); }
+    else{
+      pendingVerifyEmail = email;
+      // Show the user's email in the OTP view
+      const el=document.getElementById('verifyEmailDisplay');
+      if(el) el.textContent=email;
+      document.getElementById('otpInput').value='';
+      switchTab('verify');
+    }
   }catch(e){ setMsg('suMsg','Network error — try again.'); }
   setBtnLoad('btnSignup',false);
+}
+async function doVerifyOtp(){
+  const otp=document.getElementById('otpInput').value.trim();
+  if(otp.length!==6){ setMsg('verifyMsg','Enter the full 6-digit code.'); return; }
+  if(!pendingVerifyEmail){ setMsg('verifyMsg','Session expired — please sign up again.'); return; }
+  setBtnLoad('btnVerify',true);
+  try{
+    // Supabase OTP verification endpoint
+    const d=await sbPost('/auth/v1/verify',{
+      type:  'signup',
+      email: pendingVerifyEmail,
+      token: otp
+    });
+    if(d.error){
+      setMsg('verifyMsg', d.error.message||d.error||'Invalid code — try again.');
+    } else {
+      // Successful verify returns a session just like login
+      const payload=parseJWT(d.access_token||'');
+      const userData=d.user||d;
+      currentUser={
+        id:           userData.id||payload.sub||'',
+        email:        userData.email||pendingVerifyEmail,
+        access_token: d.access_token||''
+      };
+      localStorage.setItem('sb_token',d.access_token);
+      pendingVerifyEmail='';
+      setMsg('verifyMsg','✅ Email verified!','ok');
+      setTimeout(()=>{ onLogin(); closeModal(); },800);
+    }
+  }catch(e){ setMsg('verifyMsg','Network error — try again.'); }
+  setBtnLoad('btnVerify',false);
+}
+async function doResendOtp(){
+  if(!pendingVerifyEmail){ setMsg('verifyMsg','Session expired — please sign up again.'); return; }
+  try{
+    await sbPost('/auth/v1/resend',{ type:'signup', email:pendingVerifyEmail });
+    setMsg('verifyMsg','New code sent! Check your inbox.','ok');
+  }catch(e){ setMsg('verifyMsg','Could not resend — try again.'); }
 }
 async function doLogin(){
   const email=document.getElementById('liEmail').value.trim(),pass=document.getElementById('liPass').value;
