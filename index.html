@@ -1043,12 +1043,8 @@ input#fileInput{display:none}
 // ══ CONFIG ══
 const SERVICE_STATUS    = { state:'operational', title:'', message:'' };
 const SUPABASE_URL      = 'https://rqzflfyqazklfnfxefct.supabase.co';
-// ── HOW TO GET YOUR ANON KEY ──────────────────────────────────────────
-// Supabase Dashboard → Project Settings → API → Project API keys
-// → Copy "anon" "public" key  (starts with eyJ…, NOT sb_publishable_)
-// The sb_publishable_ format does NOT work with supabase-js v2 auth calls.
-// ─────────────────────────────────────────────────────────────────────
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxemZsZnlxYXprbGZuZnhlZmN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMjgxMDIsImV4cCI6MjA5MTgwNDEwMn0.q3F9dEDdNQ7kBGtReTQx6r8wvgGks5lL-ThZAi2uPEY';
+// sb_publishable_* keys are safe for public repos — they enforce RLS just like the JWT anon key
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_U6qIgZohv4CXqn1OGaw_hBtwLkms';
 const ANALYSE_SUBMIT    = 'https://n8n.vinmediaai.online/webhook/listing-analyse-submit';
 const QUEUE_SUBMIT      = 'https://n8n.vinmediaai.online/webhook/listing-queue-submit';
 const JOB_STATUS        = 'https://n8n.vinmediaai.online/webhook/listing-job-status';
@@ -1564,7 +1560,7 @@ function setMsg(id,msg,type='err'){ const el=document.getElementById(id); if(!el
 // Initialise the official SDK with the publishable key (safe for public repos).
 // The SDK manages sessions, token refresh and auth state automatically.
 const { createClient } = window.supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 // ══ AUTH FLOWS ══
 let pendingVerifyEmail = '';
@@ -1735,13 +1731,13 @@ async function queueInsert(table, mode){
   return data;
 }
 async function queueUpdate(table, id, patch){
-  await sb.from(table).update({
+  try{ await sb.from(table).update({
     ...patch, updated_at:new Date().toISOString(), last_seen:new Date().toISOString()
-  }).eq('id',id).catch(()=>{});
+  }).eq('id',id); }catch(e){}
 }
 async function queueDelete(table, id){
   if(!id) return;
-  await sb.from(table).delete().eq('id',id).catch(()=>{});
+  try{ await sb.from(table).delete().eq('id',id); }catch(e){}
 }
 async function queueList(table){
   const staleTs=new Date(Date.now()-STALE_MS).toISOString();
@@ -1752,10 +1748,10 @@ async function queueList(table){
   return data||[];
 }
 async function cleanStaleQueue(){
-  await sb.rpc('clean_stale_queue').catch(()=>{});
+  try{ await sb.rpc('clean_stale_queue'); }catch(e){}
 }
 async function cleanStuckProcessing(table){
-  await sb.rpc('clean_stuck_processing',{queue_table:table}).catch(()=>{});
+  try{ await sb.rpc('clean_stuck_processing',{queue_table:table}); }catch(e){}
 }
 
 function stopQueueHeartbeat(){ clearInterval(queueHeartbeatInt); queueHeartbeatInt = null; }
