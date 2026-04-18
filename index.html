@@ -1043,8 +1043,12 @@ input#fileInput{display:none}
 // ══ CONFIG ══
 const SERVICE_STATUS    = { state:'operational', title:'', message:'' };
 const SUPABASE_URL      = 'https://rqzflfyqazklfnfxefct.supabase.co';
-// sb_publishable_* keys are safe for public repos — they enforce RLS just like the JWT anon key
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_U6qIgZohv4CXqn1OGaw_hBtwLkms';
+// ── HOW TO GET YOUR ANON KEY ──────────────────────────────────────────
+// Supabase Dashboard → Project Settings → API → Project API keys
+// → Copy "anon" "public" key  (starts with eyJ…, NOT sb_publishable_)
+// The sb_publishable_ format does NOT work with supabase-js v2 auth calls.
+// ─────────────────────────────────────────────────────────────────────
+const SUPABASE_ANON_KEY = 'PASTE_ANON_JWT_KEY_HERE';
 const ANALYSE_SUBMIT    = 'https://n8n.vinmediaai.online/webhook/listing-analyse-submit';
 const QUEUE_SUBMIT      = 'https://n8n.vinmediaai.online/webhook/listing-queue-submit';
 const JOB_STATUS        = 'https://n8n.vinmediaai.online/webhook/listing-job-status';
@@ -1560,7 +1564,7 @@ function setMsg(id,msg,type='err'){ const el=document.getElementById(id); if(!el
 // Initialise the official SDK with the publishable key (safe for public repos).
 // The SDK manages sessions, token refresh and auth state automatically.
 const { createClient } = window.supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ══ AUTH FLOWS ══
 let pendingVerifyEmail = '';
