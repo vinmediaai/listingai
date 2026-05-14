@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>VinSnap — Product Image Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="icon" href="data:,">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  // Background removal API endpoint.
+  // No trailing slash; the app appends /remove-bg itself.
+  window.REMBG_API_URL = 'https://vinrembg.vinmediaai.online';
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ── RESET & BASE ── */
@@ -485,40 +491,40 @@ input#fileInput{display:none}
   <div class="showcase-viewport" id="scViewport">
     <div class="showcase-strip" id="scStrip">
       <div class="showcase-slide">
-        <img src="https://drive.google.com/thumbnail?id=1FioidN6bxbFS8IDCzjoraaVhJxht24Zs&sz=w300" alt="Educational Toy · Input → output" loading="eager">
-        <div class="showcase-label">Educational Toy · Input → output</div>
+        <img src="https://drive.google.com/thumbnail?id=SLIDE_1_ID&sz=w800" alt="Educational Toy · Before → After" loading="eager">
+        <div class="showcase-label">Educational Toy · Before → After</div>
       </div>
       <div class="showcase-slide">
-        <img src="https://drive.google.com/thumbnail?id=1QQT2eNqQl_KOPtXlPhIFifHFaEI2VzD2&sz=w300" alt="Women's Clothing · Input → output" loading="eager">
-        <div class="showcase-label">Women's Clothing · Input → output</div>
+        <img src="https://drive.google.com/thumbnail?id=SLIDE_2_ID&sz=w800" alt="Women's Clothing · Before → After" loading="eager">
+        <div class="showcase-label">Women's Clothing · Before → After</div>
       </div>
       <div class="showcase-slide">
-        <img src="https://drive.google.com/thumbnail?id=1kmPC6ez1QUd266j7CXcoQSbqVIdKQ5po&sz=w300" alt="Men's Clothing · Input → output" loading="eager">
-        <div class="showcase-label">Men's Clothing · Input → output</div>
+        <img src="https://drive.google.com/thumbnail?id=SLIDE_3_ID&sz=w800" alt="Men's Clothing · Before → After" loading="eager">
+        <div class="showcase-label">Men's Clothing · Before → After</div>
       </div>
       <div class="showcase-slide">
-        <img src="https://drive.google.com/thumbnail?id=1d-TcZFsjWBoXLmqUcsi3PHN3ewtTUw1L&sz=w300" alt="Headphones · Input → output" loading="eager">
-        <div class="showcase-label">Headphones · Input → output</div>
+        <img src="https://drive.google.com/thumbnail?id=SLIDE_4_ID&sz=w800" alt="Headphones · Before → After" loading="eager">
+        <div class="showcase-label">Headphones · Before → After</div>
       </div>
       <div class="showcase-slide">
-        <img src="https://drive.google.com/thumbnail?id=1fxyiQj6jO7T0vduhQfGMkbs_JgUmDyaE&sz=w300" alt="Wireless Headphones · Input → output" loading="eager">
-        <div class="showcase-label">Wireless Headphones · Input → output</div>
+        <img src="https://drive.google.com/thumbnail?id=SLIDE_5_ID&sz=w800" alt="Wireless Headphones · Before → After" loading="eager">
+        <div class="showcase-label">Wireless Headphones · Before → After</div>
       </div>
       <div class="showcase-slide">
-        <img src="https://drive.google.com/thumbnail?id=1Z0xAl0TToFEfEtI32Ef_rtum5fOTFaTW&sz=w300" alt="Printed Dress · Input → output" loading="eager">
-        <div class="showcase-label">Printed Dress · Input → output</div>
+        <img src="https://drive.google.com/thumbnail?id=SLIDE_6_ID&sz=w800" alt="Printed Dress · Before → After" loading="eager">
+        <div class="showcase-label">Printed Dress · Before → After</div>
       </div>
       <div class="showcase-slide">
-        <img src="https://drive.google.com/thumbnail?id=1-Xaso7Rh0Q8IenNL-ctYg_XOtc7AkrNo&sz=w800" alt="Women's Fashion · Input → output" loading="eager">
-        <div class="showcase-label">Women's Fashion · Input → output</div>
+        <img src="https://drive.google.com/thumbnail?id=SLIDE_7_ID&sz=w800" alt="Women's Fashion · Before → After" loading="eager">
+        <div class="showcase-label">Women's Fashion · Before → After</div>
       </div>
       <div class="showcase-slide">
-        <img src="https://drive.google.com/thumbnail?id=1aSi4mMz8f6iver02nqhcseBDKjL791yC&sz=w300" alt="Jewellery · Input → output" loading="eager">
-        <div class="showcase-label">Jewellery · Input → output</div>
+        <img src="https://drive.google.com/thumbnail?id=SLIDE_8_ID&sz=w800" alt="Jewellery · Before → After" loading="eager">
+        <div class="showcase-label">Jewellery · Before → After</div>
       </div>
       <div class="showcase-slide">
-        <img src="https://drive.google.com/thumbnail?id=19H5aKZv0B7yGq4f4sBCS3zKtTatRDdMX&sz=w300" alt="Skincare · Input → output" loading="eager">
-        <div class="showcase-label">Skincare · Input → output</div>
+        <img src="https://drive.google.com/thumbnail?id=SLIDE_9_ID&sz=w800" alt="Skincare · Before → After" loading="eager">
+        <div class="showcase-label">Skincare · Before → After</div>
       </div>
     </div>
   </div>
@@ -546,7 +552,7 @@ input#fileInput{display:none}
       <div id="uploadDefault">
         <div class="upload-ico">📦</div>
         <div class="upload-title">Tap to upload or drag & drop</div>
-        <div class="upload-sub">JPG, PNG or WEBP · Max 10MB</div>
+        <div class="upload-sub">JPG, PNG or WEBP · Max 5MB</div>
       </div>
       <div class="upload-preview" id="uploadPreview">
         <img id="previewImg" src="" alt="Preview">
@@ -556,17 +562,17 @@ input#fileInput{display:none}
     <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" onchange="onFileSelect(this.files[0])">
     <!-- REMBG -->
     <div id="rembgSection" style="margin-top:12px;display:none">
-      <div style="font-size:12px;font-weight:600;color:var(--dim2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Background Removal <span style="font-size:10px;font-weight:400;background:rgba(99,102,241,.15);color:var(--accent);border-radius:10px;padding:2px 8px;letter-spacing:0;text-transform:none">AI · runs in browser</span> <span style="font-size:10px;font-weight:700;background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:2px 8px;letter-spacing:0;text-transform:none">FREE</span></div>
+      <div style="font-size:12px;font-weight:600;color:var(--dim2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Background Removal <span style="font-size:10px;font-weight:400;background:rgba(99,102,241,.15);color:var(--accent);border-radius:10px;padding:2px 8px;letter-spacing:0;text-transform:none">runs on server</span> <span style="font-size:10px;font-weight:700;background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:2px 8px;letter-spacing:0;text-transform:none">QUEUE</span></div>
       <div class="rembg-row">
         <div class="rembg-opt active" id="rembgUse" onclick="setRembg('use')">
           <div class="rembg-ico">🖼️</div>
           <div class="rembg-title">Use Original</div>
-          <div class="rembg-sub" id="rembgUseSub">Send as-is to AI</div>
+          <div class="rembg-sub" id="rembgUseSub">Keep original image</div>
         </div>
         <div class="rembg-opt" id="rembgRemove" onclick="setRembg('remove')">
           <div class="rembg-ico">✂️</div>
           <div class="rembg-title">Remove Background</div>
-          <div class="rembg-sub" id="rembgRemoveSub">Strip bg first, then proceed</div>
+          <div class="rembg-sub" id="rembgRemoveSub">Send to server queue</div>
         </div>
       </div>
       <!-- Progress bar shown during model download + processing -->
@@ -618,29 +624,19 @@ input#fileInput{display:none}
         <div class="sel-wrap">
           <select id="category" onchange="onCategoryChange()">
             <option value="">Select category…</option>
-            <option value="ride-on-toys">Ride-On Toys</option>
-            <option value="outdoor-toys">Outdoor &amp; Play Toys</option>
-            <option value="educational-toys">Educational Toys</option>
-            <option value="baby-products">Baby Products</option>
-            <option value="smartphones">Smartphones &amp; Accessories</option>
-            <option value="headphones">Headphones &amp; Audio</option>
-            <option value="smart-home">Smart Home Devices</option>
-            <option value="cameras">Cameras &amp; Photography</option>
-            <option value="cookware">Cookware &amp; Bakeware</option>
-            <option value="small-appliances">Small Appliances</option>
-            <option value="furniture">Furniture &amp; Décor</option>
-            <option value="bedding">Bedding &amp; Pillows</option>
-            <option value="clothing">Clothing &amp; Apparel</option>
-            <option value="footwear">Shoes &amp; Footwear</option>
-            <option value="bags">Bags &amp; Accessories</option>
-            <option value="skincare">Skincare &amp; Beauty</option>
-            <option value="fitness">Fitness Equipment</option>
-            <option value="cycling">Cycling &amp; Scooters</option>
-            <option value="camping">Camping &amp; Hiking</option>
-            <option value="pet-supplies">Pet Supplies</option>
-            <option value="automotive">Automotive</option>
-            <option value="tools">Tools &amp; Hardware</option>
-            <option value="other">Other</option>
+            <option value="womens_fashion">👗 Women's Fashion</option>
+            <option value="mens_fashion">👔 Men's Fashion</option>
+            <option value="kids_fashion">👶 Kids' Fashion</option>
+            <option value="footwear">👠 Footwear</option>
+            <option value="jewellery">💍 Jewellery &amp; Accessories</option>
+            <option value="home_kitchen">🏠 Home &amp; Kitchen</option>
+            <option value="beauty">💄 Beauty &amp; Personal Care</option>
+            <option value="electronics">📱 Electronics &amp; Gadgets</option>
+            <option value="health">🏋️ Health &amp; Wellness</option>
+            <option value="toys">🧸 Toys</option>
+            <option value="rideon">🚗 Ride-On Toys</option>
+            <option value="stationery">📚 Stationery &amp; Bags</option>
+            <option value="other">🔵 Others</option>
           </select>
         </div>
       </div>
@@ -699,6 +695,14 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_arjun" data-country="india" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Arjun</div><div class="av-gender">Male · 28</div></div>
       <div class="av-card" data-avatar="avatar_rena" data-country="india" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Rena</div><div class="av-gender">Female · 27</div></div>
       <div class="av-card" data-avatar="avatar_priya" data-country="india" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Priya</div><div class="av-gender">Female · 30</div></div>
+      <div class="av-card" data-avatar="avatar_1" data-country="india" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Men (India)</div><div class="av-gender">Male · 30s</div></div>
+      <div class="av-card" data-avatar="avatar_2" data-country="india" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Women (India)</div><div class="av-gender">Female · late 20s</div></div>
+      <div class="av-card" data-avatar="avatar_3" data-country="india" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧒</span></div><div class="av-name">Boy (India)</div><div class="av-gender">Male · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="avatar_4" data-country="india" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧒</span></div><div class="av-name">Girl (India)</div><div class="av-gender">Female · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="avatar_5" data-country="india" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy (India)</div><div class="av-gender">Male · 8-12 mo</div></div>
+      <div class="av-card" data-avatar="avatar_6" data-country="india" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl (India)</div><div class="av-gender">Female · 8-12 mo</div></div>
+      <div class="av-card" data-avatar="avatar_7" data-country="india" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧒</span></div><div class="av-name">Old Man (India)</div><div class="av-gender">Male · 65-70 yrs</div></div>
+      <div class="av-card" data-avatar="avatar_8" data-country="india" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧒</span></div><div class="av-name">Old Woman (India)</div><div class="av-gender">Female · 65-70 yrs</div></div>
     </div>
   </div>
 
@@ -715,6 +719,15 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_tyler" data-country="american" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Tyler</div><div class="av-gender">Male · 35</div></div>
       <div class="av-card" data-avatar="avatar_emma" data-country="american" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Emma</div><div class="av-gender">Female · 26</div></div>
       <div class="av-card" data-avatar="avatar_sophia" data-country="american" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Sophia</div><div class="av-gender">Female · 30</div></div>
+
+      <div class="av-card" data-avatar="av_am_3" data-country="american" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👦</span></div><div class="av-name">Boy</div><div class="av-gender">Male · 8-10 yrs</div></div>
+      <div class="av-card" data-avatar="av_am_4" data-country="american" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👧</span></div><div class="av-name">Girl</div><div class="av-gender">Female · 8-10 yrs</div></div>
+      <div class="av-card" data-avatar="av_am_baby_boy" data-country="american" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy</div><div class="av-gender">Male · 12 months</div></div>
+      <div class="av-card" data-avatar="av_am_baby_girl" data-country="american" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl</div><div class="av-gender">Female · 12 months</div></div>
+      <div class="av-card" data-avatar="av_am_old_man" data-country="american" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👴</span></div><div class="av-name">Old Man</div><div class="av-gender">Male · 65-70</div></div>
+      <div class="av-card" data-avatar="av_am_old_woman" data-country="american" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👵</span></div><div class="av-name">Old Woman</div><div class="av-gender">Female · 65-70</div></div>
+      <div class="av-card" data-avatar="av_am_1" data-country="american" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">American Man</div><div class="av-gender">Male · early 30s</div></div>
+      <div class="av-card" data-avatar="av_am_2" data-country="american" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">American Woman</div><div class="av-gender">Female · late 20s</div></div>
     </div>
   </div>
 
@@ -729,6 +742,15 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_jun" data-country="chinese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Jun</div><div class="av-gender">Male · 33</div></div>
       <div class="av-card" data-avatar="avatar_mei" data-country="chinese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Mei</div><div class="av-gender">Female · 25</div></div>
       <div class="av-card" data-avatar="avatar_li" data-country="chinese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Li</div><div class="av-gender">Female · 29</div></div>
+
+      <div class="av-card" data-avatar="av_cn_boy" data-country="chinese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👦</span></div><div class="av-name">Boy</div><div class="av-gender">Male · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_cn_girl" data-country="chinese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👧</span></div><div class="av-name">Girl</div><div class="av-gender">Female · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_cn_baby_boy" data-country="chinese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy</div><div class="av-gender">Male · 12 months</div></div>
+      <div class="av-card" data-avatar="av_cn_baby_girl" data-country="chinese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl</div><div class="av-gender">Female · 12 months</div></div>
+      <div class="av-card" data-avatar="av_cn_old_man" data-country="chinese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👴</span></div><div class="av-name">Old Man</div><div class="av-gender">Male · 65-70</div></div>
+      <div class="av-card" data-avatar="av_cn_old_woman" data-country="chinese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👵</span></div><div class="av-name">Old Woman</div><div class="av-gender">Female · 65-70</div></div>
+      <div class="av-card" data-avatar="av_cn_1" data-country="chinese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Chinese Man</div><div class="av-gender">Male · early 30s</div></div>
+      <div class="av-card" data-avatar="av_cn_2" data-country="chinese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Chinese Woman</div><div class="av-gender">Female · late 20s</div></div>
     </div>
   </div>
 
@@ -743,6 +765,15 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_takeshi" data-country="japanese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Takeshi</div><div class="av-gender">Male · 28</div></div>
       <div class="av-card" data-avatar="avatar_yuki" data-country="japanese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Yuki</div><div class="av-gender">Female · 26</div></div>
       <div class="av-card" data-avatar="avatar_hana" data-country="japanese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Hana</div><div class="av-gender">Female · 30</div></div>
+
+      <div class="av-card" data-avatar="av_jp_boy" data-country="japanese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👦</span></div><div class="av-name">Boy</div><div class="av-gender">Male · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_jp_girl" data-country="japanese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👧</span></div><div class="av-name">Girl</div><div class="av-gender">Female · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_jp_baby_boy" data-country="japanese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy</div><div class="av-gender">Male · 12 months</div></div>
+      <div class="av-card" data-avatar="av_jp_baby_girl" data-country="japanese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl</div><div class="av-gender">Female · 12 months</div></div>
+      <div class="av-card" data-avatar="av_jp_old_man" data-country="japanese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👴</span></div><div class="av-name">Old Man</div><div class="av-gender">Male · 65-70</div></div>
+      <div class="av-card" data-avatar="av_jp_old_woman" data-country="japanese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👵</span></div><div class="av-name">Old Woman</div><div class="av-gender">Female · 65-70</div></div>
+      <div class="av-card" data-avatar="av_jp_1" data-country="japanese" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Japanese Man</div><div class="av-gender">Male · early 30s</div></div>
+      <div class="av-card" data-avatar="av_jp_2" data-country="japanese" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Japanese Woman</div><div class="av-gender">Female · mid 20s</div></div>
     </div>
   </div>
 
@@ -757,6 +788,15 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_jihoon" data-country="korean" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Jihoon</div><div class="av-gender">Male · 33</div></div>
       <div class="av-card" data-avatar="avatar_jisoo" data-country="korean" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Jisoo</div><div class="av-gender">Female · 25</div></div>
       <div class="av-card" data-avatar="avatar_chaeyeon" data-country="korean" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Chaeyeon</div><div class="av-gender">Female · 27</div></div>
+
+      <div class="av-card" data-avatar="av_kr_boy" data-country="korean" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👦</span></div><div class="av-name">Boy</div><div class="av-gender">Male · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_kr_girl" data-country="korean" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👧</span></div><div class="av-name">Girl</div><div class="av-gender">Female · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_kr_baby_boy" data-country="korean" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy</div><div class="av-gender">Male · 12 months</div></div>
+      <div class="av-card" data-avatar="av_kr_baby_girl" data-country="korean" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl</div><div class="av-gender">Female · 12 months</div></div>
+      <div class="av-card" data-avatar="av_kr_old_man" data-country="korean" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👴</span></div><div class="av-name">Old Man</div><div class="av-gender">Male · 65-70</div></div>
+      <div class="av-card" data-avatar="av_kr_old_woman" data-country="korean" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👵</span></div><div class="av-name">Old Woman</div><div class="av-gender">Female · 65-70</div></div>
+      <div class="av-card" data-avatar="av_kr_1" data-country="korean" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Korean Man</div><div class="av-gender">Male · late 20s</div></div>
+      <div class="av-card" data-avatar="av_kr_2" data-country="korean" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Korean Woman</div><div class="av-gender">Female · mid 20s</div></div>
     </div>
   </div>
 
@@ -771,6 +811,15 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_leon" data-country="european" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Leon</div><div class="av-gender">Male · 29</div></div>
       <div class="av-card" data-avatar="avatar_sophie" data-country="european" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Sophie</div><div class="av-gender">Female · 28</div></div>
       <div class="av-card" data-avatar="avatar_claire" data-country="european" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Claire</div><div class="av-gender">Female · 31</div></div>
+
+      <div class="av-card" data-avatar="av_eu_boy" data-country="european" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👦</span></div><div class="av-name">Boy</div><div class="av-gender">Male · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_eu_girl" data-country="european" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👧</span></div><div class="av-name">Girl</div><div class="av-gender">Female · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_eu_baby_boy" data-country="european" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy</div><div class="av-gender">Male · 12 months</div></div>
+      <div class="av-card" data-avatar="av_eu_baby_girl" data-country="european" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl</div><div class="av-gender">Female · 12 months</div></div>
+      <div class="av-card" data-avatar="av_eu_old_man" data-country="european" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👴</span></div><div class="av-name">Old Man</div><div class="av-gender">Male · 65-70</div></div>
+      <div class="av-card" data-avatar="av_eu_old_woman" data-country="european" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👵</span></div><div class="av-name">Old Woman</div><div class="av-gender">Female · 65-70</div></div>
+      <div class="av-card" data-avatar="av_eu_1" data-country="european" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">European Man</div><div class="av-gender">Male · early 30s</div></div>
+      <div class="av-card" data-avatar="av_eu_2" data-country="european" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">European Woman</div><div class="av-gender">Female · late 20s</div></div>
     </div>
   </div>
 
@@ -785,6 +834,15 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_hassan" data-country="arabic" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Hassan</div><div class="av-gender">Male · 35</div></div>
       <div class="av-card" data-avatar="avatar_layla" data-country="arabic" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Layla</div><div class="av-gender">Female · 27</div></div>
       <div class="av-card" data-avatar="avatar_nour" data-country="arabic" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Nour</div><div class="av-gender">Female · 29</div></div>
+
+      <div class="av-card" data-avatar="av_ar_boy" data-country="arabic" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👦</span></div><div class="av-name">Boy</div><div class="av-gender">Male · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_ar_girl" data-country="arabic" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👧</span></div><div class="av-name">Girl</div><div class="av-gender">Female · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_ar_baby_boy" data-country="arabic" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy</div><div class="av-gender">Male · 12 months</div></div>
+      <div class="av-card" data-avatar="av_ar_baby_girl" data-country="arabic" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl</div><div class="av-gender">Female · 12 months</div></div>
+      <div class="av-card" data-avatar="av_ar_old_man" data-country="arabic" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👴</span></div><div class="av-name">Old Man</div><div class="av-gender">Male · 65-70</div></div>
+      <div class="av-card" data-avatar="av_ar_old_woman" data-country="arabic" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👵</span></div><div class="av-name">Old Woman</div><div class="av-gender">Female · 65-70</div></div>
+      <div class="av-card" data-avatar="av_ar_1" data-country="arabic" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Arabic Man</div><div class="av-gender">Male · mid 30s</div></div>
+      <div class="av-card" data-avatar="av_ar_2" data-country="arabic" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Arabic Woman</div><div class="av-gender">Female · late 20s</div></div>
     </div>
   </div>
 
@@ -799,6 +857,15 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_ethan_au" data-country="australian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Ethan</div><div class="av-gender">Male · 34</div></div>
       <div class="av-card" data-avatar="avatar_grace" data-country="australian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Grace</div><div class="av-gender">Female · 27</div></div>
       <div class="av-card" data-avatar="avatar_olivia_au" data-country="australian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Olivia</div><div class="av-gender">Female · 30</div></div>
+
+      <div class="av-card" data-avatar="av_au_boy" data-country="australian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👦</span></div><div class="av-name">Boy</div><div class="av-gender">Male · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_au_girl" data-country="australian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👧</span></div><div class="av-name">Girl</div><div class="av-gender">Female · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_au_baby_boy" data-country="australian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy</div><div class="av-gender">Male · 12 months</div></div>
+      <div class="av-card" data-avatar="av_au_baby_girl" data-country="australian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl</div><div class="av-gender">Female · 12 months</div></div>
+      <div class="av-card" data-avatar="av_au_old_man" data-country="australian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👴</span></div><div class="av-name">Old Man</div><div class="av-gender">Male · 65-70</div></div>
+      <div class="av-card" data-avatar="av_au_old_woman" data-country="australian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👵</span></div><div class="av-name">Old Woman</div><div class="av-gender">Female · 65-70</div></div>
+      <div class="av-card" data-avatar="av_au_1" data-country="australian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Australian Man</div><div class="av-gender">Male · early 30s</div></div>
+      <div class="av-card" data-avatar="av_au_2" data-country="australian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Australian Woman</div><div class="av-gender">Female · late 20s</div></div>
     </div>
   </div>
 
@@ -813,6 +880,15 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_mateus" data-country="brazilian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Mateus</div><div class="av-gender">Male · 27</div></div>
       <div class="av-card" data-avatar="avatar_isabela" data-country="brazilian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Isabela</div><div class="av-gender">Female · 26</div></div>
       <div class="av-card" data-avatar="avatar_camila" data-country="brazilian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Camila</div><div class="av-gender">Female · 30</div></div>
+
+      <div class="av-card" data-avatar="av_br_boy" data-country="brazilian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👦</span></div><div class="av-name">Boy</div><div class="av-gender">Male · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_br_girl" data-country="brazilian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👧</span></div><div class="av-name">Girl</div><div class="av-gender">Female · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_br_baby_boy" data-country="brazilian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy</div><div class="av-gender">Male · 12 months</div></div>
+      <div class="av-card" data-avatar="av_br_baby_girl" data-country="brazilian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl</div><div class="av-gender">Female · 12 months</div></div>
+      <div class="av-card" data-avatar="av_br_old_man" data-country="brazilian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👴</span></div><div class="av-name">Old Man</div><div class="av-gender">Male · 65-70</div></div>
+      <div class="av-card" data-avatar="av_br_old_woman" data-country="brazilian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👵</span></div><div class="av-name">Old Woman</div><div class="av-gender">Female · 65-70</div></div>
+      <div class="av-card" data-avatar="av_br_1" data-country="brazilian" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Brazilian Man</div><div class="av-gender">Male · late 20s</div></div>
+      <div class="av-card" data-avatar="av_br_2" data-country="brazilian" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Brazilian Woman</div><div class="av-gender">Female · late 20s</div></div>
     </div>
   </div>
 
@@ -827,6 +903,15 @@ input#fileInput{display:none}
       <div class="av-card" data-avatar="avatar_emeka" data-country="african" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">Emeka</div><div class="av-gender">Male · 28</div></div>
       <div class="av-card" data-avatar="avatar_amara" data-country="african" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Amara</div><div class="av-gender">Female · 27</div></div>
       <div class="av-card" data-avatar="avatar_zuri" data-country="african" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">Zuri</div><div class="av-gender">Female · 31</div></div>
+
+      <div class="av-card" data-avatar="av_af_boy" data-country="african" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👦</span></div><div class="av-name">Boy</div><div class="av-gender">Male · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_af_girl" data-country="african" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👧</span></div><div class="av-name">Girl</div><div class="av-gender">Female · 7-9 yrs</div></div>
+      <div class="av-card" data-avatar="av_af_baby_boy" data-country="african" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Boy</div><div class="av-gender">Male · 12 months</div></div>
+      <div class="av-card" data-avatar="av_af_baby_girl" data-country="african" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👶</span></div><div class="av-name">Baby Girl</div><div class="av-gender">Female · 12 months</div></div>
+      <div class="av-card" data-avatar="av_af_old_man" data-country="african" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👴</span></div><div class="av-name">Old Man</div><div class="av-gender">Male · 65-70</div></div>
+      <div class="av-card" data-avatar="av_af_old_woman" data-country="african" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👵</span></div><div class="av-name">Old Woman</div><div class="av-gender">Female · 65-70</div></div>
+      <div class="av-card" data-avatar="av_af_1" data-country="african" data-gender="male" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">🧑</span></div><div class="av-name">African Man</div><div class="av-gender">Male · early 30s</div></div>
+      <div class="av-card" data-avatar="av_af_2" data-country="african" data-gender="female" onclick="selectAvatar(this)"><div class="av-thumb"><span class="av-ph">👩</span></div><div class="av-name">African Woman</div><div class="av-gender">Female · late 20s</div></div>
     </div>
   </div>
 
@@ -861,6 +946,10 @@ input#fileInput{display:none}
     <div class="loc-card" data-loc="theater" onclick="selectLoc(this)"><div class="loc-card-ico">🎬</div><div class="loc-card-name">Theater</div></div>
     <div class="loc-card" data-loc="mall" onclick="selectLoc(this)"><div class="loc-card-ico">🛍</div><div class="loc-card-name">Mall</div></div>
     <div class="loc-card" data-loc="park" onclick="selectLoc(this)"><div class="loc-card-ico">🌳</div><div class="loc-card-name">Park</div></div>
+    <div class="loc-card" data-loc="wedding venue" onclick="selectLoc(this)"><div class="loc-card-ico">💒</div><div class="loc-card-name">Wedding Venue</div></div>
+    <div class="loc-card" data-loc="festival ground" onclick="selectLoc(this)"><div class="loc-card-ico">🪔</div><div class="loc-card-name">Festival Ground</div></div>
+    <div class="loc-card" data-loc="school" onclick="selectLoc(this)"><div class="loc-card-ico">🏫</div><div class="loc-card-name">School</div></div>
+    <div class="loc-card" data-loc="jewellery studio" onclick="selectLoc(this)"><div class="loc-card-ico">💎</div><div class="loc-card-name">Jewellery Studio</div></div>
   </div>
 </div>
 
@@ -1050,31 +1139,31 @@ input#fileInput{display:none}
         </div>
         <div class="bg-label" style="margin-bottom:8px">Dimension Style</div>
         <div class="style-grid" id="dimStyleGrid">
-          <div class="style-card on" data-style="dim_style1" data-modifier="product on pure white seamless background, tilted slightly to the right at 15 degrees showing three dimensions, clean dimension arrows in dark grey indicating height width and depth measurements, measurement labels in clean sans-serif font, professional technical product presentation" onclick="selectDimStyle(this)">
+          <div class="style-card on" data-dimstyle="dim_style1" data-modifier="product on pure white seamless background, tilted slightly to the right at 15 degrees showing three dimensions, clean dimension arrows in dark grey indicating height width and depth measurements, measurement labels in clean sans-serif font, professional technical product presentation" onclick="selectDimStyle(this)">
             <div class="style-preview">
               <svg width="80" height="50" viewBox="0 0 80 50"><rect width="80" height="50" fill="#1a1d27"/><rect x="25" y="8" width="22" height="32" rx="3" fill="#6366f1" opacity=".5" transform="rotate(-8 36 24)"/><line x1="12" y1="8" x2="12" y2="42" stroke="#6366f1" stroke-width="1.5" marker-end="url(#a)"/><line x1="20" y1="46" x2="58" y2="46" stroke="#6366f1" stroke-width="1.5"/><text x="5" y="27" font-size="6" fill="#6366f1">H</text><text x="36" y="50" font-size="6" fill="#6366f1">W</text></svg>
             </div>
             <div class="style-name">Classic Tilt</div>
           </div>
-          <div class="style-card" data-style="dim_style2" data-modifier="product in strict right side profile view on soft gradient background matching product color palette, dimension arrows in white or dark contrast color showing height width and depth, clean sans-serif measurement labels, crisp technical illustration style" onclick="selectDimStyle(this)">
+          <div class="style-card" data-dimstyle="dim_style2" data-modifier="product in strict right side profile view on soft gradient background matching product color palette, dimension arrows in white or dark contrast color showing height width and depth, clean sans-serif measurement labels, crisp technical illustration style" onclick="selectDimStyle(this)">
             <div class="style-preview">
               <svg width="80" height="50" viewBox="0 0 80 50"><rect width="80" height="50" fill="#1a1d27"/><rect x="22" y="8" width="36" height="34" rx="3" fill="#6366f1" opacity=".5"/><line x1="14" y1="8" x2="14" y2="42" stroke="#6366f1" stroke-width="1.5"/><line x1="22" y1="46" x2="58" y2="46" stroke="#6366f1" stroke-width="1.5"/><text x="6" y="27" font-size="6" fill="#6366f1">H</text><text x="36" y="50" font-size="6" fill="#6366f1">W</text></svg>
             </div>
             <div class="style-name">Right Face</div>
           </div>
-          <div class="style-card" data-style="dim_style3" data-modifier="product in isometric view at 45 degree angle on soft pastel gradient background, flat design aesthetic, dimension lines in bold contrasting color with clean arrow heads, measurement text in rounded sans-serif font, modern minimal technical style" onclick="selectDimStyle(this)">
+          <div class="style-card" data-dimstyle="dim_style3" data-modifier="product in isometric view at 45 degree angle on soft pastel gradient background, flat design aesthetic, dimension lines in bold contrasting color with clean arrow heads, measurement text in rounded sans-serif font, modern minimal technical style" onclick="selectDimStyle(this)">
             <div class="style-preview">
               <svg width="80" height="50" viewBox="0 0 80 50"><rect width="80" height="50" fill="#1a1d27"/><polygon points="40,6 65,20 65,38 40,44 15,38 15,20" fill="#6366f1" opacity=".35"/><polygon points="40,6 65,20 40,26 15,20" fill="#6366f1" opacity=".5"/><line x1="10" y1="20" x2="10" y2="38" stroke="#6366f1" stroke-width="1.5"/><line x1="40" y1="46" x2="65" y2="40" stroke="#6366f1" stroke-width="1.5"/></svg>
             </div>
             <div class="style-name">Isometric</div>
           </div>
-          <div class="style-card" data-style="dim_style4" data-modifier="product centered on deep dark charcoal background with precision spotlight from above, dimension arrows in bright white or electric blue with clean sharp arrow heads, measurement labels in white mono-spaced technical font, premium engineering blueprint feel" onclick="selectDimStyle(this)">
+          <div class="style-card" data-dimstyle="dim_style4" data-modifier="product centered on deep dark charcoal background with precision spotlight from above, dimension arrows in bright white or electric blue with clean sharp arrow heads, measurement labels in white mono-spaced technical font, premium engineering blueprint feel" onclick="selectDimStyle(this)">
             <div class="style-preview" style="background:#111">
               <svg width="80" height="50" viewBox="0 0 80 50"><rect width="80" height="50" fill="#111"/><rect x="24" y="8" width="32" height="34" rx="3" fill="#6366f1" opacity=".6"/><line x1="14" y1="8" x2="14" y2="42" stroke="#06b6d4" stroke-width="1.5"/><line x1="24" y1="46" x2="56" y2="46" stroke="#06b6d4" stroke-width="1.5"/><text x="6" y="27" font-size="6" fill="#06b6d4">H</text><text x="36" y="50" font-size="6" fill="#06b6d4">W</text></svg>
             </div>
             <div class="style-name">Dark Precision</div>
           </div>
-          <div class="style-card" data-style="dim_style5" data-modifier="product standing upright on clean white surface with natural soft cast shadow on ground plane, three-quarter front view, dimension arrows in medium grey with clean arrow heads pointing to outer edges, measurement labels in clean sans-serif, photorealistic grounded feel" onclick="selectDimStyle(this)">
+          <div class="style-card" data-dimstyle="dim_style5" data-modifier="product standing upright on clean white surface with natural soft cast shadow on ground plane, three-quarter front view, dimension arrows in medium grey with clean arrow heads pointing to outer edges, measurement labels in clean sans-serif, photorealistic grounded feel" onclick="selectDimStyle(this)">
             <div class="style-preview">
               <svg width="80" height="50" viewBox="0 0 80 50"><rect width="80" height="50" fill="#1a1d27"/><rect x="26" y="6" width="28" height="34" rx="3" fill="#6366f1" opacity=".45"/><ellipse cx="40" cy="40" rx="18" ry="4" fill="#000" opacity=".3"/><line x1="16" y1="6" x2="16" y2="40" stroke="#6366f1" stroke-width="1.5"/><line x1="26" y1="46" x2="54" y2="46" stroke="#6366f1" stroke-width="1.5"/></svg>
             </div>
@@ -1155,10 +1244,11 @@ const ANALYSE_SUBMIT    = 'https://n8n.vinmediaai.online/webhook/listing-analyse
 const QUEUE_SUBMIT      = 'https://n8n.vinmediaai.online/webhook/listing-queue-submit';
 const JOB_STATUS        = 'https://n8n.vinmediaai.online/webhook/listing-job-status';
 const FEEDBACK_WEBHOOK  = 'https://n8n.vinmediaai.online/webhook/amazon-listing-feedback';
-const DRIVE_FOLDER      = '1dOWQloKxJFNTU0PF2WfjF9AL0EPu-VA_';
+// Images stored in Oracle Object Storage — no Drive folder needed
 const MAX_USES          = 5;
 const USE_PERIOD_DAYS   = 10;
 const POLL_INTERVAL_MS  = 4000;
+const MAX_POLL_MS       = 10 * 60 * 1000; // 10 min hard stop — multi-image jobs need more time (3 images × ~2.5min each)
 // Queue tables defined in queue section below
 // QUEUE_POLL_MS defined in queue section
 // QUEUE_HEARTBEAT_MS defined in queue section
@@ -1166,53 +1256,127 @@ const POLL_INTERVAL_MS  = 4000;
 
 const CHAR_LIMITS = { hero:500, infographic:500, lifestyle:600, lifestyle2:600, lifestyle3:600, dimensions:400, generic:600 };
 
-const SUBCATS = {
-  'ride-on-toys':      ['Electric Cars','Motorcycles','Scooters','Tricycles','Balance Bikes'],
-  'outdoor-toys':      ['Water Toys','Sand Toys','Swing Sets','Trampolines','Sports Sets'],
-  'educational-toys':  ['Puzzles','Building Blocks','STEM Kits','Art & Craft','Flash Cards'],
-  'baby-products':     ['Strollers','Car Seats','Baby Monitors','Feeding','Bath Products'],
-  'smartphones':       ['Cases & Covers','Chargers','Screen Protectors','Stands','Cables'],
-  'headphones':        ['Over-ear','In-ear','True Wireless','Gaming Headsets','Speaker'],
-  'cookware':          ['Pans','Pots','Bakeware','Knives','Boards'],
-  'clothing':          ['T-Shirts','Dresses','Tops','Bottoms','Outerwear'],
-  'footwear':          ['Sneakers','Sandals','Formal','Boots','Sports'],
-  'skincare':          ['Moisturizers','Serums','Sunscreen','Face Wash','Masks'],
-  'fitness':           ['Yoga','Weights','Resistance Bands','Cardio','Recovery'],
-};
-
 // Category → recommended avatars (avatar data-avatar values)
+const SUBCATS = {
+  womens_fashion: [
+    {v:'womens_ethnic_saree',l:'Sarees'},{v:'womens_ethnic_kurti',l:'Kurtis'},
+    {v:'womens_ethnic_kurta_set',l:'Kurta Sets'},{v:'womens_ethnic_suit',l:'Suits & Dress Materials'},
+    {v:'womens_ethnic_lehenga',l:'Lehengas & Cholis'},{v:'womens_ethnic_blouse',l:'Blouses & Dupattas'},
+    {v:'womens_ethnic_abaya',l:'Abayas & Ethnic Jackets'},{v:'womens_ethnic_bottom',l:'Petticoats & Ethnic Bottoms'},
+    {v:'womens_western_top',l:'Tops, Tunics & T-Shirts'},{v:'womens_western_dress',l:'Dresses & Gowns'},
+    {v:'womens_western_coord',l:'Co-ord Sets'},{v:'womens_western_bottom',l:'Jeans, Leggings & Palazzos'},
+    {v:'womens_innerwear',l:'Bras & Innerwear'},{v:'womens_sleepwear',l:'Night Suits & Sleepwear'}
+  ],
+  mens_fashion: [
+    {v:'mens_tshirt',l:'T-Shirts'},{v:'mens_shirt',l:'Shirts'},
+    {v:'mens_formal',l:'Formal Shirts & Trousers'},{v:'mens_jeans',l:'Jeans & Chinos'},
+    {v:'mens_trackpants',l:'Track Pants & Joggers'},{v:'mens_sweatshirt',l:'Sweatshirts & Hoodies'},
+    {v:'mens_jacket',l:'Jackets & Sweaters'},{v:'mens_innerwear',l:'Innerwear & Socks'},
+    {v:'mens_ethnic',l:'Kurtas & Ethnic Wear'}
+  ],
+  kids_fashion: [
+    {v:'kids_baby_dress',l:'Baby Dresses & Rompers'},{v:'kids_boys_set',l:"Boys' Clothing Sets"},
+    {v:'kids_girls_set',l:"Girls' Clothing Sets"},{v:'kids_uniform',l:'School Uniforms'},
+    {v:'kids_combo',l:'Combo Sets'}
+  ],
+  footwear: [
+    {v:'footwear_womens_heels',l:"Women's Heels & Wedges"},{v:'footwear_womens_flats',l:"Women's Flats & Sandals"},
+    {v:'footwear_mens_casual',l:"Men's Casual Shoes"},{v:'footwear_mens_formal',l:"Men's Formal Shoes"},
+    {v:'footwear_mens_sports',l:"Men's Sports Shoes"},{v:'footwear_sneakers',l:'Sneakers'},
+    {v:'footwear_kids',l:"Kids' Shoes & Slippers"},{v:'footwear_flipflops',l:'Flip-Flops & Loafers'},
+    {v:'footwear_boots',l:'Boots'}
+  ],
+  jewellery: [
+    {v:'jewellery_necklace',l:'Necklaces'},{v:'jewellery_earring',l:'Earrings'},
+    {v:'jewellery_set',l:'Jewellery Sets'},{v:'jewellery_bangle',l:'Bangles'},
+    {v:'jewellery_anklet',l:'Anklets'},{v:'jewellery_ring',l:'Rings'},
+    {v:'jewellery_maang_tikka',l:'Maang Tikka'},{v:'jewellery_watch',l:'Watches'},
+    {v:'jewellery_smartwatch',l:'Smartwatches & Fitness Trackers'},
+    {v:'jewellery_sunglasses',l:'Sunglasses'},{v:'jewellery_hair_acc',l:'Hair Accessories'},
+    // Accessories — grouped under Jewellery & Accessories category
+    {v:'acc_handbag',l:'Handbags & Clutches'},{v:'acc_backpack',l:'Backpacks'},
+    {v:'acc_wallet',l:'Wallets'},{v:'acc_belt',l:'Belts'}
+  ],
+  home_kitchen: [
+    {v:'home_curtain',l:'Curtains & Cushion Covers'},{v:'home_wall_art',l:'Wall Art & Posters'},
+    {v:'home_led_lights',l:'LED Lights & Fairy Lights'},{v:'home_showpiece',l:'Showpieces & Candles'},
+    {v:'cookware',l:'Cookware'},{v:'home_storage',l:'Storage Containers'},
+    {v:'home_chopper',l:'Choppers & Slicers'},{v:'home_dinnerware',l:'Dinner Sets & Crockery'},
+    {v:'small-appliances',l:'Small Appliances'},{v:'home_bedsheet',l:'Bedsheets & Pillow Covers'},
+    {v:'home_towel',l:'Towels & Bath Accessories'},{v:'home_laundry',l:'Storage & Laundry'}
+  ],
+  beauty: [
+    {v:'skincare_moisturizer',l:'Moisturizers & Serums'},{v:'skincare_facewash',l:'Face Wash & Masks'},
+    {v:'skincare_sunscreen',l:'Sunscreen'},{v:'beauty_haircare',l:'Hair Oils & Shampoos'},
+    {v:'beauty_makeup',l:'Makeup'},{v:'beauty_perfume',l:'Perfumes & Deodorants'},
+    {v:'beauty_grooming',l:'Grooming Tools'}
+  ],
+  electronics: [
+    {v:'electronics_earbuds',l:'Wireless Earbuds'},{v:'electronics_phone_case',l:'Phone Cases & Covers'},
+    {v:'electronics_charger',l:'Chargers & Adapters'},{v:'electronics_powerbank',l:'Power Banks'},
+    {v:'electronics_cable',l:'USB Cables'},{v:'electronics_holder',l:'Pop Sockets & Holders'}
+  ],
+  health: [
+    {v:'fitness',l:'Yoga & Fitness Equipment'},{v:'health_supplement',l:'Nutritional Supplements'},
+    {v:'health_monitor',l:'Health Monitors'},{v:'health_massager',l:'Massagers'}
+  ],
+  toys: [
+    {v:'outdoor-toys',l:'Outdoor Toys'},{v:'educational-toys',l:'Educational Toys'},
+    {v:'toys_electric',l:'Electric Toys'},{v:'toys_indoor',l:'Indoor Toys'}
+  ],
+  rideon: [
+    {v:'rideon_electric_car',l:'Electric Cars'},{v:'rideon_motorcycle',l:'Motorcycles & Bikes'},
+    {v:'rideon_tricycle',l:'Tricycles'},{v:'rideon_scooter',l:'Scooters'}
+  ],
+  stationery: [
+    {v:'stationery_schoolbag',l:'School Bags & Backpacks'},{v:'stationery_notebook',l:'Notebooks & Pens'},
+    {v:'stationery_lunchbox',l:'Lunch Boxes'},{v:'stationery_waterbottle',l:'Water Bottles'}
+  ],
+  other: [{v:'other',l:'Others'}]
+};
+
+// Subcategories where location picker is hidden (LOCATION_DRIVEN = 0 in Oracle)
+const NO_LOC_SUBCATS = new Set([
+  'womens_innerwear','womens_sleepwear','mens_innerwear','kids_baby_dress',
+  'jewellery_necklace','jewellery_earring','jewellery_set','jewellery_bangle',
+  'jewellery_anklet','jewellery_ring','jewellery_maang_tikka',
+  'jewellery_watch','jewellery_smartwatch','jewellery_hair_acc',
+  'home_curtain','home_wall_art','home_led_lights','home_showpiece',
+  'cookware','home_storage','home_chopper','home_dinnerware',
+  'small-appliances','home_bedsheet','home_towel','home_laundry',
+  'skincare_moisturizer','skincare_facewash','skincare_sunscreen',
+  'beauty_haircare','beauty_makeup','beauty_perfume','beauty_grooming',
+  'electronics_phone_case','electronics_charger','electronics_powerbank',
+  'electronics_cable','electronics_holder',
+  'health_supplement','health_monitor',
+  'rideon_electric_car','rideon_motorcycle','rideon_tricycle','rideon_scooter',
+  'stationery_notebook','stationery_lunchbox','stationery_waterbottle',
+  // Toys — product-only shots, no avatar/location needed
+  'outdoor-toys','educational-toys','toys_electric','toys_indoor',
+  // Accessories — flat-lay / product-only
+  'acc_handbag','acc_backpack','acc_wallet','acc_belt',
+  // Stationery schoolbag — product only
+  'stationery_schoolbag'
+]);
+
+// Avatar hint per category
 const CAT_AVATAR_MAP = {
-  'ride-on-toys':     { avatars:['dynamic'], hint:'Children avatars recommended for this category' },
-  'outdoor-toys':     { avatars:['dynamic'], hint:'Children avatars recommended for this category' },
-  'educational-toys': { avatars:['dynamic'], hint:'Children avatars recommended' },
-  'baby-products':    { avatars:['dynamic'], hint:'Parent + baby context recommended' },
-  'clothing':         { avatars:['avatar_rakesh','avatar_raj','avatar_arjun','avatar_rena','avatar_priya','avatar_james','avatar_michael','avatar_tyler','avatar_emma','avatar_sophia','dynamic'], hint:'Adult models recommended for clothing' },
-  'footwear':         { avatars:['avatar_rakesh','avatar_raj','avatar_rena','avatar_priya','avatar_james','avatar_emma','dynamic'], hint:'Adult models recommended' },
-  'skincare':         { avatars:['avatar_rena','avatar_priya','avatar_emma','avatar_sophia','dynamic'], hint:'Female models typically best for skincare' },
-  'fitness':          { avatars:['avatar_rakesh','avatar_raj','avatar_arjun','avatar_rena','avatar_james','avatar_michael','dynamic'], hint:'Active adult models recommended' },
-  'cookware':         { avatars:['avatar_rena','avatar_priya','avatar_rakesh','avatar_emma','dynamic'], hint:'Kitchen setting — adult models' },
-  'headphones':       { avatars:['avatar_rakesh','avatar_raj','avatar_rena','avatar_james','avatar_emma','dynamic'], hint:'Young adult models recommended' },
-  'smartphones':      { avatars:['avatar_rakesh','avatar_raj','avatar_rena','avatar_james','avatar_emma','dynamic'], hint:'Young adult models recommended' },
-  'default':          { avatars:['dynamic'], hint:'Avatar recommendation based on category' }
+  womens_fashion:  {hint:'Female models recommended for women\'s fashion'},
+  mens_fashion:    {hint:'Male models recommended for men\'s fashion'},
+  kids_fashion:    {hint:'Kids or baby avatars recommended'},
+  footwear:        {hint:'Any avatar — feet/legs shot'},
+  jewellery:       {hint:'Any avatar — close-up shots'},
+  home_kitchen:    {hint:'No avatar needed for home & kitchen'},
+  beauty:          {hint:'Female models recommended for beauty'},
+  electronics:     {hint:'Earbuds: any avatar. Others: no avatar needed'},
+  health:          {hint:'Active adult avatars recommended'},
+  toys:            {hint:'Kids avatars recommended'},
+  rideon:          {hint:'Kids avatars recommended for ride-on toys'},
+  stationery:      {hint:'Kids avatars recommended for stationery'},
+  other:           {hint:'Select the most relevant avatar'},
+  default:         {hint:'Select avatar based on your product'}
 };
 
-// Category → recommended locations
-const CAT_LOCATION_MAP = {
-  'baby-products':    ['indoor home hall','indoor home bedroom','indoor home kitchen'],
-  'cookware':         ['indoor home kitchen'],
-  'bedding':          ['indoor home bedroom'],
-  'fitness':          ['outdoor home garden','park','studio'],
-  'skincare':         ['bathroom','indoor home bedroom'],
-  'outdoor-toys':     ['outdoor home garden','park','coastal'],
-  'ride-on-toys':     ['outdoor home garden','park','outdoor home parking'],
-  'automotive':       ['outdoor home parking'],
-  'camping':          ['outdoor home garden','coastal','park'],
-  'cycling':          ['outdoor home parking','park','busy city'],
-  'clothing':         ['studio','indoor home hall','mall','busy city'],
-  'footwear':         ['studio','busy city','outdoor home garden'],
-};
-
-// Avatar descriptions for dynamic mode prompt building
 const AVATAR_DESCS = {
   avatar_rakesh: 'South Asian Indian man, medium build, clean-shaven, confident posture, warm medium brown skin, short neat black hair',
   avatar_raj:    'South Asian Indian man, sharp defined jawline, thick well-groomed black eyebrows, warm wheatish skin, strong straight nose, high cheekbones, medium athletic build, calm confident smile',
@@ -1224,6 +1388,60 @@ const AVATAR_DESCS = {
   avatar_tyler:  'American man, medium build, wavy brown hair, easy relaxed smile, approachable expression',
   avatar_emma:   'American woman, slender build, shoulder-length blonde hair, bright blue eyes, natural warm smile',
   avatar_sophia: 'American woman, medium build, dark wavy hair, expressive brown eyes, confident poised expression',
+  av_am_3:    'American boy, energetic playful build, bright curious eyes, casual clothing, 8-10 years old',
+  av_am_4:    'American girl, lively cheerful build, bright expressive eyes, casual clothing, 8-10 years old',
+  av_am_baby_boy: 'American baby boy, chubby cheeks, bright blue or brown eyes, standing independently, 12 months old, focus on outfit',
+  av_am_baby_girl:'American baby girl, round soft face, bright eyes, standing independently, 12 months old, focus on outfit',
+  av_am_old_man:  'American man, silver hair, kind lined face, dignified warm bearing, 65-70 years old',
+  av_am_old_woman:'American woman, silver or white hair, warm kind expression, elegant graceful bearing, 65-70 years old',
+  av_cn_boy:   'Chinese boy, lean energetic build, bright curious eyes, neat school-age appearance, 7-9 years old',
+  av_cn_girl:  'Chinese girl, lean build, bright expressive eyes, neat pigtails or loose hair, 7-9 years old',
+  av_cn_baby_boy: 'Chinese baby boy, chubby round face, bright dark eyes, standing independently, 12 months old, focus on outfit',
+  av_cn_baby_girl:'Chinese baby girl, soft round face, gentle dark eyes, standing independently, 12 months old, focus on outfit',
+  av_cn_old_man:  'Chinese man, silver hair, kind wise face, dignified calm bearing, 65-70 years old',
+  av_cn_old_woman:'Chinese woman, silver streaked hair, warm gentle expression, graceful bearing, 65-70 years old',
+  av_jp_boy:   'Japanese boy, neat lean build, bright curious eyes, tidy school-age appearance, 7-9 years old',
+  av_jp_girl:  'Japanese girl, neat lean build, bright expressive eyes, tidy pigtails or bob, 7-9 years old',
+  av_jp_baby_boy: 'Japanese baby boy, soft round face, bright dark eyes, standing independently, 12 months old, focus on outfit',
+  av_jp_baby_girl:'Japanese baby girl, soft round face, gentle dark eyes, standing independently, 12 months old, focus on outfit',
+  av_jp_old_man:  'Japanese man, silver hair, composed dignified face, refined calm bearing, 65-70 years old',
+  av_jp_old_woman:'Japanese woman, silver hair, gentle warm expression, graceful refined bearing, 65-70 years old',
+  av_kr_boy:   'Korean boy, neat slim build, bright curious eyes, tidy school-age appearance, 7-9 years old',
+  av_kr_girl:  'Korean girl, neat slim build, bright expressive eyes, tidy hair, 7-9 years old',
+  av_kr_baby_boy: 'Korean baby boy, smooth round face, bright dark eyes, standing independently, 12 months old, focus on outfit',
+  av_kr_baby_girl:'Korean baby girl, smooth round face, gentle dark eyes, standing independently, 12 months old, focus on outfit',
+  av_kr_old_man:  'Korean man, silver hair, calm dignified face, refined composed bearing, 65-70 years old',
+  av_kr_old_woman:'Korean woman, silver hair, gentle warm expression, graceful poised bearing, 65-70 years old',
+  av_eu_boy:   'European boy, energetic lean build, bright curious eyes, casual clothing, 7-9 years old',
+  av_eu_girl:  'European girl, lively lean build, bright expressive eyes, casual clothing, 7-9 years old',
+  av_eu_baby_boy: 'European baby boy, chubby cheeks, bright blue or green eyes, standing independently, 12 months old, focus on outfit',
+  av_eu_baby_girl:'European baby girl, round soft face, bright eyes, standing independently, 12 months old, focus on outfit',
+  av_eu_old_man:  'European man, silver or white hair, warm kind lined face, dignified bearing, 65-70 years old',
+  av_eu_old_woman:'European woman, silver or white hair, elegant warm expression, refined graceful bearing, 65-70 years old',
+  av_ar_boy:   'Arabic boy, energetic lean build, bright dark eyes, casual traditional or modern clothing, 7-9 years old',
+  av_ar_girl:  'Arabic girl, lean build, bright expressive dark eyes, neat hair or headscarf, 7-9 years old',
+  av_ar_baby_boy: 'Arabic baby boy, chubby cheeks, bright dark eyes, standing independently, 12 months old, focus on outfit',
+  av_ar_baby_girl:'Arabic baby girl, round soft face, gentle dark eyes, standing independently, 12 months old, focus on outfit',
+  av_ar_old_man:  'Arabic man, silver beard and hair, dignified composed face, warm distinguished bearing, 65-70 years old',
+  av_ar_old_woman:'Arabic woman, silver hair, warm kind expression, graceful modestly dressed bearing, 65-70 years old',
+  av_au_boy:   'Australian boy, energetic sporty build, sun-kissed appearance, bright curious eyes, 7-9 years old',
+  av_au_girl:  'Australian girl, lively outdoor build, bright expressive eyes, natural look, 7-9 years old',
+  av_au_baby_boy: 'Australian baby boy, chubby cheeks, bright blue or brown eyes, standing independently, 12 months old, focus on outfit',
+  av_au_baby_girl:'Australian baby girl, round soft face, bright eyes, standing independently, 12 months old, focus on outfit',
+  av_au_old_man:  'Australian man, silver hair, warm sun-lined face, friendly relaxed bearing, 65-70 years old',
+  av_au_old_woman:'Australian woman, silver or white hair, warm bright expression, graceful relaxed bearing, 65-70 years old',
+  av_br_boy:   'Brazilian boy, energetic vibrant build, bright dark eyes, casual clothing, 7-9 years old',
+  av_br_girl:  'Brazilian girl, lively energetic build, bright expressive eyes, vibrant casual clothing, 7-9 years old',
+  av_br_baby_boy: 'Brazilian baby boy, chubby cheeks, bright dark eyes, standing independently, 12 months old, focus on outfit',
+  av_br_baby_girl:'Brazilian baby girl, round soft face, bright dark eyes, standing independently, 12 months old, focus on outfit',
+  av_br_old_man:  'Brazilian man, silver hair, warm sun-lined face, friendly vibrant bearing, 65-70 years old',
+  av_br_old_woman:'Brazilian woman, silver or white hair, warm vibrant expression, graceful energetic bearing, 65-70 years old',
+  av_af_boy:   'African boy, energetic vibrant build, bright expressive eyes, casual clothing, 7-9 years old',
+  av_af_girl:  'African girl, lively energetic build, bright expressive eyes, natural hair, casual clothing, 7-9 years old',
+  av_af_baby_boy: 'African baby boy, chubby cheeks, bright dark eyes, standing independently, 12 months old, focus on outfit',
+  av_af_baby_girl:'African baby girl, round soft face, bright dark eyes, standing independently, 12 months old, focus on outfit',
+  av_af_old_man:  'African man, silver or white hair, warm wise face, dignified strong bearing, 65-70 years old',
+  av_af_old_woman:'African woman, silver or white natural hair, warm radiant expression, graceful dignified bearing, 65-70 years old',
   avatar_wei:    'Chinese man, lean build, short black hair, calm composed expression, medium height',
   avatar_liang:  'Chinese man, medium build, neat short black hair, friendly confident smile',
   avatar_jun:    'Chinese man, athletic build, sharp features, short black hair, focused expression',
@@ -1325,22 +1543,48 @@ function setMode(mode){
 
 // ══ SUBCATEGORY ══
 function onCategoryChange(){
-  const cat=document.getElementById('category').value;
-  const wrap=document.getElementById('subcatWrap');
-  const sel=document.getElementById('subcategory');
-  sel.innerHTML='<option value="">Select sub-category…</option>';
-  if(cat && SUBCATS[cat]){
-    SUBCATS[cat].forEach(s=>{
-      const o=document.createElement('option');
-      o.value=s; o.textContent=s;
-      sel.appendChild(o);
-    });
-    wrap.style.display='';
-  } else { wrap.style.display='none'; }
-  updateAvatarsByCategory(cat);
-  updateLocationsByCategory(cat);
+  const cat = document.getElementById('category').value;
+  const subSel = document.getElementById('subcategory');
+  const subWrap = document.getElementById('subcatWrap');
+  const secLoc  = document.getElementById('secLocation');
+
+  // Populate subcategory dropdown
+  subSel.innerHTML = '<option value="">Select sub-category…</option>';
+  const subs = SUBCATS[cat] || [];
+  if(subs.length){
+    subs.forEach(s=>{ const o=document.createElement('option'); o.value=s.v; o.textContent=s.l; subSel.appendChild(o); });
+    subWrap.style.display='block';
+  } else {
+    subWrap.style.display='none';
+  }
+
+  // Avatar hint
+  const hint = (CAT_AVATAR_MAP[cat]||CAT_AVATAR_MAP.default||{}).hint || '';
+  const noteEl = document.getElementById('avCatNoteText');
+  if(noteEl) noteEl.textContent = hint || 'Select a category to see avatar guidance';
+
+  // Location section — show by default, hidden by subcategory
+  if(secLoc) secLoc.style.display = '';
+
   validate();
 }
+
+function onSubcatChange(){
+  const sub = document.getElementById('subcategory').value;
+  const secLoc = document.getElementById('secLocation');
+  // Hide location picker for categories where it's not needed
+  if(secLoc){
+    secLoc.style.display = NO_LOC_SUBCATS.has(sub) ? 'none' : '';
+    if(NO_LOC_SUBCATS.has(sub)){
+      // Reset location selection to default so it doesn't interfere
+      document.querySelectorAll('.loc-card').forEach(c=>c.classList.remove('on'));
+      const first = document.querySelector('.loc-card');
+      if(first) first.classList.add('on');
+    }
+  }
+  validate();
+}
+
 function onSubcatChange(){ validate(); }
 
 // ══ AVATAR FILTER BY CATEGORY ══
@@ -1503,7 +1747,7 @@ function onDrop(e){ e.preventDefault(); onDragLeave(); const f=e.dataTransfer.fi
 function onFileSelect(f){
   if(!f) return;
   if(!['image/jpeg','image/png','image/webp'].includes(f.type)){ toast('Please upload a JPG, PNG or WEBP image','err'); return; }
-  if(f.size>10*1024*1024){ toast('Image must be under 10MB','err'); return; }
+  if(f.size>5*1024*1024){ toast('Image must be under 5MB','err'); return; }
   file=f;
   const reader=new FileReader();
   reader.onload=e=>{
@@ -1527,178 +1771,128 @@ function resetUpload(){
   validate();
 }
 
-// ══ REMBG ══
-// ══ BACKGROUND REMOVAL — rembg-webgpu ══
-// Uses the official rembg-webgpu npm package loaded via CDN (ESM shim)
-// Supports WebGPU-FP16 (fastest), WebGPU-FP32, and WASM fallback automatically.
-
-let rembgLib = null;           // cached { removeBackground, subscribeToProgress, getCapabilities }
-let rembgReady = false;        // true once model is fully loaded
-let rembgInitPromise = null;   // singleton init promise
+// ══ BACKGROUND REMOVAL — server-side rembg via Oracle queue ══
 
 function rembgSetProg(pct, label){
-  const wrap  = document.getElementById('rembgProgWrap');
-  const fill  = document.getElementById('rembgProgFill');
-  const lbl   = document.getElementById('rembgProgLabel');
+  const wrap = document.getElementById('rembgProgWrap');
+  const fill = document.getElementById('rembgProgFill');
+  const lbl  = document.getElementById('rembgProgLabel');
   if(!wrap) return;
-  wrap.style.display = pct === null ? 'none' : '';
+  wrap.style.display = (pct === null) ? 'none' : '';
   if(fill) fill.style.width = (pct ?? 0) + '%';
   if(lbl)  lbl.textContent  = label || '';
 }
 
-async function loadRembgLib(){
-  if(rembgLib) return rembgLib;
-  // Use pinned version for stability — rembg-webgpu from esm.sh
-  const mod = await import('https://esm.sh/rembg-webgpu@0.1.8');
-  rembgLib = mod;
-  return rembgLib;
-}
-
-async function initRembgModel(){
-  if(rembgReady) return true;
-  if(rembgInitPromise) return rembgInitPromise;
-
-  rembgInitPromise = (async () => {
-    try {
-      const lib = await loadRembgLib();
-
-      // Subscribe to progress so we can show the bar during model download
-      const unsub = lib.subscribeToProgress((state) => {
-        const btn = document.getElementById('rembgRemove');
-        switch(state.phase){
-          case 'idle':
-            rembgSetProg(2, 'Preparing model…');
-            if(btn) btn.querySelector('#rembgRemoveSub').textContent = 'Preparing…';
-            break;
-          case 'downloading':
-            rembgSetProg(Math.max(2, state.progress), `Downloading model… ${state.progress.toFixed(0)}%`);
-            if(btn) btn.querySelector('#rembgRemoveSub').textContent = `Downloading… ${state.progress.toFixed(0)}%`;
-            break;
-          case 'building':
-            rembgSetProg(Math.max(70, 70 + state.progress * 0.3), `Building model… ${state.progress.toFixed(0)}%`);
-            if(btn) btn.querySelector('#rembgRemoveSub').textContent = `Building… ${state.progress.toFixed(0)}%`;
-            break;
-          case 'ready':
-            rembgSetProg(100, 'Model ready ✓');
-            rembgReady = true;
-            if(btn) btn.querySelector('#rembgRemoveSub').textContent = 'Model ready — click to remove bg';
-            setTimeout(() => rembgSetProg(null, ''), 1200);
-            unsub();
-            break;
-          case 'error':
-            rembgSetProg(null, '');
-            if(btn) btn.querySelector('#rembgRemoveSub').textContent = 'Failed — try again';
-            break;
-        }
-      });
-
-      // Trigger model initialization with a tiny 1×1 dummy image
-      const dummy = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-      try { await lib.removeBackground(dummy); } catch(e){ /* dummy result discarded */ }
-      return true;
-    } catch(e){
-      console.error('rembg-webgpu init failed:', e);
-      rembgSetProg(null, '');
-      return false;
-    }
-  })();
-
-  return rembgInitPromise;
+function rembgBase64ToBlobUrl(base64){
+  const clean = String(base64 || '').replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, '').trim();
+  if(!clean) throw new Error('Empty image payload');
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for(let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
 }
 
 async function doRemoveBackground(imgFile){
-  const btn     = document.getElementById('rembgRemove');
-  const subEl   = document.getElementById('rembgRemoveSub');
+  const subEl = document.getElementById('rembgRemoveSub');
+  const btn   = document.getElementById('rembgRemove');
+  if(btn) btn.style.opacity = '.6';
+  if(subEl) subEl.textContent = 'Sending to server queue…';
+  rembgSetProg(8, 'Uploading image…');
 
-  // Show progress bar immediately
-  rembgSetProg(2, 'Starting…');
-  if(btn)   btn.style.opacity = '.6';
-  if(subEl) subEl.textContent = 'Loading model…';
+  try{
+    const apiBase = (window.REMBG_API_URL || '').replace(/\/+$/, '');
+    if(!apiBase) throw new Error('Background removal API URL is not configured.');
 
-  try {
-    const lib = await loadRembgLib();
+    const endpoint = new URL('/remove-bg', apiBase).toString();
 
-    // Subscribe to progress for THIS processing run
-    const unsub = lib.subscribeToProgress((state) => {
-      switch(state.phase){
-        case 'idle':
-          rembgSetProg(5, 'Initialising…');
-          break;
-        case 'downloading':
-          rembgSetProg(Math.max(5, state.progress * 0.7), `Downloading model… ${state.progress.toFixed(0)}%`);
-          if(subEl) subEl.textContent = `Downloading… ${state.progress.toFixed(0)}%`;
-          break;
-        case 'building':
-          rembgSetProg(70 + state.progress * 0.2, `Building… ${state.progress.toFixed(0)}%`);
-          if(subEl) subEl.textContent = `Building… ${state.progress.toFixed(0)}%`;
-          break;
-        case 'ready':
-          rembgSetProg(92, 'Processing image…');
-          if(subEl) subEl.textContent = 'Processing…';
-          break;
-      }
+    const formData = new FormData();
+    formData.append('image', imgFile, imgFile.name || 'product.png');
+
+    rembgSetProg(18, 'Waiting for server queue…');
+    if(subEl) subEl.textContent = 'Waiting for server queue…';
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      redirect: 'follow',
+      body: formData,
+      signal: controller.signal
     });
 
-    // Create object URL from the File
-    const objectUrl = URL.createObjectURL(imgFile);
+    clearTimeout(timeoutId);
 
-    let result;
-    try {
-      result = await lib.removeBackground(objectUrl);
-    } finally {
-      URL.revokeObjectURL(objectUrl);
+    if(!response.ok){
+      const body = await response.text().catch(() => '');
+      throw new Error(body ? `Server error ${response.status}: ${body.slice(0, 200)}` : `Server error ${response.status}`);
     }
 
-    unsub();
+    rembgSetProg(70, 'Processing on server…');
+    if(subEl) subEl.textContent = 'Processing on server…';
 
-    // Handle both blob (newer) and blobUrl (older) API shapes
-    if(result.blobUrl){
-      rembgBlobURL = result.blobUrl;
-    } else if(result.blob){
-      rembgBlobURL = URL.createObjectURL(result.blob);
-    } else if(result instanceof Blob){
-      rembgBlobURL = URL.createObjectURL(result);
+    const data = await response.json();
+    const returned = data.image || data.imageBase64 || data.result || data.output || data.url;
+    if(!returned) throw new Error('Server returned no image.');
+
+    let resultURL = returned;
+    if(typeof returned === 'string'){
+      if(returned.startsWith('data:') || returned.startsWith('blob:') || returned.startsWith('http')){
+        resultURL = returned;
+      } else {
+        resultURL = rembgBase64ToBlobUrl(returned);
+      }
+    } else if(returned instanceof Blob){
+      resultURL = URL.createObjectURL(returned);
     } else {
-      throw new Error('Unexpected result format from rembg-webgpu');
+      throw new Error('Unexpected response format from server.');
     }
 
-    // Show result in preview
-    document.getElementById('previewImg').src = rembgBlobURL;
-    const timeStr = result.processingTimeSeconds ? result.processingTimeSeconds.toFixed(1)+'s' : '';
-    const sizeStr = result.width ? `${result.width}×${result.height}px` : '';
-    rembgSetProg(100, ['Done ✓', sizeStr, timeStr].filter(Boolean).join(' · '));
+    rembgSetProg(95, 'Finalising…');
 
-    if(btn)   btn.style.opacity = '1';
+    if(rembgBlobURL && String(rembgBlobURL).startsWith('blob:')) URL.revokeObjectURL(rembgBlobURL);
+    rembgBlobURL = resultURL;
+    document.getElementById('previewImg').src = rembgBlobURL;
+
+    if(btn) btn.style.opacity = '1';
     if(subEl) subEl.textContent = 'Done ✓ Background removed';
-    // Show download button
-    document.getElementById('rembgDownloadWrap').style.display='';
+    rembgSetProg(100, 'Done ✓');
     toast('✅ Background removed!', 'ok');
     setTimeout(() => rembgSetProg(null, ''), 2500);
 
-  } catch(e) {
+    const dlWrap = document.getElementById('rembgDownloadWrap');
+    if(dlWrap) dlWrap.style.display = '';
+
+  }catch(e){
     rembgSetProg(null, '');
-    if(btn)   btn.style.opacity = '1';
-    if(subEl) subEl.textContent = 'Failed — try again';
-    toast('❌ Background removal failed: ' + (e.message || e), 'err');
-    // Reset to "use original"
-    document.getElementById('rembgDownloadWrap').style.display='none';
+    if(btn) btn.style.opacity = '1';
+
+    const errMsg = e && e.message ? e.message : String(e);
+    if(subEl){
+      if(errMsg.includes('Abort')) subEl.textContent = 'Server timed out — try again';
+      else subEl.textContent = 'Failed — try again';
+    }
+    toast('❌ Background removal failed', 'err');
     rembgMode = 'use';
     document.getElementById('rembgUse').classList.add('active');
     document.getElementById('rembgRemove').classList.remove('active');
     console.error('rembg error:', e);
+  } finally {
+    window._rembgOnProgress = null;
+    if(btn) btn.style.opacity = '1';
   }
 }
 
 function downloadRemovedBg(){
-  if(!rembgBlobURL){ toast('No removed background image yet.','err'); return; }
+  if(!rembgBlobURL){ toast('No image yet.', 'err'); return; }
   const a = document.createElement('a');
   a.href = rembgBlobURL;
   a.download = (file ? file.name.replace(/\.[^.]+$/, '') : 'product') + '_no_bg.png';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  toast('⬇️ Downloading PNG…', 'ok');
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
+
 function setRembg(mode){
   rembgMode = mode;
   document.getElementById('rembgUse').classList.toggle('active', mode === 'use');
@@ -1717,10 +1911,46 @@ function setRembg(mode){
     rembgSetProg(null, '');
     document.getElementById('rembgDownloadWrap').style.display='none';
     const subEl = document.getElementById('rembgRemoveSub');
-    if(subEl) subEl.textContent = 'Strip bg first, then proceed';
+    if(subEl) subEl.textContent = 'Send to server queue';
   }
 }
 function toBase64(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(f); }); }
+
+// Resize + compress image before upload — critical for mobile camera photos (10-20 MB)
+// Reduces to max 1500px longest side, JPEG 0.82 quality → cuts payload ~95%
+async function compressImage(file, maxPx=1500, quality=0.82){
+  return new Promise(resolve=>{
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      URL.revokeObjectURL(url);
+      let w=img.naturalWidth, h=img.naturalHeight;
+      if(w<=maxPx && h<=maxPx && file.size<800*1024){ resolve(file); return; }
+      const scale = Math.min(1, maxPx/Math.max(w,h));
+      w=Math.round(w*scale); h=Math.round(h*scale);
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>resolve(blob||file),'image/jpeg',quality);
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); resolve(file); };
+    img.src=url;
+  });
+}
+
+// fetch() with explicit timeout — prevents silent hang on slow/dropped mobile connections
+async function fetchWithTimeout(url, options={}, timeoutMs=90000){
+  const ctrl=new AbortController();
+  const tid=setTimeout(()=>ctrl.abort(), timeoutMs);
+  try{
+    return await fetch(url, {...options, signal:ctrl.signal});
+  } catch(err){
+    if(err.name==='AbortError') throw new Error('Request timed out — check your connection and try again.');
+    throw new Error(err?.message || String(err) || 'Network error — check your connection.');
+  } finally{
+    clearTimeout(tid);
+  }
+}
 
 // ══ VALIDATE ══
 function validate(){
@@ -2032,9 +2262,20 @@ async function evaluateQueue(mode, submitFn, sel=[]){
 
   // Our row not found — expired or cleaned
   if(myIdx === -1){
-    toast('⏳ Queue entry expired — please try again.', 'warn');
     stopQueuePolling(); stopQueueHeartbeat();
     queueRowId = null; queueDispatching = false;
+    hideQB(isGen);
+    toast('⏳ Queue entry expired — please try again.', 'warn');
+    if(isGen){
+      document.getElementById('genBtn').disabled = false;
+      const pw = document.getElementById('progPanelWrap');
+      if(pw) pw.style.display = 'none';
+      document.getElementById('progPanel').classList.remove('on');
+      document.getElementById('promptPanel').classList.add('on');
+    } else {
+      document.getElementById('analyseBtn').disabled = false;
+      document.getElementById('analysePanel').classList.remove('on');
+    }
     return;
   }
 
@@ -2078,11 +2319,22 @@ async function evaluateQueue(mode, submitFn, sel=[]){
     hideQB(isGen);
     startPolling(qData.jobId, sel, mode);
   } catch(err){
-    // Reset to waiting if submit failed
-    queueDispatching = false;
-    await queueUpdate(table, queueRowId, { status: 'waiting' });
+    // Submit failed — stop completely, no retry (prevents API abuse)
+    stopQueuePolling(); stopQueueHeartbeat();
+    try{ await queueDelete(table, queueRowId); } catch(_){}
+    queueRowId = null; queueDispatching = false;
+    hideQB(isGen);
     toast('❌ Submit failed: ' + err.message, 'err');
-    showQB(isGen ? 'Waiting in queue…' : 'Waiting to analyse…', pos, '', isGen);
+    if(isGen){
+      document.getElementById('genBtn').disabled = false;
+      const pw = document.getElementById('progPanelWrap');
+      if(pw) pw.style.display = 'none';
+      document.getElementById('progPanel').classList.remove('on');
+      document.getElementById('promptPanel').classList.add('on');
+    } else {
+      document.getElementById('analyseBtn').disabled = false;
+      document.getElementById('analysePanel').classList.remove('on');
+    }
   }
 }
 
@@ -2091,10 +2343,33 @@ function stopPolling(){ clearInterval(pollInterval); pollInterval=null; }
 async function startPolling(jobId,sel,mode){
   currentJobId=jobId; stopPolling();
   const isGen=mode==='generate';
+  const pollStart=Date.now();
+  let   failCount=0;
+  const MAX_FAILS=3; // 3 consecutive fetch errors → stop
+
+  function abortPolling(msg, isWarn){
+    stopPolling(); hideQB(isGen);
+    queueFinalize().catch(()=>{});
+    toast(isWarn ? '⏳ '+msg : '❌ '+msg, isWarn?'warn':'err');
+    if(isGen){ document.getElementById('genBtn').disabled=false;
+               const pw=document.getElementById('progPanelWrap');
+               if(pw) pw.style.display='none';
+               document.getElementById('progPanel').classList.remove('on');
+               document.getElementById('promptPanel').classList.add('on'); }
+    else { document.getElementById('analyseBtn').disabled=false;
+           document.getElementById('analysePanel').classList.remove('on'); }
+  }
+
   pollInterval=setInterval(async()=>{
+    // Hard timeout — stop polling after MAX_POLL_MS regardless
+    if(Date.now()-pollStart > MAX_POLL_MS){
+      abortPolling('Job timed out after 5 minutes. Please try again.', true);
+      return;
+    }
     try{
       const r=await fetch(`${JOB_STATUS}?jobId=${encodeURIComponent(jobId)}`);
-      if(!r.ok) return;
+      if(!r.ok){ failCount++; if(failCount>=MAX_FAILS){ abortPolling('Cannot reach server. Check your connection.', false); } return; }
+      failCount=0; // reset on success
       const data=await r.json();
       if(data.status==='waiting'){ showQB('Waiting…',data.position||'?',data.etaMin?`~${data.etaMin} min wait`:'',isGen); }
       else if(data.status==='processing'){ showQB(isGen?'Generating your images…':'Analysing your product…',null,'',isGen); }
@@ -2102,16 +2377,24 @@ async function startPolling(jobId,sel,mode){
         stopPolling(); hideQB();
         await queueFinalize();
         analysisData={
-          outputFolderId:data.outputFolderId,
-          heroPrompt:data.heroPrompt,
-          infographicPrompt:data.infographicPrompt,
-          lifestylePrompt:data.lifestylePrompt,
-          lifestylePrompt2:data.lifestylePrompt2,
-          lifestylePrompt3:data.lifestylePrompt3,
-          infographicCallouts:data.infographicCallouts||[],
-          sheetAvatarDesc:data.sheetAvatarDesc,
-          sheetLocation:data.sheetLocation,
-          sheetLighting:data.sheetLighting
+          outputFolderId:       data.outputFolderId       || '',
+          heroPrompt:           data.heroPrompt           || '',
+          infographicPrompt:    data.infographicPrompt    || '',
+          lifestylePrompt:      data.lifestylePrompt      || '',
+          lifestylePrompt2:     data.lifestylePrompt2     || '',
+          lifestylePrompt3:     data.lifestylePrompt3     || '',
+          infographicCallouts:  data.infographicCallouts  || [],
+          sheetAvatarDesc:      data.sheetAvatarDesc      || '',
+          sheetLocation:        data.sheetLocation        || '',
+          sheetLighting:        data.sheetLighting        || '',
+          // Extra passthrough fields required by Extract Inputs — Phase2
+          runId:                data.runId                || '',
+          mode:                 data.mode                 || 'dynamic',
+          productDescription:   data.productDescription   || '',
+          primaryColor:         data.primaryColor         || '',
+          productType:          data.productType          || '',
+          productMood:          data.productMood          || '',
+          shootSurface:         data.shootSurface         || '',
         };
         setTA('hero',data.heroPrompt||'');
         setTA('infographic',data.infographicPrompt||'');
@@ -2119,9 +2402,7 @@ async function startPolling(jobId,sel,mode){
         setTA('lifestyle2',data.lifestylePrompt2||'');
         setTA('lifestyle3',data.lifestylePrompt3||'');
         Object.keys(CHAR_LIMITS).forEach(k=>updateCounter(k,CHAR_LIMITS[k]));
-        // Apply selected bg color to hero
         if(selectedBgColor) rebuildHeroPrompt();
-        // Apply selected infographic style
         if(selectedInfoStyle) rebuildInfoPrompt();
         document.getElementById('analysePanel').classList.remove('on');
         document.getElementById('promptPanel').classList.add('on');
@@ -2140,29 +2421,39 @@ async function startPolling(jobId,sel,mode){
         document.getElementById('analyseBtn').disabled=false;
         showDone(data);
       }
-      else if(data.status==='failed'){
-        stopPolling(); hideQB(isGen);
+      else if(data.status==='partial_failed'){
+        // Some images succeeded, some failed mid-loop — show partial results
+        stopPolling(); hideQB(true);
         await queueFinalize();
-        if(isGen){
-          toast('❌ Generation failed. Please try again.','err');
-          document.getElementById('genBtn').disabled=false;
-          const progWrapF=document.getElementById('progPanelWrap');
-          if(progWrapF) progWrapF.style.display='none';
-          document.getElementById('progPanel').classList.remove('on');
-          document.getElementById('promptPanel').classList.add('on');
-        } else {
-          toast('❌ Analysis failed. Please try again.','err');
+        forceAllDone('pstepsList');
+        document.getElementById('pbarFill').style.width='100%';
+        const partialImages = data.images||[];
+        if(partialImages.length > 0){
+          await incrementUsage(partialImages.length);
           document.getElementById('analyseBtn').disabled=false;
-          document.getElementById('analysePanel').classList.remove('on');
+          showDone(data);
+          toast(`⚠️ ${partialImages.length} image(s) generated — failed at: ${data.failedAt||'unknown'}. ${data.error||''}`, 'warn');
+        } else {
+          const errDetail = data.error ? ` (${data.error})` : '';
+          abortPolling('Generation partial failure — no images saved'+errDetail, false);
         }
       }
-      else if(data.status==='not_found'){
-        stopPolling(); hideQB(isGen);
-        await queueFinalize();
-        if(isGen){ forceAllDone('pstepsList'); document.getElementById('pbarFill').style.width='100%'; showDoneTimeout(); }
-        else { toast('⏳ Analysis timed out — please try again.','warn'); document.getElementById('analyseBtn').disabled=false; document.getElementById('analysePanel').classList.remove('on'); }
+      else if(data.status==='failed'){
+        const errDetail = data.error ? ` (${data.error})` : '';
+        if(isGen){ abortPolling('Generation failed'+errDetail+'. Please try again.', false); }
+        else      { abortPolling('Analysis failed'+errDetail+'. Please try again.', false); }
       }
-    }catch(e){}
+      else if(data.status==='not_found'){
+        // Job not in DB yet — only wait up to 30s before giving up
+        if(Date.now()-pollStart > 30000){
+          if(isGen){ abortPolling('Job not found. Please try again.', true); }
+          else      { abortPolling('Analysis timed out. Please try again.', true); }
+        }
+      }
+    }catch(e){
+      failCount++;
+      if(failCount>=MAX_FAILS){ abortPolling('Network error after '+MAX_FAILS+' attempts. Check your connection.', false); }
+    }
   },POLL_INTERVAL_MS);
 }
 
@@ -2185,22 +2476,25 @@ async function runAnalyse(){
   try{ await startQueuePolling('analyse',submitAnalyseToN8n); }
   catch(err){
     await queueFinalize(); stopPolling(); hideQB();
-    toast('❌ Analysis failed: '+err.message,'err');
+    toast('❌ Analysis failed: '+(err?.message||String(err)||'Unknown error'),'err');
     document.getElementById('analyseBtn').disabled=false;
     document.getElementById('analysePanel').classList.remove('on');
   }
 }
 async function submitAnalyseToN8n(){
-  const useFile = (rembgMode==='remove'&&rembgBlobURL) ? await fetch(rembgBlobURL).then(r=>r.blob()) : file;
-  const imageBase64=await toBase64(useFile);
+  const rawFile = (rembgMode==='remove'&&rembgBlobURL) ? await fetch(rembgBlobURL).then(r=>r.blob()) : file;
+  // Compress before base64 — mobile cameras produce 10-20 MB photos that exceed fetch limits
+  const useFile    = await compressImage(rawFile, 1500, 0.82);
+  const imageBase64 = await toBase64(useFile);
+  const payloadKB  = Math.round(imageBase64.length * 0.75 / 1024);
+  console.log('Analyse payload:', payloadKB, 'KB (compressed from', Math.round(rawFile.size/1024), 'KB)');
   showQB('Submitting for analysis…',null,'');
-  // Get avatar description
   const avDesc = avatarId!=='dynamic' ? (AVATAR_DESCS[avatarId]||'') : '';
-  const res=await fetch(ANALYSE_SUBMIT,{
+  const res = await fetchWithTimeout(ANALYSE_SUBMIT, {
     method:'POST',
     headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
     body:JSON.stringify({
-      imageBase64, imageName:file.name, imageMimeType:file.type||'image/jpeg',
+      imageBase64, imageName:file.name, imageMimeType:'image/jpeg',
       category:document.getElementById('category').value,
       subcategory:document.getElementById('subcategory').value||'',
       avatarId, avatarCountry, locationVariant,
@@ -2209,10 +2503,12 @@ async function submitAnalyseToN8n(){
       productName:document.getElementById('productName').value.trim(),
       features:document.getElementById('features').value.trim(),
       userEmail:currentUser.email, email:currentUser.email,
-      driveFolderId:DRIVE_FOLDER
+      language: 'en',
+      runId: analysisData?.runId || '',
+      driveFolderId: ''
     })
-  });
-  if(!res.ok) throw new Error('Submit failed — HTTP '+res.status);
+  }, 90000);
+  if(!res.ok) throw new Error('Server error ' + res.status + ' — please try again.');
   return await res.json();
 }
 
@@ -2241,7 +2537,7 @@ async function generate(){
   try{ await startQueuePolling('generate',()=>submitGenerateToN8n(sel),sel); }
   catch(err){
     await queueFinalize(); stopPolling(); hideQB(true);
-    toast('❌ Generation failed: '+err.message,'err');
+    toast('❌ Generation failed: '+(err?.message||String(err)||'Unknown error'),'err');
     document.getElementById('genBtn').disabled=false;
     document.getElementById('analyseBtn').disabled=false;
     const progWrapE=document.getElementById('progPanelWrap');
@@ -2251,38 +2547,53 @@ async function generate(){
   }
 }
 async function submitGenerateToN8n(sel){
-  const useFile=(rembgMode==='remove'&&rembgBlobURL)?await fetch(rembgBlobURL).then(r=>r.blob()):file;
-  const imageBase64=await toBase64(useFile);
-  const callouts=analysisData?.infographicCallouts||[];
+  const rawFile = (rembgMode==='remove'&&rembgBlobURL)?await fetch(rembgBlobURL).then(r=>r.blob()):file;
+  // Compress before base64 — mobile cameras produce 10-20 MB photos that exceed fetch limits
+  const useFile     = await compressImage(rawFile, 1500, 0.82);
+  const imageBase64 = await toBase64(useFile);
+  const payloadKB   = Math.round(imageBase64.length * 0.75 / 1024);
+  console.log('Generate payload:', payloadKB, 'KB (compressed from', Math.round(rawFile.size/1024), 'KB)');
+  const callouts = analysisData?.infographicCallouts||[];
   showQB('Submitting your job…',null,'',true);
-  const res=await fetch(QUEUE_SUBMIT,{
+  const res = await fetchWithTimeout(QUEUE_SUBMIT, {
     method:'POST',
     headers:{'Content-Type':'application/json','X-User-Token':currentUser.access_token,'X-User-Email':currentUser.email},
     body:JSON.stringify({
-      imageBase64, imageName:file.name, imageMimeType:file.type||'image/jpeg',
+      imageBase64, imageName:file.name, imageMimeType:'image/jpeg',
       category:document.getElementById('category').value,
       subcategory:document.getElementById('subcategory').value||'',
       avatarId, avatarCountry, locationVariant,
+      avatarDesc: avatarId!=='dynamic' ? (AVATAR_DESCS[avatarId]||'') : '',
+      mode: analysisData?.mode || currentMode,
       productName:document.getElementById('productName').value.trim(),
       features:document.getElementById('features').value.trim(),
       userEmail:currentUser.email, email:currentUser.email,
-      driveFolderId:DRIVE_FOLDER,
+      language: 'en',
+      driveFolderId: '',
       selectedPrompts:sel, selectedPromptsJson:JSON.stringify(sel),
       heroPrompt:getTA('hero'),
       infographicPrompt:getTA('infographic'),
       lifestylePrompt:getTA('lifestyle'),
       lifestylePrompt2:getTA('lifestyle2'),
       lifestylePrompt3:getTA('lifestyle3'),
+      lifestylePrompt4: '',
       dimensionPrompt:getTA('dimensions'),
       genericPrompt:getTA('generic'),
       outputFolderId:analysisData?.outputFolderId||'',
+      runId:analysisData?.runId||'',
       infographicCallouts:callouts,
       sheetAvatarDesc:analysisData?.sheetAvatarDesc||'',
       sheetLocation:analysisData?.sheetLocation||'',
       sheetLighting:analysisData?.sheetLighting||'',
+      // Gemini analysis passthrough — Build Generation Payload reads these
+      productDescription: analysisData?.productDescription||'',
+      primaryColor:       analysisData?.primaryColor||'',
+      productType:        analysisData?.productType||'',
+      productMood:        analysisData?.productMood||'',
+      shootSurface:       analysisData?.shootSurface||'',
     })
-  });
-  if(!res.ok) throw new Error('Submit failed — HTTP '+res.status);
+  }, 90000);
+  if(!res.ok) throw new Error('Server error ' + res.status + ' — please try again.');
   return await res.json();
 }
 
