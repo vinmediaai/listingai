@@ -2505,7 +2505,10 @@ async function submitAnalyseToN8n(){
       userEmail:currentUser.email, email:currentUser.email,
       language: 'en',
       runId: analysisData?.runId || '',
-      driveFolderId: ''
+      driveFolderId: '',
+      selectedBgColor:    selectedBgColor   || '',
+      selectedInfoStyle:  selectedInfoStyle  || '',
+      selectedDimStyle:   selectedDimStyle   || ''
     })
   }, 90000);
   if(!res.ok) throw new Error('Server error ' + res.status + ' — please try again.');
@@ -2591,6 +2594,9 @@ async function submitGenerateToN8n(sel){
       productType:        analysisData?.productType||'',
       productMood:        analysisData?.productMood||'',
       shootSurface:       analysisData?.shootSurface||'',
+      selectedBgColor:    selectedBgColor   || '',
+      selectedInfoStyle:  selectedInfoStyle  || '',
+      selectedDimStyle:   selectedDimStyle   || '',
     })
   }, 90000);
   if(!res.ok) throw new Error('Server error ' + res.status + ' — please try again.');
