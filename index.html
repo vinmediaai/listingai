@@ -628,8 +628,10 @@ input#fileInput{display:none}
             <option value="mens_fashion">👔 Men's Fashion</option>
             <option value="kids_fashion">👶 Kids' Fashion</option>
             <option value="footwear">👠 Footwear</option>
-            <option value="jewellery">💍 Jewellery &amp; Accessories</option>
-            <option value="home_kitchen">🏠 Home &amp; Kitchen</option>
+            <option value="jewellery">💍 Jewellery</option>
+            <option value="accessories">👜 Accessories</option>
+            <option value="home_kitchen">🍳 Home &amp; Kitchen</option>
+            <option value="home_decor">🏠 Home Décor</option>
             <option value="beauty">💄 Beauty &amp; Personal Care</option>
             <option value="electronics">📱 Electronics &amp; Gadgets</option>
             <option value="health">🏋️ Health &amp; Wellness</option>
@@ -1259,104 +1261,215 @@ const CHAR_LIMITS = { hero:500, infographic:500, lifestyle:600, lifestyle2:600, 
 // Category → recommended avatars (avatar data-avatar values)
 const SUBCATS = {
   womens_fashion: [
+    // Ethnic
     {v:'womens_ethnic_saree',l:'Sarees'},{v:'womens_ethnic_kurti',l:'Kurtis'},
     {v:'womens_ethnic_kurta_set',l:'Kurta Sets'},{v:'womens_ethnic_suit',l:'Suits & Dress Materials'},
     {v:'womens_ethnic_lehenga',l:'Lehengas & Cholis'},{v:'womens_ethnic_blouse',l:'Blouses & Dupattas'},
     {v:'womens_ethnic_abaya',l:'Abayas & Ethnic Jackets'},{v:'womens_ethnic_bottom',l:'Petticoats & Ethnic Bottoms'},
+    // Western
     {v:'womens_western_top',l:'Tops, Tunics & T-Shirts'},{v:'womens_western_dress',l:'Dresses & Gowns'},
     {v:'womens_western_coord',l:'Co-ord Sets'},{v:'womens_western_bottom',l:'Jeans, Leggings & Palazzos'},
+    {v:'womens_activewear',l:'Activewear & Yoga Wear'},{v:'womens_swimwear',l:'Swimwear & Beachwear'},
+    {v:'womens_maternity',l:'Maternity Wear'},
+    // Innerwear
     {v:'womens_innerwear',l:'Bras & Innerwear'},{v:'womens_sleepwear',l:'Night Suits & Sleepwear'}
   ],
   mens_fashion: [
-    {v:'mens_tshirt',l:'T-Shirts'},{v:'mens_shirt',l:'Shirts'},
-    {v:'mens_formal',l:'Formal Shirts & Trousers'},{v:'mens_jeans',l:'Jeans & Chinos'},
-    {v:'mens_trackpants',l:'Track Pants & Joggers'},{v:'mens_sweatshirt',l:'Sweatshirts & Hoodies'},
-    {v:'mens_jacket',l:'Jackets & Sweaters'},{v:'mens_innerwear',l:'Innerwear & Socks'},
-    {v:'mens_ethnic',l:'Kurtas & Ethnic Wear'}
+    // Casual
+    {v:'mens_tshirt',l:'T-Shirts'},{v:'mens_shirt',l:'Casual Shirts'},
+    {v:'mens_jeans',l:'Jeans & Chinos'},{v:'mens_trackpants',l:'Track Pants & Joggers'},
+    {v:'mens_sweatshirt',l:'Sweatshirts & Hoodies'},{v:'mens_jacket',l:'Jackets & Coats'},
+    {v:'mens_rainwear',l:'Rainwear & Windcheaters'},
+    // Formal
+    {v:'mens_formal_shirt',l:'Formal Shirts'},{v:'mens_formal_trouser',l:'Formal Trousers'},
+    {v:'mens_suit_blazer',l:'Suits & Blazers'},
+    // Ethnic
+    {v:'mens_kurta',l:'Kurtas'},{v:'mens_kurta_set',l:'Kurta Sets'},
+    {v:'mens_sherwani',l:'Sherwanis'},{v:'mens_dhoti',l:'Dhotis & Mundus'},
+    // Active & Night
+    {v:'mens_activewear',l:'Activewear & Gym Wear'},{v:'mens_swimwear',l:'Swimwear'},
+    {v:'mens_sleepwear',l:'Nightwear & Lounge Wear'},
+    // Innerwear
+    {v:'mens_innerwear',l:'Innerwear & Vests'},{v:'mens_socks',l:'Socks'}
   ],
   kids_fashion: [
-    {v:'kids_baby_dress',l:'Baby Dresses & Rompers'},{v:'kids_boys_set',l:"Boys' Clothing Sets"},
-    {v:'kids_girls_set',l:"Girls' Clothing Sets"},{v:'kids_uniform',l:'School Uniforms'},
-    {v:'kids_combo',l:'Combo Sets'}
+    {v:'kids_infant',l:'Infant & Newborn (0–12m)'},{v:'kids_baby_dress',l:'Baby Dresses & Rompers'},
+    {v:'kids_boys_set',l:"Boys' Clothing Sets"},{v:'kids_girls_set',l:"Girls' Clothing Sets"},
+    {v:'kids_ethnic',l:"Kids' Ethnic Wear"},{v:'kids_uniform',l:'School Uniforms'},
+    {v:'kids_activewear',l:"Kids' Activewear & Sportswear"},{v:'kids_winterwear',l:'Winter Wear & Jackets'},
+    {v:'kids_swimwear',l:'Swimwear'},{v:'kids_combo',l:'Combo Sets'}
   ],
   footwear: [
     {v:'footwear_womens_heels',l:"Women's Heels & Wedges"},{v:'footwear_womens_flats',l:"Women's Flats & Sandals"},
+    {v:'footwear_womens_ethnic',l:"Women's Ethnic Footwear"},
     {v:'footwear_mens_casual',l:"Men's Casual Shoes"},{v:'footwear_mens_formal',l:"Men's Formal Shoes"},
-    {v:'footwear_mens_sports',l:"Men's Sports Shoes"},{v:'footwear_sneakers',l:'Sneakers'},
-    {v:'footwear_kids',l:"Kids' Shoes & Slippers"},{v:'footwear_flipflops',l:'Flip-Flops & Loafers'},
-    {v:'footwear_boots',l:'Boots'}
+    {v:'footwear_mens_sports',l:"Men's Sports Shoes"},{v:'footwear_mens_ethnic',l:"Men's Ethnic Footwear"},
+    {v:'footwear_sneakers',l:'Sneakers'},{v:'footwear_boots',l:'Boots & Ankle Boots'},
+    {v:'footwear_flipflops',l:'Flip-Flops, Loafers & Slippers'},
+    {v:'footwear_kids',l:"Kids' Shoes & Slippers"},
+    {v:'footwear_sports',l:'Sports & Running Shoes'},
+    {v:'footwear_ortho',l:'Orthopaedic & Comfort Footwear'},
+    {v:'footwear_rain',l:'Rain Boots & Waterproof Footwear'},
+    {v:'footwear_school',l:'School Shoes'}
   ],
   jewellery: [
-    {v:'jewellery_necklace',l:'Necklaces'},{v:'jewellery_earring',l:'Earrings'},
+    {v:'jewellery_necklace',l:'Necklaces & Chains'},{v:'jewellery_earring',l:'Earrings'},
     {v:'jewellery_set',l:'Jewellery Sets'},{v:'jewellery_bangle',l:'Bangles'},
-    {v:'jewellery_anklet',l:'Anklets'},{v:'jewellery_ring',l:'Rings'},
-    {v:'jewellery_maang_tikka',l:'Maang Tikka'},{v:'jewellery_watch',l:'Watches'},
-    {v:'jewellery_smartwatch',l:'Smartwatches & Fitness Trackers'},
-    {v:'jewellery_sunglasses',l:'Sunglasses'},{v:'jewellery_hair_acc',l:'Hair Accessories'},
-    // Accessories — grouped under Jewellery & Accessories category
-    {v:'acc_handbag',l:'Handbags & Clutches'},{v:'acc_backpack',l:'Backpacks'},
-    {v:'acc_wallet',l:'Wallets'},{v:'acc_belt',l:'Belts'}
+    {v:'jewellery_bracelet',l:'Bracelets'},{v:'jewellery_anklet',l:'Anklets'},
+    {v:'jewellery_ring',l:'Rings'},{v:'jewellery_pendant',l:'Pendants'},
+    {v:'jewellery_maang_tikka',l:'Maang Tikka'},{v:'jewellery_nose_pin',l:'Nose Pins & Rings'},
+    {v:'jewellery_toe_ring',l:'Toe Rings'},{v:'jewellery_brooch',l:'Brooches & Pins'},
+    {v:'jewellery_mens_chain',l:"Men's Chains & Kadas"}
+  ],
+  accessories: [
+    // Bags & Luggage
+    {v:'acc_handbag',l:'Handbags & Clutches'},{v:'acc_sling_bag',l:'Sling Bags & Crossbody'},
+    {v:'acc_backpack',l:'Backpacks'},{v:'acc_tote',l:'Tote Bags'},
+    {v:'acc_luggage',l:'Luggage & Trolley Bags'},{v:'acc_travel_pouch',l:'Travel Pouches & Organisers'},
+    // Wearable accessories
+    {v:'acc_watch',l:'Watches'},{v:'acc_smartwatch',l:'Smartwatches & Fitness Bands'},
+    {v:'acc_sunglasses',l:'Sunglasses & Eyewear'},{v:'acc_hair_acc',l:'Hair Accessories'},
+    {v:'acc_cap',l:'Caps & Hats'},{v:'acc_scarf',l:'Scarves, Stoles & Dupattas'},
+    {v:'acc_belt',l:'Belts'},{v:'acc_wallet',l:'Wallets & Cardholders'},
+    {v:'acc_umbrella',l:'Umbrellas'},{v:'acc_gloves',l:'Gloves'},
+    {v:'acc_socks',l:'Socks & Stockings'}
   ],
   home_kitchen: [
-    {v:'home_curtain',l:'Curtains & Cushion Covers'},{v:'home_wall_art',l:'Wall Art & Posters'},
-    {v:'home_led_lights',l:'LED Lights & Fairy Lights'},{v:'home_showpiece',l:'Showpieces & Candles'},
-    {v:'cookware',l:'Cookware'},{v:'home_storage',l:'Storage Containers'},
-    {v:'home_chopper',l:'Choppers & Slicers'},{v:'home_dinnerware',l:'Dinner Sets & Crockery'},
-    {v:'small-appliances',l:'Small Appliances'},{v:'home_bedsheet',l:'Bedsheets & Pillow Covers'},
-    {v:'home_towel',l:'Towels & Bath Accessories'},{v:'home_laundry',l:'Storage & Laundry'}
+    {v:'cookware',l:'Cookware & Pans'},{v:'home_pressure_cooker',l:'Pressure Cookers'},
+    {v:'home_chopper',l:'Choppers, Graters & Slicers'},{v:'home_knife',l:'Knives & Cutlery Sets'},
+    {v:'home_dinnerware',l:'Dinner Sets & Crockery'},{v:'home_kitchen_storage',l:'Kitchen Storage & Containers'},
+    {v:'home_waterbottle',l:'Water Bottles & Flasks'},{v:'small-appliances',l:'Small Kitchen Appliances'},
+    {v:'home_kettle',l:'Kettles & Coffee Makers'},{v:'home_air_fryer',l:'Air Fryers & OTG'},
+    {v:'home_induction',l:'Induction Cooktops & Gas Stoves'},{v:'home_kitchen_scale',l:'Kitchen Scales & Gadgets'},
+    {v:'home_bakeware',l:'Bakeware & Mixing Bowls'}
+  ],
+  home_decor: [
+    {v:'home_curtain',l:'Curtains & Drapes'},{v:'home_cushion',l:'Cushions & Cushion Covers'},
+    {v:'home_bedsheet',l:'Bedsheets & Pillow Covers'},{v:'home_comforter',l:'Comforters, Quilts & Blankets'},
+    {v:'home_pillow',l:'Pillows & Bolsters'},{v:'home_towel',l:'Towels & Bath Accessories'},
+    {v:'home_carpet',l:'Carpets, Rugs & Doormats'},{v:'home_wall_art',l:'Wall Art & Posters'},
+    {v:'home_mirror',l:'Mirrors'},{v:'home_photo_frame',l:'Photo Frames & Wall Clocks'},
+    {v:'home_led_lights',l:'LED Lights & Fairy Lights'},{v:'home_candle',l:'Candles & Diffusers'},
+    {v:'home_showpiece',l:'Showpieces & Figurines'},{v:'home_planter',l:'Plant Pots & Planters'},
+    {v:'home_storage',l:'Storage Boxes & Organisers'},{v:'home_laundry',l:'Laundry & Cleaning'},
+    {v:'home_bathroom_acc',l:'Bathroom Accessories'}
   ],
   beauty: [
+    // Skincare
     {v:'skincare_moisturizer',l:'Moisturizers & Serums'},{v:'skincare_facewash',l:'Face Wash & Masks'},
-    {v:'skincare_sunscreen',l:'Sunscreen'},{v:'beauty_haircare',l:'Hair Oils & Shampoos'},
-    {v:'beauty_makeup',l:'Makeup'},{v:'beauty_perfume',l:'Perfumes & Deodorants'},
-    {v:'beauty_grooming',l:'Grooming Tools'}
+    {v:'skincare_sunscreen',l:'Sunscreen'},{v:'skincare_eye_care',l:'Eye Creams & Under-Eye Care'},
+    {v:'skincare_lip_care',l:'Lip Balm & Lip Care'},{v:'skincare_body',l:'Body Lotion & Body Wash'},
+    {v:'skincare_baby',l:'Baby Skincare'},{v:'beauty_mens_skin',l:"Men's Skincare"},
+    // Hair
+    {v:'beauty_haircare',l:'Hair Oils, Shampoos & Conditioners'},
+    // Makeup
+    {v:'beauty_makeup',l:'Makeup'},{v:'beauty_nail',l:'Nail Care & Nail Polish'},
+    // Fragrance
+    {v:'beauty_perfume',l:'Perfumes & Deodorants'},
+    // Grooming
+    {v:'beauty_grooming',l:'Grooming Tools & Trimmers'},{v:'beauty_beard',l:'Beard Care'}
   ],
   electronics: [
-    {v:'electronics_earbuds',l:'Wireless Earbuds'},{v:'electronics_phone_case',l:'Phone Cases & Covers'},
-    {v:'electronics_charger',l:'Chargers & Adapters'},{v:'electronics_powerbank',l:'Power Banks'},
-    {v:'electronics_cable',l:'USB Cables'},{v:'electronics_holder',l:'Pop Sockets & Holders'}
+    // Audio
+    {v:'electronics_earbuds',l:'Wireless Earbuds & Headphones'},
+    {v:'electronics_speaker',l:'Bluetooth Speakers'},
+    // Mobile
+    {v:'electronics_phone_case',l:'Phone Cases & Covers'},
+    {v:'electronics_charger',l:'Chargers & Adapters'},
+    {v:'electronics_powerbank',l:'Power Banks'},
+    {v:'electronics_cable',l:'USB Cables & Connectors'},
+    {v:'electronics_holder',l:'Pop Sockets, Stands & Holders'},
+    // Wearables (tech angle)
+    {v:'electronics_watch',l:'Watches'},{v:'electronics_smartwatch',l:'Smartwatches & Fitness Bands'},
+    // Computing
+    {v:'electronics_laptop_acc',l:'Laptop & Tablet Accessories'},
+    {v:'electronics_keyboard',l:'Keyboards & Mouse'},
+    {v:'electronics_camera_acc',l:'Camera Accessories'},
+    // Smart Home & Gaming
+    {v:'electronics_smart_home',l:'Smart Home Devices'},
+    {v:'electronics_gaming',l:'Gaming Accessories'},
+    {v:'electronics_router',l:'Routers & Networking'}
   ],
   health: [
-    {v:'fitness',l:'Yoga & Fitness Equipment'},{v:'health_supplement',l:'Nutritional Supplements'},
-    {v:'health_monitor',l:'Health Monitors'},{v:'health_massager',l:'Massagers'}
+    {v:'fitness',l:'Yoga & Fitness Equipment'},{v:'health_gym',l:'Gym Equipment & Weights'},
+    {v:'health_supplement',l:'Nutritional Supplements'},{v:'health_monitor',l:'Health Monitors & BP Machines'},
+    {v:'health_glucometer',l:'Glucometers & Diabetes Care'},
+    {v:'health_massager',l:'Massagers & Pain Relief'},
+    {v:'health_personal_care',l:'Personal Care Devices'},
+    {v:'health_first_aid',l:'First Aid & Medical Supplies'},
+    {v:'health_baby',l:'Baby Health & Care'}
   ],
   toys: [
-    {v:'outdoor-toys',l:'Outdoor Toys'},{v:'educational-toys',l:'Educational Toys'},
-    {v:'toys_electric',l:'Electric Toys'},{v:'toys_indoor',l:'Indoor Toys'}
+    {v:'outdoor-toys',l:'Outdoor & Sports Toys'},{v:'educational-toys',l:'Educational Toys'},
+    {v:'toys_electric',l:'Electric & Remote Control Toys'},{v:'toys_indoor',l:'Indoor & Pretend Play'},
+    {v:'toys_soft',l:'Soft Toys & Stuffed Animals'},{v:'toys_board_game',l:'Board Games & Card Games'},
+    {v:'toys_building',l:'Building Blocks & Construction Sets'},{v:'toys_action',l:'Action Figures & Collectibles'},
+    {v:'toys_art_craft',l:'Art & Craft Kits'},{v:'toys_puzzle',l:'Puzzles & Brain Teasers'},
+    {v:'toys_baby',l:'Baby & Infant Toys (0–2 yrs)'}
   ],
   rideon: [
     {v:'rideon_electric_car',l:'Electric Cars'},{v:'rideon_motorcycle',l:'Motorcycles & Bikes'},
-    {v:'rideon_tricycle',l:'Tricycles'},{v:'rideon_scooter',l:'Scooters'}
+    {v:'rideon_tricycle',l:'Tricycles'},{v:'rideon_scooter',l:'Scooters'},
+    {v:'rideon_balance_bike',l:'Balance Bikes & Push Bikes'},
+    {v:'rideon_go_kart',l:'Go-Karts'},{v:'rideon_hoverboard',l:'Hoverboards & Self-Balancing Scooters'}
   ],
   stationery: [
-    {v:'stationery_schoolbag',l:'School Bags & Backpacks'},{v:'stationery_notebook',l:'Notebooks & Pens'},
-    {v:'stationery_lunchbox',l:'Lunch Boxes'},{v:'stationery_waterbottle',l:'Water Bottles'}
+    {v:'stationery_schoolbag',l:'School Bags & Backpacks'},{v:'stationery_notebook',l:'Notebooks & Diaries'},
+    {v:'stationery_pen',l:'Pens, Pencils & Writing Instruments'},{v:'stationery_art',l:'Art Supplies & Colours'},
+    {v:'stationery_lunchbox',l:'Lunch Boxes'},{v:'stationery_waterbottle',l:'Water Bottles'},
+    {v:'stationery_desk',l:'Desk Organisers & Stationery Sets'},{v:'stationery_calculator',l:'Calculators'},
+    {v:'stationery_planner',l:'Planners & Gift Wrapping'}
   ],
   other: [{v:'other',l:'Others'}]
 };
 
 // Subcategories where location picker is hidden (LOCATION_DRIVEN = 0 in Oracle)
 const NO_LOC_SUBCATS = new Set([
-  'womens_innerwear','womens_sleepwear','mens_innerwear','kids_baby_dress',
+  // Womens — product-flat-lay only
+  'womens_innerwear','womens_sleepwear','womens_swimwear',
+  // Mens — product-flat-lay only
+  'mens_innerwear','mens_socks','mens_sleepwear','mens_swimwear',
+  // Kids — infant/baby product only
+  'kids_infant','kids_baby_dress','kids_swimwear',
+  // Jewellery — all product macro shots, no avatar
   'jewellery_necklace','jewellery_earring','jewellery_set','jewellery_bangle',
-  'jewellery_anklet','jewellery_ring','jewellery_maang_tikka',
-  'jewellery_watch','jewellery_smartwatch','jewellery_hair_acc',
-  'home_curtain','home_wall_art','home_led_lights','home_showpiece',
-  'cookware','home_storage','home_chopper','home_dinnerware',
-  'small-appliances','home_bedsheet','home_towel','home_laundry',
+  'jewellery_bracelet','jewellery_anklet','jewellery_ring','jewellery_pendant',
+  'jewellery_maang_tikka','jewellery_nose_pin','jewellery_toe_ring',
+  'jewellery_brooch','jewellery_mens_chain',
+  // Accessories — product-only flat-lay
+  'acc_wallet','acc_belt','acc_travel_pouch','acc_gloves','acc_socks','acc_umbrella',
+  // Home Kitchen — all product studio shots
+  'cookware','home_pressure_cooker','home_chopper','home_knife','home_dinnerware',
+  'home_kitchen_storage','home_waterbottle','small-appliances','home_kettle',
+  'home_air_fryer','home_induction','home_kitchen_scale','home_bakeware',
+  // Home Décor — entire category product-only
+  'home_curtain','home_cushion','home_bedsheet','home_comforter','home_pillow',
+  'home_towel','home_carpet','home_wall_art','home_mirror','home_photo_frame',
+  'home_led_lights','home_candle','home_showpiece','home_planter',
+  'home_storage','home_laundry','home_bathroom_acc',
+  // Beauty — all product shots
   'skincare_moisturizer','skincare_facewash','skincare_sunscreen',
-  'beauty_haircare','beauty_makeup','beauty_perfume','beauty_grooming',
+  'skincare_eye_care','skincare_lip_care','skincare_body','skincare_baby',
+  'beauty_mens_skin','beauty_haircare','beauty_makeup','beauty_nail',
+  'beauty_perfume','beauty_grooming','beauty_beard',
+  // Electronics — non-wearable product shots
   'electronics_phone_case','electronics_charger','electronics_powerbank',
-  'electronics_cable','electronics_holder',
-  'health_supplement','health_monitor',
-  'rideon_electric_car','rideon_motorcycle','rideon_tricycle','rideon_scooter',
-  'stationery_notebook','stationery_lunchbox','stationery_waterbottle',
-  // Toys — product-only shots, no avatar/location needed
-  'outdoor-toys','educational-toys','toys_electric','toys_indoor',
-  // Accessories — flat-lay / product-only
-  'acc_handbag','acc_backpack','acc_wallet','acc_belt',
-  // Stationery schoolbag — product only
-  'stationery_schoolbag'
+  'electronics_cable','electronics_holder','electronics_speaker',
+  'electronics_laptop_acc','electronics_keyboard','electronics_camera_acc',
+  'electronics_smart_home','electronics_gaming','electronics_router',
+  'electronics_watch','electronics_smartwatch',
+  // Health — supplements and monitors are product-only
+  'health_supplement','health_monitor','health_glucometer','health_first_aid',
+  // Toys — product-only
+  'outdoor-toys','educational-toys','toys_electric','toys_baby',
+  'toys_soft','toys_puzzle',
+  // Rideon — product shots (too large/dangerous for child avatar AI)
+  'rideon_electric_car','rideon_motorcycle','rideon_tricycle',
+  'rideon_scooter','rideon_balance_bike','rideon_go_kart','rideon_hoverboard',
+  // Stationery — product-only
+  'stationery_notebook','stationery_pen','stationery_lunchbox',
+  'stationery_waterbottle','stationery_desk','stationery_calculator',
+  'stationery_planner','stationery_art'
 ]);
 
 // Avatar hint per category
@@ -1365,17 +1478,156 @@ const CAT_AVATAR_MAP = {
   mens_fashion:    {hint:'Male models recommended for men\'s fashion'},
   kids_fashion:    {hint:'Kids or baby avatars recommended'},
   footwear:        {hint:'Any avatar — feet/legs shot'},
-  jewellery:       {hint:'Any avatar — close-up shots'},
-  home_kitchen:    {hint:'No avatar needed for home & kitchen'},
+  jewellery:       {hint:'Female models for jewellery close-ups'},
+  accessories:     {hint:'Select avatar based on the specific accessory'},
+  home_kitchen:    {hint:'No avatar needed — product studio shot'},
+  home_decor:      {hint:'No avatar needed — product styling shot'},
   beauty:          {hint:'Female models recommended for beauty'},
-  electronics:     {hint:'Earbuds: any avatar. Others: no avatar needed'},
-  health:          {hint:'Active adult avatars recommended'},
-  toys:            {hint:'Kids avatars recommended'},
-  rideon:          {hint:'Kids avatars recommended for ride-on toys'},
-  stationery:      {hint:'Kids avatars recommended for stationery'},
+  electronics:     {hint:'Earbuds/wearables: any avatar. Others: no avatar'},
+  health:          {hint:'Active adult avatars for fitness & care products'},
+  toys:            {hint:'Kids avatars for toys & games'},
+  rideon:          {hint:'No avatar needed — product shot'},
+  stationery:      {hint:'Kids avatars for school stationery'},
   other:           {hint:'Select the most relevant avatar'},
   default:         {hint:'Select avatar based on your product'}
 };
+
+// ══ AVATAR FILTER ══
+// Controls which avatars appear per category/subcategory.
+// Gender: 'male' | 'female' | 'all'
+// AgeGroup: 'adult' (includes teen + senior) | 'child' | 'toddler' | 'all'
+// dynamic mode also uses this to constrain its Gemini prompt.
+const AVATAR_FILTER = {
+  womens_fashion:  { gender:'female', ageGroup:'adult'   },
+  mens_fashion:    { gender:'male',   ageGroup:'adult'   },
+  kids_fashion:    { gender:'all',    ageGroup:'child'   },
+  footwear:        { gender:'all',    ageGroup:'adult'   },
+  jewellery:       { gender:'female', ageGroup:'adult'   },
+  accessories:     { gender:'all',    ageGroup:'adult'   },
+  beauty:          { gender:'female', ageGroup:'adult'   },
+  electronics:     { gender:'all',    ageGroup:'adult'   },
+  health:          { gender:'all',    ageGroup:'adult'   },
+  toys:            { gender:'all',    ageGroup:'child'   },
+  rideon:          { gender:'none',   ageGroup:'none'    }, // product-only
+  stationery:      { gender:'all',    ageGroup:'child'   },
+  home_kitchen:    { gender:'none',   ageGroup:'none'    }, // product-only
+  home_decor:      { gender:'none',   ageGroup:'none'    }, // product-only
+  other:           { gender:'all',    ageGroup:'all'     },
+};
+
+// Subcategory overrides — applied on top of category default
+const SUBCAT_FILTER = {
+  // Kids — age overrides
+  kids_infant:            { gender:'all',    ageGroup:'toddler' },
+  kids_baby_dress:        { gender:'all',    ageGroup:'toddler' },
+  kids_swimwear:          { gender:'all',    ageGroup:'child'   },
+  // Toys — baby items use toddler avatars
+  toys_baby:              { gender:'all',    ageGroup:'toddler' },
+  toys_soft:              { gender:'all',    ageGroup:'child'   },
+  toys_board_game:        { gender:'all',    ageGroup:'child'   },
+  toys_building:          { gender:'all',    ageGroup:'child'   },
+  toys_art_craft:         { gender:'all',    ageGroup:'child'   },
+  toys_action:            { gender:'all',    ageGroup:'child'   },
+  // Accessories — gender overrides
+  acc_handbag:            { gender:'female', ageGroup:'adult'   },
+  acc_sling_bag:          { gender:'female', ageGroup:'adult'   },
+  acc_tote:               { gender:'female', ageGroup:'adult'   },
+  acc_scarf:              { gender:'female', ageGroup:'adult'   },
+  acc_wallet:             { gender:'all',    ageGroup:'adult'   },
+  acc_belt:               { gender:'all',    ageGroup:'adult'   },
+  acc_backpack:           { gender:'all',    ageGroup:'adult'   },
+  acc_luggage:            { gender:'all',    ageGroup:'adult'   },
+  acc_cap:                { gender:'all',    ageGroup:'adult'   },
+  acc_umbrella:           { gender:'all',    ageGroup:'adult'   },
+  acc_watch:              { gender:'all',    ageGroup:'adult'   },
+  acc_smartwatch:         { gender:'all',    ageGroup:'adult'   },
+  acc_sunglasses:         { gender:'all',    ageGroup:'adult'   },
+  acc_hair_acc:           { gender:'female', ageGroup:'adult'   },
+  acc_gloves:             { gender:'all',    ageGroup:'adult'   },
+  acc_socks:              { gender:'all',    ageGroup:'adult'   },
+  // Beauty
+  beauty_grooming:        { gender:'male',   ageGroup:'adult'   },
+  beauty_beard:           { gender:'male',   ageGroup:'adult'   },
+  beauty_mens_skin:       { gender:'male',   ageGroup:'adult'   },
+  skincare_baby:          { gender:'all',    ageGroup:'toddler' },
+  // Jewellery
+  jewellery_mens_chain:   { gender:'male',   ageGroup:'adult'   },
+  // Innerwear
+  mens_innerwear:         { gender:'male',   ageGroup:'adult'   },
+  womens_innerwear:       { gender:'female', ageGroup:'adult'   },
+  womens_sleepwear:       { gender:'female', ageGroup:'adult'   },
+  // Footwear
+  footwear_womens_heels:  { gender:'female', ageGroup:'adult'   },
+  footwear_womens_flats:  { gender:'female', ageGroup:'adult'   },
+  footwear_womens_ethnic: { gender:'female', ageGroup:'adult'   },
+  footwear_mens_casual:   { gender:'male',   ageGroup:'adult'   },
+  footwear_mens_formal:   { gender:'male',   ageGroup:'adult'   },
+  footwear_mens_sports:   { gender:'male',   ageGroup:'adult'   },
+  footwear_mens_ethnic:   { gender:'male',   ageGroup:'adult'   },
+  footwear_kids:          { gender:'all',    ageGroup:'child'   },
+  footwear_school:        { gender:'all',    ageGroup:'child'   },
+  // Health
+  health_baby:            { gender:'all',    ageGroup:'toddler' },
+  health_massager:        { gender:'all',    ageGroup:'adult'   },
+  health_personal_care:   { gender:'all',    ageGroup:'adult'   },
+  // Electronics — wearables need avatar
+  electronics_earbuds:    { gender:'all',    ageGroup:'adult'   },
+  electronics_watch:      { gender:'all',    ageGroup:'adult'   },
+  electronics_smartwatch: { gender:'all',    ageGroup:'adult'   },
+  // Stationery
+  stationery_schoolbag:   { gender:'all',    ageGroup:'child'   },
+  stationery_lunchbox:    { gender:'all',    ageGroup:'child'   },
+  stationery_waterbottle: { gender:'all',    ageGroup:'all'     },
+};
+
+// Returns {gender, ageGroup} for current category + subcategory
+function getAvatarFilter(cat, subcat) {
+  const sub = subcat && SUBCAT_FILTER[subcat];
+  if (sub) return sub;
+  return AVATAR_FILTER[cat] || { gender:'all', ageGroup:'all' };
+}
+
+// Apply filter to avatar grid — show/hide cards
+// age-group data attr: 'adult' covers teen+senior+adult as agreed
+function applyAvatarFilter(cat, subcat) {
+  const f = getAvatarFilter(cat, subcat);
+  const section = document.getElementById('avatarSection');
+
+  // Hide entire avatar section for product-only categories
+  if (f.gender === 'none') {
+    if (section) section.style.display = 'none';
+    return;
+  }
+  if (section) section.style.display = '';
+
+  document.querySelectorAll('.av-card').forEach(card => {
+    const cGender = card.dataset.gender || 'all';
+    const cAge    = card.dataset.ageGroup || 'adult';
+    const okGender = f.gender === 'all' || cGender === f.gender;
+    // adult filter shows adult + teen + senior
+    const okAge = f.ageGroup === 'all'
+      || (f.ageGroup === 'adult' && ['adult','teen','senior'].includes(cAge))
+      || (f.ageGroup === 'child'   && cAge === 'child')
+      || (f.ageGroup === 'toddler' && ['toddler','child'].includes(cAge));
+    card.style.display = (okGender && okAge) ? '' : 'none';
+  });
+
+  // Dynamic option hint
+  const dynCard = document.querySelector('.av-card[data-avatar="dynamic"]');
+  if (dynCard) dynCard.style.display = '';
+
+  // Clear current selection if selected avatar is now hidden
+  const selCard = document.querySelector('.av-card.selected');
+  if (selCard && selCard.style.display === 'none') {
+    selCard.classList.remove('selected');
+    avatarId = 'dynamic';
+    avatarCountry = 'global';
+  }
+
+  // Update filter context sent to Gemini for dynamic mode
+  window._avatarFilterCtx = f;
+}
+
 
 const AVATAR_DESCS = {
   avatar_rakesh: 'South Asian Indian man, medium build, clean-shaven, confident posture, warm medium brown skin, short neat black hair',
@@ -1567,6 +1819,7 @@ function onCategoryChange(){
   if(secLoc) secLoc.style.display = '';
 
   validate();
+  applyAvatarFilter(document.getElementById('category').value, document.getElementById('subcategory').value);
 }
 
 function onSubcatChange(){
@@ -1583,6 +1836,7 @@ function onSubcatChange(){
     }
   }
   validate();
+  applyAvatarFilter(document.getElementById('category').value, document.getElementById('subcategory').value);
 }
 
 function onSubcatChange(){ validate(); }
@@ -2511,8 +2765,17 @@ async function submitAnalyseToN8n(){
       selectedDimStyle:   selectedDimStyle   || ''
     })
   }, 90000);
-  if(!res.ok) throw new Error('Server error ' + res.status + ' — please try again.');
-  return await res.json();
+  if(!res.ok){
+    const errText = await res.text().catch(()=>'');
+    const errMsg  = errText.includes('{') ? (() => { try{ return JSON.parse(errText)?.message; }catch(e){ return ''; } })() : '';
+    throw new Error(errMsg || ('Server error ' + res.status + ' — please try again.'));
+  }
+  const text = await res.text();
+  let qData;
+  try{ qData = JSON.parse(text); }
+  catch(e){ throw new Error('Server returned an invalid response — please try again.'); }
+  if(qData?.insertError) throw new Error('Job creation failed: ' + qData.insertError);
+  return qData;
 }
 
 // ══ GENERATE ══
@@ -2567,6 +2830,8 @@ async function submitGenerateToN8n(sel){
       subcategory:document.getElementById('subcategory').value||'',
       avatarId, avatarCountry, locationVariant,
       avatarDesc: avatarId!=='dynamic' ? (AVATAR_DESCS[avatarId]||'') : '',
+      avatarFilterGender:   window._avatarFilterCtx?.gender   || 'all',
+      avatarFilterAgeGroup: window._avatarFilterCtx?.ageGroup || 'all',
       mode: analysisData?.mode || currentMode,
       productName:document.getElementById('productName').value.trim(),
       features:document.getElementById('features').value.trim(),
@@ -2599,8 +2864,17 @@ async function submitGenerateToN8n(sel){
       selectedDimStyle:   selectedDimStyle   || '',
     })
   }, 90000);
-  if(!res.ok) throw new Error('Server error ' + res.status + ' — please try again.');
-  return await res.json();
+  if(!res.ok){
+    const errText = await res.text().catch(()=>'');
+    const errMsg  = errText.includes('{') ? (() => { try{ return JSON.parse(errText)?.message; }catch(e){ return ''; } })() : '';
+    throw new Error(errMsg || ('Server error ' + res.status + ' — please try again.'));
+  }
+  const text = await res.text();
+  let qData;
+  try{ qData = JSON.parse(text); }
+  catch(e){ throw new Error('Server returned an invalid response — please try again.'); }
+  if(qData?.insertError) throw new Error('Job creation failed: ' + qData.insertError);
+  return qData;
 }
 
 // ══ PROGRESS STEPS ══
