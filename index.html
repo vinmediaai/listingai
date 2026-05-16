@@ -1590,41 +1590,46 @@ function getAvatarFilter(cat, subcat) {
 // Apply filter to avatar grid — show/hide cards
 // age-group data attr: 'adult' covers teen+senior+adult as agreed
 function applyAvatarFilter(cat, subcat) {
-  const f = getAvatarFilter(cat, subcat);
-  const section = document.getElementById('avatarSection');
+  const f          = getAvatarFilter(cat, subcat);
+  const secAv      = document.getElementById('secAvatar');    // correct ID
+  const secLoc     = document.getElementById('secLocation');
+  const isNoLoc    = subcat && NO_LOC_SUBCATS.has(subcat);
+  const isProductOnly = f.gender === 'none';                  // category-level hide
 
-  // Hide entire avatar section for product-only categories
-  if (f.gender === 'none') {
-    if (section) section.style.display = 'none';
+  // ── Hide/show Avatar section ──
+  // Hide if: category is product-only (home_kitchen, home_decor, rideon)
+  // OR subcategory is in NO_LOC_SUBCATS (all jewellery, innerwear, etc.)
+  const hideAvatar = isProductOnly || isNoLoc;
+  if (secAv) secAv.style.display = hideAvatar ? 'none' : '';
+  if (hideAvatar) {
+    window._avatarFilterCtx = { gender:'none', ageGroup:'none' };
     return;
   }
-  if (section) section.style.display = '';
 
+  // ── Filter avatar cards by gender + age group ──
   document.querySelectorAll('.av-card').forEach(card => {
-    const cGender = card.dataset.gender || 'all';
+    const cGender = card.dataset.gender   || 'all';
     const cAge    = card.dataset.ageGroup || 'adult';
     const okGender = f.gender === 'all' || cGender === f.gender;
-    // adult filter shows adult + teen + senior
-    const okAge = f.ageGroup === 'all'
-      || (f.ageGroup === 'adult' && ['adult','teen','senior'].includes(cAge))
+    const okAge    = f.ageGroup === 'all'
+      || (f.ageGroup === 'adult'   && ['adult','teen','senior'].includes(cAge))
       || (f.ageGroup === 'child'   && cAge === 'child')
       || (f.ageGroup === 'toddler' && ['toddler','child'].includes(cAge));
     card.style.display = (okGender && okAge) ? '' : 'none';
   });
 
-  // Dynamic option hint
+  // Always keep the dynamic option visible
   const dynCard = document.querySelector('.av-card[data-avatar="dynamic"]');
   if (dynCard) dynCard.style.display = '';
 
-  // Clear current selection if selected avatar is now hidden
+  // Deselect if currently selected avatar is now hidden
   const selCard = document.querySelector('.av-card.selected');
   if (selCard && selCard.style.display === 'none') {
     selCard.classList.remove('selected');
-    avatarId = 'dynamic';
+    avatarId     = 'dynamic';
     avatarCountry = 'global';
   }
 
-  // Update filter context sent to Gemini for dynamic mode
   window._avatarFilterCtx = f;
 }
 
@@ -1815,28 +1820,39 @@ function onCategoryChange(){
   const noteEl = document.getElementById('avCatNoteText');
   if(noteEl) noteEl.textContent = hint || 'Select a category to see avatar guidance';
 
-  // Location section — show by default, hidden by subcategory
-  if(secLoc) secLoc.style.display = '';
+  // Avatar + Location section visibility — hide for product-only categories
+  // Individual subcategory hiding is handled by onSubcatChange + applyAvatarFilter
+  const productOnlyCats = new Set(['home_kitchen','home_decor','rideon']);
+  if (productOnlyCats.has(cat)) {
+    if(secLoc) secLoc.style.display = 'none';
+  } else {
+    if(secLoc) secLoc.style.display = '';
+  }
 
   validate();
-  applyAvatarFilter(document.getElementById('category').value, document.getElementById('subcategory').value);
+  applyAvatarFilter(cat, ''); // reset to category-level filter when category changes
 }
 
 function onSubcatChange(){
-  const sub = document.getElementById('subcategory').value;
+  const cat    = document.getElementById('category').value;
+  const sub    = document.getElementById('subcategory').value;
   const secLoc = document.getElementById('secLocation');
-  // Hide location picker for categories where it's not needed
+  const isNoLoc = NO_LOC_SUBCATS.has(sub);
+  const productOnlyCats = new Set(['home_kitchen','home_decor','rideon']);
+
+  // Location: hide if NO_LOC subcat OR product-only category
   if(secLoc){
-    secLoc.style.display = NO_LOC_SUBCATS.has(sub) ? 'none' : '';
-    if(NO_LOC_SUBCATS.has(sub)){
-      // Reset location selection to default so it doesn't interfere
+    const hideLoc = isNoLoc || productOnlyCats.has(cat);
+    secLoc.style.display = hideLoc ? 'none' : '';
+    if(hideLoc){
       document.querySelectorAll('.loc-card').forEach(c=>c.classList.remove('on'));
       const first = document.querySelector('.loc-card');
       if(first) first.classList.add('on');
     }
   }
   validate();
-  applyAvatarFilter(document.getElementById('category').value, document.getElementById('subcategory').value);
+  // applyAvatarFilter handles avatar section hide (including NO_LOC_SUBCATS)
+  applyAvatarFilter(cat, sub);
 }
 
 function onSubcatChange(){ validate(); }
@@ -3130,7 +3146,12 @@ sb.auth.onAuthStateChange((event, session) => {
 
   // Boot after DOM ready
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', scInit);
+    document.addEventListener('DOMContentLoaded', () => {
+    scInit();
+    // Apply avatar/location filter for the default category on page load
+    const defCat = document.getElementById('category')?.value || '';
+    if(defCat) applyAvatarFilter(defCat, '');
+  });
   } else {
     scInit();
   }
