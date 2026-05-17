@@ -1431,11 +1431,8 @@ const NO_LOC_SUBCATS = new Set([
   'mens_innerwear','mens_socks','mens_sleepwear','mens_swimwear',
   // Kids — infant/baby product only
   'kids_infant','kids_baby_dress','kids_swimwear',
-  // Jewellery — all product macro shots, no avatar
-  'jewellery_necklace','jewellery_earring','jewellery_set','jewellery_bangle',
-  'jewellery_bracelet','jewellery_anklet','jewellery_ring','jewellery_pendant',
-  'jewellery_maang_tikka','jewellery_nose_pin','jewellery_toe_ring',
-  'jewellery_brooch','jewellery_mens_chain',
+  // Jewellery — lifestyle shots use avatar (person wearing)
+  // Jewellery subcats removed from NO_LOC so avatar section shows
   // Accessories — product-only flat-lay
   'acc_wallet','acc_belt','acc_travel_pouch','acc_gloves','acc_socks','acc_umbrella',
   // Home Kitchen — all product studio shots
@@ -1502,7 +1499,7 @@ const AVATAR_FILTER = {
   mens_fashion:    { gender:'male',   ageGroup:'adult'   },
   kids_fashion:    { gender:'all',    ageGroup:'child'   },
   footwear:        { gender:'all',    ageGroup:'adult'   },
-  jewellery:       { gender:'female', ageGroup:'adult'   },
+  jewellery:       { gender:'all',    ageGroup:'adult'   }, // male+female — mens chains, kadas etc.
   accessories:     { gender:'all',    ageGroup:'adult'   },
   beauty:          { gender:'female', ageGroup:'adult'   },
   electronics:     { gender:'all',    ageGroup:'adult'   },
@@ -1550,8 +1547,13 @@ const SUBCAT_FILTER = {
   beauty_beard:           { gender:'male',   ageGroup:'adult'   },
   beauty_mens_skin:       { gender:'male',   ageGroup:'adult'   },
   skincare_baby:          { gender:'all',    ageGroup:'toddler' },
-  // Jewellery
-  jewellery_mens_chain:   { gender:'male',   ageGroup:'adult'   },
+  // Jewellery — gender overrides
+  jewellery_mens_chain:   { gender:'male',   ageGroup:'adult'   }, // exclusively male
+  jewellery_maang_tikka:  { gender:'female', ageGroup:'adult'   }, // exclusively female
+  jewellery_nose_pin:     { gender:'female', ageGroup:'adult'   },
+  jewellery_toe_ring:     { gender:'female', ageGroup:'adult'   },
+  jewellery_anklet:       { gender:'female', ageGroup:'adult'   },
+  // Others (rings, bangles, earrings, necklaces) remain gender:'all' from category default
   // Innerwear
   mens_innerwear:         { gender:'male',   ageGroup:'adult'   },
   womens_innerwear:       { gender:'female', ageGroup:'adult'   },
@@ -2589,18 +2591,28 @@ async function evaluateQueue(mode, submitFn, sel=[]){
     hideQB(isGen);
     startPolling(qData.jobId, sel, mode);
   } catch(err){
-    // Submit failed — stop completely, no retry (prevents API abuse)
+    // Submit failed — stop completely. No retry.
+    // n8n may still be processing in background — a second submission
+    // while it holds imageBase64 in memory causes OOM and crashes n8n.
     stopQueuePolling(); stopQueueHeartbeat();
     try{ await queueDelete(table, queueRowId); } catch(_){}
     queueRowId = null; queueDispatching = false;
     hideQB(isGen);
-    toast('❌ Submit failed: ' + err.message, 'err');
+    toast('❌ ' + err.message, 'err');
     if(isGen){
-      document.getElementById('genBtn').disabled = false;
-      const pw = document.getElementById('progPanelWrap');
+      const btn = document.getElementById('genBtn');
+      const pw  = document.getElementById('progPanelWrap');
       if(pw) pw.style.display = 'none';
       document.getElementById('progPanel').classList.remove('on');
       document.getElementById('promptPanel').classList.add('on');
+      let secs = 15;
+      btn.disabled = true;
+      btn.textContent = `⏳ Wait ${secs}s before retrying…`;
+      const cd = setInterval(() => {
+        secs--;
+        if(secs <= 0){ clearInterval(cd); btn.disabled=false; btn.textContent='Generate Images'; }
+        else { btn.textContent = `⏳ Wait ${secs}s before retrying…`; }
+      }, 1000);
     } else {
       document.getElementById('analyseBtn').disabled = false;
       document.getElementById('analysePanel').classList.remove('on');
@@ -2621,13 +2633,32 @@ async function startPolling(jobId,sel,mode){
     stopPolling(); hideQB(isGen);
     queueFinalize().catch(()=>{});
     toast(isWarn ? '⏳ '+msg : '❌ '+msg, isWarn?'warn':'err');
-    if(isGen){ document.getElementById('genBtn').disabled=false;
-               const pw=document.getElementById('progPanelWrap');
-               if(pw) pw.style.display='none';
-               document.getElementById('progPanel').classList.remove('on');
-               document.getElementById('promptPanel').classList.add('on'); }
-    else { document.getElementById('analyseBtn').disabled=false;
-           document.getElementById('analysePanel').classList.remove('on'); }
+    if(isGen){
+      // Cooldown — prevent immediate retry that could start a second n8n execution
+      // while the first one is still running in the background (causes OOM crash)
+      const btn = document.getElementById('genBtn');
+      const pw  = document.getElementById('progPanelWrap');
+      if(pw) pw.style.display='none';
+      document.getElementById('progPanel').classList.remove('on');
+      document.getElementById('promptPanel').classList.add('on');
+      let secs = 15;
+      btn.disabled = true;
+      btn.textContent = `⏳ Wait ${secs}s before retrying…`;
+      const cd = setInterval(() => {
+        secs--;
+        if(secs <= 0){
+          clearInterval(cd);
+          btn.disabled = false;
+          btn.textContent = 'Generate Images';
+        } else {
+          btn.textContent = `⏳ Wait ${secs}s before retrying…`;
+        }
+      }, 1000);
+    }
+    else {
+      document.getElementById('analyseBtn').disabled=false;
+      document.getElementById('analysePanel').classList.remove('on');
+    }
   }
 
   pollInterval=setInterval(async()=>{
@@ -2780,7 +2811,7 @@ async function submitAnalyseToN8n(){
       selectedInfoStyle:  selectedInfoStyle  || '',
       selectedDimStyle:   selectedDimStyle   || ''
     })
-  }, 90000);
+  }, 30000);  // 30s — only needs jobId ACK from n8n Respond Early, not full generation
   if(!res.ok){
     const errText = await res.text().catch(()=>'');
     const errMsg  = errText.includes('{') ? (() => { try{ return JSON.parse(errText)?.message; }catch(e){ return ''; } })() : '';
@@ -2879,7 +2910,7 @@ async function submitGenerateToN8n(sel){
       selectedInfoStyle:  selectedInfoStyle  || '',
       selectedDimStyle:   selectedDimStyle   || '',
     })
-  }, 90000);
+  }, 30000);  // 30s — only needs jobId ACK from n8n Respond Early, not full generation
   if(!res.ok){
     const errText = await res.text().catch(()=>'');
     const errMsg  = errText.includes('{') ? (() => { try{ return JSON.parse(errText)?.message; }catch(e){ return ''; } })() : '';
