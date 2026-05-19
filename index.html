@@ -2589,6 +2589,9 @@ async function evaluateQueue(mode, submitFn, sel=[]){
     if(!qData?.jobId) throw new Error('No jobId returned from server');
     stopQueuePolling();
     hideQB(isGen);
+    // Queue row stays as 'processing' during n8n execution
+    // so other users are held in queue until this job completes.
+    // queueFinalize() deletes it when polling ends (done/failed/partial).
     startPolling(qData.jobId, sel, mode);
   } catch(err){
     // Submit failed — stop completely. No retry.
