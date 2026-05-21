@@ -378,6 +378,21 @@ input#fileInput{display:none}
 .showcase-progress{height:2px;background:var(--border);position:relative;overflow:hidden}
 .showcase-progress-fill{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:none}
 .showcase-progress-fill.animating{transition:width linear}
+
+/* Readonly prompt textareas — viewable but not editable */
+.prompt-ta[readonly] {
+  cursor: default;
+  background: #f8f9fa;
+  color: #444;
+  border-color: #e0e0e0;
+  resize: none;
+  user-select: text;
+}
+.prompt-ta[readonly]:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: #e0e0e0;
+}
 </style>
 </head>
 <body>
@@ -1027,7 +1042,7 @@ input#fileInput{display:none}
           </div>
         </div>
         <div class="prompt-ta-wrap">
-          <textarea class="prompt-ta" id="ta-hero" oninput="updateCounter('hero',500)" placeholder="Hero product prompt will appear here after analysis…"></textarea>
+          <textarea class="prompt-ta" id="ta-hero" readonly placeholder="Hero product prompt will appear here after analysis…"></textarea>
           <div class="char-counter" id="cc-hero">0 / 500</div>
         </div>
       </div>
@@ -1075,7 +1090,7 @@ input#fileInput{display:none}
           </div>
         </div>
         <div class="prompt-ta-wrap">
-          <textarea class="prompt-ta" id="ta-infographic" oninput="updateCounter('infographic',500)" placeholder="Infographic prompt will appear here after analysis…"></textarea>
+          <textarea class="prompt-ta" id="ta-infographic" readonly placeholder="Infographic prompt will appear here after analysis…"></textarea>
           <div class="char-counter" id="cc-infographic">0 / 500</div>
         </div>
       </div>
@@ -1090,7 +1105,7 @@ input#fileInput{display:none}
       </div>
       <div class="pc-body">
         <div class="prompt-ta-wrap">
-          <textarea class="prompt-ta" id="ta-lifestyle" oninput="updateCounter('lifestyle',600)" placeholder="Lifestyle 1 prompt will appear here after analysis…"></textarea>
+          <textarea class="prompt-ta" id="ta-lifestyle" readonly placeholder="Lifestyle 1 prompt will appear here after analysis…"></textarea>
           <div class="char-counter" id="cc-lifestyle">0 / 600</div>
         </div>
       </div>
@@ -1105,7 +1120,7 @@ input#fileInput{display:none}
       </div>
       <div class="pc-body">
         <div class="prompt-ta-wrap">
-          <textarea class="prompt-ta" id="ta-lifestyle2" oninput="updateCounter('lifestyle2',600)" placeholder="Lifestyle 2 prompt will appear here after analysis…"></textarea>
+          <textarea class="prompt-ta" id="ta-lifestyle2" readonly placeholder="Lifestyle 2 prompt will appear here after analysis…"></textarea>
           <div class="char-counter" id="cc-lifestyle2">0 / 600</div>
         </div>
       </div>
@@ -1120,7 +1135,7 @@ input#fileInput{display:none}
       </div>
       <div class="pc-body">
         <div class="prompt-ta-wrap">
-          <textarea class="prompt-ta" id="ta-lifestyle3" oninput="updateCounter('lifestyle3',600)" placeholder="Lifestyle 3 prompt will appear here after analysis…"></textarea>
+          <textarea class="prompt-ta" id="ta-lifestyle3" readonly placeholder="Lifestyle 3 prompt will appear here after analysis…"></textarea>
           <div class="char-counter" id="cc-lifestyle3">0 / 600</div>
         </div>
       </div>
@@ -1173,7 +1188,7 @@ input#fileInput{display:none}
           </div>
         </div>
         <div class="prompt-ta-wrap" style="margin-top:10px">
-          <textarea class="prompt-ta" id="ta-dimensions" oninput="updateCounter('dimensions',400)" placeholder="Dimension prompt will appear here after entering measurements…"></textarea>
+          <textarea class="prompt-ta" id="ta-dimensions" readonly placeholder="Dimension prompt will appear here after entering measurements…"></textarea>
           <div class="char-counter" id="cc-dimensions">0 / 400</div>
         </div>
       </div>
@@ -1250,7 +1265,7 @@ const FEEDBACK_WEBHOOK  = 'https://n8n.vinmediaai.online/webhook/amazon-listing-
 const MAX_USES          = 5;
 const USE_PERIOD_DAYS   = 10;
 const POLL_INTERVAL_MS  = 4000;
-const MAX_POLL_MS       = 10 * 60 * 1000; // 10 min hard stop — multi-image jobs need more time (3 images × ~2.5min each)
+const MAX_POLL_MS       = 8 * 60 * 1000;  // 8 min hard stop (4 images × 90s + buffer)
 // Queue tables defined in queue section below
 // QUEUE_POLL_MS defined in queue section
 // QUEUE_HEARTBEAT_MS defined in queue section
